@@ -1,0 +1,159 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!213 &21300000
+Sprite:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DiscountShop_tag
+  m_Rect:
+    serializedVersion: 2
+    x: 2099
+    y: 852
+    width: 128
+    height: 88
+  m_Offset: {x: 0, y: 0}
+  m_Border: {x: 21.172934, y: 0, z: 36.57143, w: 0}
+  m_PixelsToUnits: 96.2406
+  m_Pivot: {x: 0.5, y: 0.5}
+  m_Extrude: 1
+  m_IsPolygon: 0
+  m_AtlasName:
+  m_PackingTag:
+  m_RenderDataKey:
+    48294ae48e29bdd4e8b8b6520bd3af75: 21300000
+  m_AtlasTags: []
+  m_SpriteAtlas: {fileID: 0}
+  m_RD:
+    serializedVersion: 3
+    texture: {fileID: 2800000, guid: ee25a22ceab830d48bc65541d1d30081, type: 3}
+    alphaTexture: {fileID: 0}
+    secondaryTextures: []
+    m_SubMeshes:
+    - serializedVersion: 2
+      firstByte: 0
+      indexCount: 12
+      topology: 0
+      baseVertex: 0
+      firstVertex: 0
+      vertexCount: 6
+      localAABB:
+        m_Center: {x: 0, y: 0, z: 0}
+        m_Extent: {x: 0, y: 0, z: 0}
+    m_IndexBuffer: 050004000100030001000400000001000300020001000000
+    m_VertexData:
+      serializedVersion: 3
+      m_VertexCount: 6
+      m_Channels:
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 3
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 1
+        offset: 0
+        format: 0
+        dimension: 2
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      - stream: 0
+        offset: 0
+        format: 0
+        dimension: 0
+      m_DataSize: 128
+      _typelessdata: 713d2a3fa4705f3e00000000e1fa0c3f7b14eabe00000000713d2a3f295c7fbd00000000ec510a3f7b14ea3e00000000713d2abf7b14ea3e00000000713d2abf7b14eabe000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+    m_Bindpose: []
+    textureRect:
+      serializedVersion: 2
+      x: 2099
+      y: 852
+      width: 128
+      height: 88
+    textureRectOffset: {x: 0, y: 0}
+    atlasRectOffset: {x: 2099, y: 852}
+    settingsRaw: 67
+    uvTransform: {x: 96.2406, y: 2163, z: 96.2406, w: 896}
+    downscaleMultiplier: 1
+  m_AtlasRD:
+    serializedVersion: 3
+    texture: {fileID: 0}
+    alphaTexture: {fileID: 0}
+    secondaryTextures: []
+    m_SubMeshes: []
+    m_IndexBuffer:
+    m_VertexData:
+      serializedVersion: 3
+      m_VertexCount: 0
+      m_Channels: []
+      m_DataSize: 0
+      _typelessdata:
+    m_Bindpose: []
+    textureRect:
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 0
+      height: 0
+    textureRectOffset: {x: 0, y: 0}
+    atlasRectOffset: {x: 0, y: 0}
+    settingsRaw: 0
+    uvTransform: {x: 0, y: 0, z: 0, w: 0}
+    downscaleMultiplier: 0
+  m_PhysicsShape:
+  - - {x: 0.6546094, y: 0.114296876}
+    - {x: 0.4052344, y: 0.43640625}
+    - {x: 0.3740625, y: 0.4571875}
+    - {x: -0.5299219, y: 0.4571875}
+    - {x: -0.665, y: 0.3636719}
+    - {x: -0.665, y: -0.22859375}
+    - {x: -0.6546094, y: -0.35328126}
+    - {x: -0.63382816, y: -0.4052344}
+    - {x: -0.5714844, y: -0.4571875}
+    - {x: 0.38445315, y: -0.4571875}
+    - {x: 0.415625, y: -0.4467969}
+    - {x: 0.665, y: -0.051953126}
+    - {x: 0.665, y: 0.083125}
+  m_Bones: []
+  m_SpriteID:
