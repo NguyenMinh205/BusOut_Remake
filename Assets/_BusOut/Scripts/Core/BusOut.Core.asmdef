@@ -1,0 +1,16 @@
+{
+    "name": "BusOut.Core",
+    "rootNamespace": "BusOut.Core",
+    "references": [
+        "BusOut.DesignPattern"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
