@@ -17,6 +17,12 @@ namespace BusOut.Gameplay
         [Tooltip("Số ô đỗ mở sẵn (tính từ ô 1). Game gốc mở 4 ô, ô 5–7 mở bằng quảng cáo.")]
         public int openSlotCount = 4;
 
+        [Tooltip("Ô trống cuối cùng nhấp nháy bao nhiêu lần lúc vừa thành ô cuối, rồi sáng đứng. Gốc: 4.")]
+        public int warningBlinkCount = 4;
+
+        [Tooltip("Thời gian một lần nhấp nháy (tắt + sáng), giây. Gốc: 0.5.")]
+        public float warningBlinkDuration = 0.5f;
+
         [Header("Chạy lên bến")]
         [Tooltip("Tốc độ xe chạy từ bãi lên bến và rời bến (đơn vị/giây). Gốc: 30.")]
         public float carMoveSpeed = 30f;

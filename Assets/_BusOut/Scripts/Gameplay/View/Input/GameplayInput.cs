@@ -5,8 +5,8 @@ using UnityEngine.InputSystem;
 
 namespace BusOut.Gameplay
 {
-    /// Nhận chạm: bắn tia từ camera, báo xe trúng tia cho Presenter.
-    public class CarInput : MonoBehaviour
+    /// Nhận chạm trong ván: bắn tia từ camera, báo cho Presenter chạm trúng xe hay ô đỗ.
+    public class GameplayInput : MonoBehaviour
     {
         [Tooltip("Camera gameplay (GameContext/Main Camera).")]
         [SerializeField] private Camera worldCamera;
@@ -15,12 +15,13 @@ namespace BusOut.Gameplay
         private float rayDistance = 200f;
 
         public event Action<CarView> CarTapped;
+        public event Action<BusStopSlotView> SlotTapped;
 
         public bool Init(float tapRayDistance)
         {
             rayDistance = tapRayDistance;
             if (worldCamera != null) return true;
-            Debug.LogError("[BusOut] CarInput thiếu worldCamera. Kéo GameContext/Main Camera vào ô World Camera.", this);
+            Debug.LogError("[BusOut] GameplayInput thiếu worldCamera. Kéo GameContext/Main Camera vào ô World Camera.", this);
             enabled = false;
             return false;
         }
@@ -36,18 +37,25 @@ namespace BusOut.Gameplay
             int count = Physics.RaycastNonAlloc(ray, hitBuffer, rayDistance, Physics.DefaultRaycastLayers,
                 QueryTriggerInteraction.Ignore);
 
-            CarView nearest = null;
-            float nearestDistance = float.MaxValue;
+            CarView nearestCar = null;
+            BusStopSlotView nearestSlot = null;
+            float carDistance = float.MaxValue, slotDistance = float.MaxValue;
             for (int i = 0; i < count; i++)
             {
-                if (hitBuffer[i].distance >= nearestDistance) continue;
-                var car = hitBuffer[i].collider.GetComponentInParent<CarView>();
-                if (car == null) continue;
-                nearest = car;
-                nearestDistance = hitBuffer[i].distance;
+                RaycastHit hit = hitBuffer[i];
+                var car = hit.collider.GetComponentInParent<CarView>();
+                if (car != null)
+                {
+                    if (hit.distance < carDistance) { nearestCar = car; carDistance = hit.distance; }
+                    continue;
+                }
+                var slot = hit.collider.GetComponentInParent<BusStopSlotView>();
+                if (slot != null && hit.distance < slotDistance) { nearestSlot = slot; slotDistance = hit.distance; }
             }
 
-            if (nearest != null) CarTapped?.Invoke(nearest);
+            // Xe ưu tiên hơn ô: vùng chạm của ô to, nằm chồng lên xe đỗ trong ô hoặc đang chạy qua.
+            if (nearestCar != null) CarTapped?.Invoke(nearestCar);
+            else if (nearestSlot != null) SlotTapped?.Invoke(nearestSlot);
         }
     }
 }

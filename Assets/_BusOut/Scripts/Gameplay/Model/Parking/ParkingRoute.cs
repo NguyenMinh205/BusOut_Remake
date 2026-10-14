@@ -23,7 +23,8 @@ namespace BusOut.Gameplay
 
         /// Đường từ chỗ đỗ trong bãi tới ô đỗ ở bến: thẳng tới làn → theo làn lên làn trên → tới ngang EntryPoint
         /// → EntryPoint → ParkPoint. Xe đỗ với đầu xe theo hướng EntryPoint → ParkPoint.
-        public static void BuildToSlot(Vector3 carPosition, Vector3 carForward, LaneRing ring,
+        /// Trả về chỉ số điểm đầu tiên nằm trên làn trên (lúc xe "ra tới đường").
+        public static int BuildToSlot(Vector3 carPosition, Vector3 carForward, LaneRing ring,
             Vector3 slotEntry, Vector3 slotPark, List<Vector3> result)
         {
             result.Clear();
@@ -32,14 +33,18 @@ namespace BusOut.Gameplay
             float distance = DistanceToRing(carPosition, direction, ring, out Side side);
             Vector3 exit = carPosition + direction * distance;
             result.Add(exit);
+            // Ra cạnh trên thì điểm thoát đã nằm trên làn trên; cạnh trái/phải thêm 1 điểm, cạnh dưới thêm 2 điểm mới tới.
+            int topLaneIndex = 0;
 
             switch (side)
             {
                 case Side.Left:
                     result.Add(new Vector3(ring.LeftX, y, ring.TopZ));
+                    topLaneIndex = result.Count - 1;
                     break;
                 case Side.Right:
                     result.Add(new Vector3(ring.RightX, y, ring.TopZ));
+                    topLaneIndex = result.Count - 1;
                     break;
                 case Side.Bottom:
                     // Chọn bên vòng ngắn hơn: quãng ngang = (lối ra → mép) + (mép → ô đỗ).
@@ -49,12 +54,14 @@ namespace BusOut.Gameplay
                     float sideX = viaLeft <= viaRight ? ring.LeftX : ring.RightX;
                     result.Add(new Vector3(sideX, y, ring.BottomZ));
                     result.Add(new Vector3(sideX, y, ring.TopZ));
+                    topLaneIndex = result.Count - 1;
                     break;
             }
 
             result.Add(new Vector3(slotEntry.x, y, ring.TopZ));
             result.Add(new Vector3(slotEntry.x, y, slotEntry.z));
             result.Add(new Vector3(slotPark.x, y, slotPark.z));
+            return topLaneIndex;
         }
 
         /// Đường rời bến: LÙI theo trục ô (ParkPoint → EntryPoint, kéo dài nếu cần) tới khi z bằng z của điểm rời bến,

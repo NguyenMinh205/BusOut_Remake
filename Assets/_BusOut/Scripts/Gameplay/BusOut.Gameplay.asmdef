@@ -2,6 +2,8 @@
     "name": "BusOut.Gameplay",
     "rootNamespace": "BusOut.Gameplay",
     "references": [
+        "BusOut.DesignPattern",
+        "BusOut.Core",
         "Unity.InputSystem",
         "UnityEngine.UI"
     ],

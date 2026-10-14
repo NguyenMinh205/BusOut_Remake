@@ -3,16 +3,10 @@ using UnityEngine.Serialization;
 
 namespace BusOut.Gameplay
 {
-    /// Hình học bãi đỗ trong scene: gốc toạ độ level, làn đường vòng quanh bãi, các ô đỗ ở bến.
+    /// Hình học bãi đỗ trong scene: gốc toạ độ level, làn xe chạy quanh bãi, 2 điểm rời bến. (Ô đỗ: BusStopView.)
     /// Đặt GameObject này sao cho toạ độ level gốc khớp với bãi (scene hiện tại: (0, 0, -5) — Ground ở z = 0; không xoay, scale 1).
     public class ParkingLotView : MonoBehaviour
     {
-        // Tên con trong mỗi Slot của SlotParking (dựng tay trong scene).
-        // EntryPoint: miệng ô, xe từ làn trên đi tới đây trước. ParkPoint: điểm dừng, giữa ô.
-        // Hướng EntryPoint → ParkPoint là hướng đầu xe khi đỗ; rời bến thì lùi theo hướng ngược lại.
-        private const string SlotEntryPath = "DataPoint/EntryPoint";
-        private const string SlotParkPath = "DataPoint/ParkPoint";
-
         [Header("Bãi đỗ (toạ độ local) — Gizmo trắng")]
         [Tooltip("Góc dưới-trái bãi đỗ (x, z). Xe trong level phải nằm trong khung này.")]
         [SerializeField] private Vector2 lotMin = new Vector2(-10.5f, -12.5f);
@@ -28,8 +22,6 @@ namespace BusOut.Gameplay
         [SerializeField] private float topLaneMargin = 2f;
 
         [Header("Tham chiếu trong scene")]
-        [Tooltip("GameObject SlotParking: mỗi con là một ô đỗ, có DataPoint/EntryPoint và DataPoint/ParkPoint.")]
-        [SerializeField] private Transform slotsRoot;
         [Tooltip("Điểm rời bến bên trái (LeavingPointLeft): xe ở nửa trái bến chạy tới đây rồi biến mất.")]
         [SerializeField] private Transform leftLeavingPoint;
         [Tooltip("Điểm rời bến bên phải (LeavingPointRight): xe ở nửa phải bến chạy tới đây rồi biến mất.")]
@@ -38,10 +30,6 @@ namespace BusOut.Gameplay
         [Tooltip("Cha của các xe spawn ra. Bỏ trống = chính GameObject này.")]
         [SerializeField] private Transform carsRoot;
 
-        private Transform[] slotEntryPoints;
-        private Transform[] slotParkPoints;
-
-        public int SlotCount => slotEntryPoints != null ? slotEntryPoints.Length : 0;
         public Transform CarsRoot => carsRoot != null ? carsRoot : transform;
         public Vector3 LeftLeavingPoint => leftLeavingPoint.position;
         public Vector3 RightLeavingPoint => rightLeavingPoint.position;
@@ -63,35 +51,17 @@ namespace BusOut.Gameplay
 
         public bool Init()
         {
-            if (slotsRoot == null || leftLeavingPoint == null || rightLeavingPoint == null)
+            if (leftLeavingPoint == null || rightLeavingPoint == null)
             {
-                Debug.LogError("[BusOut] ParkingLotView thiếu tham chiếu: kéo SlotParking vào Slots Root, " +
-                               "LeavingPointLeft vào Left Leaving Point và LeavingPointRight vào Right Leaving Point.", this);
+                Debug.LogError("[BusOut] ParkingLotView thiếu tham chiếu: kéo LeavingPointLeft vào Left Leaving Point " +
+                               "và LeavingPointRight vào Right Leaving Point.", this);
                 return false;
             }
             // Làn đường chỉ cộng vị trí, không tính xoay/scale: xoay GameObject này là xe chạy lệch khỏi đường.
             if (transform.rotation != Quaternion.identity || transform.lossyScale != Vector3.one)
                 Debug.LogError("[BusOut] ParkingLotView phải để rotation (0,0,0) và scale (1,1,1), không thì xe chạy lệch khỏi đường.", this);
-
-            int count = slotsRoot.childCount;
-            slotEntryPoints = new Transform[count];
-            slotParkPoints = new Transform[count];
-            for (int i = 0; i < count; i++)
-            {
-                Transform slot = slotsRoot.GetChild(i);
-                slotEntryPoints[i] = slot.Find(SlotEntryPath);
-                slotParkPoints[i] = slot.Find(SlotParkPath);
-                if (slotEntryPoints[i] == null || slotParkPoints[i] == null)
-                {
-                    Debug.LogError($"[BusOut] Ô đỗ '{slot.name}' thiếu {SlotEntryPath} hoặc {SlotParkPath}. Mỗi con của SlotParking phải có đủ 2 điểm này.", slot);
-                    return false;
-                }
-            }
             return true;
         }
-
-        public Vector3 GetSlotEntryPoint(int slotIndex) => slotEntryPoints[slotIndex].position;
-        public Vector3 GetSlotParkPoint(int slotIndex) => slotParkPoints[slotIndex].position;
 
         public Vector3 LevelToWorld(float x, float z) => transform.position + new Vector3(x, 0f, z);
 

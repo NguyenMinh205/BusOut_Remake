@@ -23,6 +23,8 @@ MonoBehaviour:
   - {r: 0.772549, g: 0.3803922, b: 0.9686275, a: 1}
   - {r: 1, g: 0.6431373, b: 0.3019608, a: 1}
   openSlotCount: 4
+  warningBlinkCount: 4
+  warningBlinkDuration: 0.5
   carMoveSpeed: 30
   carTurnSharpness: 20
   blockerRayInset: 0.08

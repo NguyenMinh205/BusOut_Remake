@@ -23,9 +23,14 @@ namespace BusOut.Gameplay
         [Tooltip("Renderer của Body — nhận màu xe qua MaterialPropertyBlock.")]
         [SerializeField] private Renderer bodyRenderer;
 
+        [Tooltip("Mũi tên chỉ hướng đi trên nóc (object Mark). Ẩn khi xe đã ra tới làn trên.")]
+        [SerializeField] private GameObject markObject;
+
         private readonly List<Vector3> drivePath = new List<Vector3>(12);
         private int drivePathIndex;
         private int driveReverseCount;
+        private int driveMilestoneIndex;
+        private Action<CarView> onDriveMilestone;
         private float driveSpeed;
         private float driveTurnSharpness;
         private bool isDriving;
@@ -49,10 +54,10 @@ namespace BusOut.Gameplay
         public bool Init(int carId, Color color)
         {
             CarId = carId;
-            if (bodyCollider == null || selectionCollider == null || bodyRenderer == null)
+            if (bodyCollider == null || selectionCollider == null || bodyRenderer == null || markObject == null)
             {
-                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu tham chiếu (bodyCollider / selectionCollider / bodyRenderer). " +
-                               "Mở prefab trong Assets/_BusOut/Prefab, kéo BoxCollider ở root, BoxCollider của SelectionBox và MeshRenderer của Body vào.", this);
+                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu tham chiếu (bodyCollider / selectionCollider / bodyRenderer / markObject). " +
+                               "Mở prefab trong Assets/_BusOut/Prefab, kéo BoxCollider ở root, BoxCollider của SelectionBox, MeshRenderer của Body và object Mark vào.", this);
                 return false;
             }
 
@@ -70,6 +75,8 @@ namespace BusOut.Gameplay
             bodyCollider.enabled = body;
             selectionCollider.enabled = selection;
         }
+
+        public void SetMarkVisible(bool visible) => markObject.SetActive(visible);
 
         /// Collider này có phải thân của xe này không (để phân biệt với SelectionBox khi tia trúng).
         public bool IsBody(Collider other) => other == bodyCollider;
@@ -165,8 +172,9 @@ namespace BusOut.Gameplay
         /// Chạy qua lần lượt các điểm với tốc độ đều, đầu xe xoay mượt theo hướng chạy.
         /// <paramref name="endRotation"/> (nếu có) được đặt đúng lúc tới nơi để xe đỗ thẳng ô.
         /// <paramref name="reverseCount"/> điểm đầu tiên được chạy LÙI: đầu xe quay ngược hướng chạy (rời ô đỗ).
+        /// <paramref name="onMilestone"/> được gọi một lần khi xe tới điểm thứ <paramref name="milestoneIndex"/> (vd. tới làn trên).
         public void Drive(List<Vector3> points, float speed, float turnSharpness, Quaternion? endRotation,
-            Action<CarView> onFinished, int reverseCount = 0)
+            Action<CarView> onFinished, int reverseCount = 0, int milestoneIndex = -1, Action<CarView> onMilestone = null)
         {
             KillRam();
             KillTilt();
@@ -174,6 +182,8 @@ namespace BusOut.Gameplay
             drivePath.AddRange(points);
             drivePathIndex = 0;
             driveReverseCount = reverseCount;
+            driveMilestoneIndex = milestoneIndex;
+            onDriveMilestone = onMilestone;
             driveSpeed = speed;
             driveTurnSharpness = turnSharpness;
             hasArriveRotation = endRotation.HasValue;
@@ -199,6 +209,7 @@ namespace BusOut.Gameplay
                 {
                     position = drivePath[drivePathIndex];
                     remaining -= distance;
+                    if (drivePathIndex == driveMilestoneIndex) FireMilestone();
                     drivePathIndex++;
                 }
                 else
@@ -224,6 +235,13 @@ namespace BusOut.Gameplay
             if (drivePathIndex >= drivePath.Count) FinishDrive();
         }
 
+        private void FireMilestone()
+        {
+            Action<CarView> callback = onDriveMilestone;
+            onDriveMilestone = null;
+            callback?.Invoke(this);
+        }
+
         private void FinishDrive()
         {
             isDriving = false;
@@ -238,6 +256,7 @@ namespace BusOut.Gameplay
         {
             isDriving = false;
             onDriveFinished = null;
+            onDriveMilestone = null;
             transform.DOKill();
         }
 
