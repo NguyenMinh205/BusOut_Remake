@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5947499064423379308}
   - component: {fileID: 298533926843271820}
+  - component: {fileID: 7713094401120568303}
   m_Layer: 0
   m_Name: Bus
   m_TagString: Untagged
@@ -413,3 +414,18 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &7713094401120568303
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 727405097218552540}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bac5364c1734ae8873de3438dcefaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.CarView
+  bodyCollider: {fileID: 298533926843271820}
+  selectionCollider: {fileID: 8619232100880355722}
+  bodyRenderer: {fileID: 670649403444749958}

@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3897141673694508946}
   - component: {fileID: 5166432494696001743}
+  - component: {fileID: 7713094401120568301}
   m_Layer: 0
   m_Name: Car
   m_TagString: Untagged
@@ -413,3 +414,18 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &7713094401120568301
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2411031778908317380}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8bac5364c1734ae8873de3438dcefaa1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.CarView
+  bodyCollider: {fileID: 5166432494696001743}
+  selectionCollider: {fileID: 1486491580899148062}
+  bodyRenderer: {fileID: 1331484305246512920}

@@ -1,4 +1,5 @@
 ﻿<Solution>
+  <Project Path="BusOut.Gameplay.csproj" />
   <Project Path="LeanCommon.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
   <Project Path="LeanTouchPlus.csproj" />

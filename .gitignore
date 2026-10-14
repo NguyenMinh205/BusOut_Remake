@@ -96,6 +96,11 @@ google-services.json
 local.properties
 
 # ==============================
+# LOCAL DOCS (Local only, không commit)
+# ==============================
+/docs/
+
+# ==============================
 # OS / EDITOR KHÁC
 # ==============================
 .DS_Store         # macOS (nếu dùng cả mac trong team)
