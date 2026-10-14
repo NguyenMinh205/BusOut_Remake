@@ -344,6 +344,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 29513048}
+  - component: {fileID: 1029442578}
   m_Layer: 0
   m_Name: Slot2
   m_TagString: Untagged
@@ -1275,6 +1276,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 132388859}
+  - component: {fileID: 1836132305}
   m_Layer: 0
   m_Name: Slot1
   m_TagString: Untagged
@@ -4441,10 +4443,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.ParkingLotView
   lotMin: {x: -10, y: -12.5}
   lotMax: {x: 10, y: 9.5}
-  sideLaneMargin: 2.2
-  bottomLaneMargin: 1.5
-  topLaneMargin: 2
-  slotsRoot: {fileID: 1701485267}
+  sideLaneMargin: 1.5
+  bottomLaneMargin: 0.7
+  topLaneMargin: 2.5
   leftLeavingPoint: {fileID: 1625855756}
   rightLeavingPoint: {fileID: 1811345136}
   carsRoot: {fileID: 1744166108}
@@ -7439,6 +7440,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1156503588}
+  - component: {fileID: 1916567190}
   m_Layer: 0
   m_Name: Slot5
   m_TagString: Untagged
@@ -8526,6 +8528,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1394325228}
+  - component: {fileID: 1719151478}
   m_Layer: 0
   m_Name: Slot7
   m_TagString: Untagged
@@ -10880,6 +10883,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1701485267}
+  - component: {fileID: 1445562263}
   m_Layer: 0
   m_Name: SlotParking
   m_TagString: Untagged
@@ -10956,6 +10960,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1709363513}
+  - component: {fileID: 1244212274}
   m_Layer: 0
   m_Name: Slot6
   m_TagString: Untagged
@@ -12104,6 +12109,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1822168976}
+  - component: {fileID: 1891363643}
   m_Layer: 0
   m_Name: Slot4
   m_TagString: Untagged
@@ -12541,7 +12547,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 6cdd8bda67ac4d028b4f5f4b7a3c898e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.CarInput
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.GameplayInput
   worldCamera: {fileID: 330585545}
 --- !u!114 &1870407042
 MonoBehaviour:
@@ -12557,7 +12563,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.GameplayPresenter
   config: {fileID: 11400000, guid: 6e0c3b6eef144ddf87298a824c2fe413, type: 2}
   parkingLot: {fileID: 570378576}
-  carInput: {fileID: 1870407041}
+  busStopView: {fileID: 1445562263}
+  gameplayInput: {fileID: 1870407041}
   levelCurve: {fileID: 4900000, guid: dba2f46084b2437893762769a1ad0998, type: 3}
   levelNumber: 1
   fourSeatPrefab: {fileID: 7713094401120568301, guid: 9d74f82ad378b804eb33730c9b2c8b6b, type: 3}
@@ -12572,6 +12579,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1872223465}
+  - component: {fileID: 1673465235}
   m_Layer: 0
   m_Name: Slot3
   m_TagString: Untagged
@@ -13943,6 +13951,152 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1945187853}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1836132305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132388858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 62502515}
+  warningSprite: {fileID: 1747016103}
+  adsObject: {fileID: 713656155}
+  entryPoint: {fileID: 1191358145}
+  parkPoint: {fileID: 1417228790}
+  tapCollider: {fileID: 1978667244}
+--- !u!114 &1029442578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29513047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 1586571896}
+  warningSprite: {fileID: 511532861}
+  adsObject: {fileID: 548444804}
+  entryPoint: {fileID: 1602225349}
+  parkPoint: {fileID: 737149447}
+  tapCollider: {fileID: 254856672}
+--- !u!114 &1673465235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1872223464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 221772690}
+  warningSprite: {fileID: 566769489}
+  adsObject: {fileID: 734617850}
+  entryPoint: {fileID: 27781788}
+  parkPoint: {fileID: 1630915518}
+  tapCollider: {fileID: 18593238}
+--- !u!114 &1891363643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1822168975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 618649931}
+  warningSprite: {fileID: 1559481367}
+  adsObject: {fileID: 71051708}
+  entryPoint: {fileID: 822567302}
+  parkPoint: {fileID: 1935050911}
+  tapCollider: {fileID: 381825589}
+--- !u!114 &1916567190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156503587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 313771865}
+  warningSprite: {fileID: 649816391}
+  adsObject: {fileID: 849037856}
+  entryPoint: {fileID: 1946522205}
+  parkPoint: {fileID: 159982442}
+  tapCollider: {fileID: 1630252840}
+--- !u!114 &1244212274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1709363512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 822173956}
+  warningSprite: {fileID: 1270513451}
+  adsObject: {fileID: 462993504}
+  entryPoint: {fileID: 2046671160}
+  parkPoint: {fileID: 1629929742}
+  tapCollider: {fileID: 1067660579}
+--- !u!114 &1719151478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394325227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 651591318}
+  warningSprite: {fileID: 93554500}
+  adsObject: {fileID: 1753143256}
+  entryPoint: {fileID: 1724307085}
+  parkPoint: {fileID: 2138499000}
+  tapCollider: {fileID: 1630022751}
+--- !u!114 &1445562263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1701485266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61df5f7e1d654894b84d845616a16ddc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopView
+  slots:
+  - {fileID: 1836132305}
+  - {fileID: 1029442578}
+  - {fileID: 1673465235}
+  - {fileID: 1891363643}
+  - {fileID: 1916567190}
+  - {fileID: 1244212274}
+  - {fileID: 1719151478}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
