@@ -45,10 +45,9 @@ namespace BusOut.DesignPattern
     {
         private static readonly List<Action> channelClears = new List<Action>();
 
-#if UNITY_EDITOR
-        /// Bật trong Editor để in tên mọi sự kiện được Publish (dò luồng game). Mặc định tắt.
+        /// Bật để in tên mọi sự kiện được Publish (dò luồng game). Chỉ in trong Editor; build bỏ qua. Mặc định tắt.
+        /// ⚠️ Luôn khai báo (không bọc #if): code gán LogEnabled mà quên #if vẫn build được.
         public static bool LogEnabled;
-#endif
 
         public static void Subscribe<T>(Action<T> listener) where T : struct, IEvent => EventBus<T>.Subscribe(listener);
 

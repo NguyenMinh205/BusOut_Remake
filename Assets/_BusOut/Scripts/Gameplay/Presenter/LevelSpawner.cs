@@ -16,6 +16,9 @@ namespace BusOut.Gameplay
         private readonly List<CarModel> cars = new List<CarModel>();
         private readonly List<CarView> carViews = new List<CarView>();
 
+        /// Mọi xe của level (kể cả xe đã rời đi: State = Gone). Chỉ số = CarId.
+        public IReadOnlyList<CarModel> Cars => cars;
+
         public LevelSpawner(GameplayConfig config, ParkingLotView parkingLot,
             CarView fourSeatPrefab, CarView sixSeatPrefab, CarView tenSeatPrefab)
         {
@@ -48,6 +51,9 @@ namespace BusOut.Gameplay
             {
                 if (view == null) continue;
                 view.StopAll();
+                // ⚠️ Destroy chỉ xoá cuối frame: tắt collider NGAY, không thì dựng đồ thị chặn cho level mới
+                // (cùng frame) vẫn bắn trúng xe cũ đang nằm đúng chỗ đó.
+                view.SetCollidersEnabled(false, false);
                 Object.Destroy(view.gameObject);
             }
             cars.Clear();
@@ -62,6 +68,45 @@ namespace BusOut.Gameplay
             carViews[view.CarId] = null;
             Object.Destroy(view.gameObject);
         }
+
+        /// Mọi xe đã rời đi hẳn (hoặc level không có xe).
+        public bool AllCarsGone
+        {
+            get
+            {
+                foreach (CarModel car in cars)
+                    if (car.State != CarState.Gone) return false;
+                return true;
+            }
+        }
+
+        /// Dựng đồ thị chặn cho các xe vừa spawn: mỗi xe ghi lại mọi xe nằm trên đường ra của nó.
+        public BlockingGraph BuildBlockingGraph()
+        {
+            // ⚠️ Xe vừa Instantiate rồi đổi scale trong cùng frame: collider vật lý chưa cập nhật theo scale mới,
+            // bắn tia lúc này là trúng collider to gấp 1/0.85. Đồng bộ trước.
+            Physics.SyncTransforms();
+            var graph = new BlockingGraph(cars.Count);
+            var aheadViews = new List<CarView>();
+            var aheadIds = new List<int>();
+            LaneRing ring = parkingLot.Ring;
+            for (int id = 0; id < carViews.Count; id++)
+            {
+                CarView view = carViews[id];
+                if (view == null || !view.gameObject.activeSelf) continue;
+                aheadViews.Clear();
+                aheadIds.Clear();
+                Transform t = view.transform;
+                view.FindAllAhead(ParkingRoute.DistanceToRing(t.position, t.forward, ring), config.blockerRayInset, aheadViews);
+                foreach (CarView other in aheadViews)
+                    if (TryGetCar(other, out CarModel otherCar)) aheadIds.Add(otherCar.Id);
+                graph.SetAhead(id, aheadIds);
+            }
+            return graph;
+        }
+
+        /// Hình của xe đang có mặt; null nếu xe đã rời đi hoặc CarId sai.
+        public CarView GetView(int carId) => carId >= 0 && carId < carViews.Count ? carViews[carId] : null;
 
         /// Tìm Model của một xe đang có mặt. False nếu view không thuộc level hiện tại (vd. xe của level cũ).
         public bool TryGetCar(CarView view, out CarModel car)

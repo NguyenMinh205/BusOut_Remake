@@ -102,6 +102,7 @@ namespace BusOut.DesignPattern
         private readonly GameObject prefab;
         private readonly Transform container;
         private readonly Stack<PooledObject> idle = new Stack<PooledObject>();
+        private bool isCleared;
 
         public Pool(GameObject prefab, Transform container)
         {
@@ -136,6 +137,13 @@ namespace BusOut.DesignPattern
         {
             pooled.IsSpawned = false;
             for (int i = 0; i < pooled.Poolables.Length; i++) pooled.Poolables[i].OnDespawned();
+            // ⚠️ Pool đã bị ClearAll (container đã huỷ): object đang dùng lúc Clear trả về đây thì huỷ luôn,
+            // không thì nó bị tắt và nằm lơ lửng ở gốc scene, không ai dùng lại cũng không ai huỷ.
+            if (isCleared)
+            {
+                Object.Destroy(pooled.gameObject);
+                return;
+            }
             pooled.gameObject.SetActive(false);
             pooled.transform.SetParent(container, false);
             idle.Push(pooled);
@@ -153,6 +161,7 @@ namespace BusOut.DesignPattern
 
         public void DestroyIdle()
         {
+            isCleared = true;
             while (idle.Count > 0)
             {
                 PooledObject pooled = idle.Pop();

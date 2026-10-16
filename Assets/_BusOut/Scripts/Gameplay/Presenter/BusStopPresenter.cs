@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BusOut.Gameplay
@@ -8,6 +9,9 @@ namespace BusOut.Gameplay
         private readonly BusStop busStop;
         private readonly BusStopView view;
         private readonly GameplayConfig config;
+
+        /// Trạng thái 7 ô (chỉ đọc), theo thứ tự trái → phải.
+        public IReadOnlyList<BusStopSlot> Slots => busStop.Slots;
 
         public BusStopPresenter(BusStopView view, GameplayConfig config)
         {

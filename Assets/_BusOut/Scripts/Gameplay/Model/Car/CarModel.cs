@@ -15,6 +15,19 @@ namespace BusOut.Gameplay
         /// Ô đỗ đang giữ; -1 khi chưa giữ ô nào.
         public int SlotIndex { get; private set; } = -1;
 
+        /// Ghế đã có khách nhận (khách đang đi tới hoặc đã ngồi). Giữ ghế lúc khách rời hàng để 2 khách liền nhau
+        /// không cùng nhắm vào ghế cuối.
+        public int ReservedSeats { get; private set; }
+
+        /// Khách đã tới xe.
+        public int BoardedSeats { get; private set; }
+
+        /// Còn ghế chưa ai nhận.
+        public bool HasFreeSeat => ReservedSeats < SeatCount;
+
+        /// Mọi ghế đã có khách ngồi: xe rời bến được.
+        public bool IsFull => BoardedSeats >= SeatCount;
+
         public CarModel(int id, VehicleType type, int colorIndex)
         {
             Id = id;
@@ -41,6 +54,16 @@ namespace BusOut.Gameplay
         }
 
         public void ArriveSlot() => State = CarState.InSlot;
+
+        public void ReserveSeat()
+        {
+            if (HasFreeSeat) ReservedSeats++;
+        }
+
+        public void BoardSeat()
+        {
+            if (BoardedSeats < ReservedSeats) BoardedSeats++;
+        }
 
         public void StartLeaving() => State = CarState.Leaving;
 

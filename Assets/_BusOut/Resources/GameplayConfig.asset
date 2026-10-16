@@ -37,4 +37,12 @@ MonoBehaviour:
   rammedParallelThreshold: 0.9
   noSlotShakeDistance: 0.15
   noSlotShakeDuration: 0.25
+  passengerQueueCount: 25
+  passengerJoinSpeed: 10
+  passengerForwardSpeed: 15
+  passengerToBusSpeed: 15
+  passengerTurnSharpness: 20
+  passengerPlanAheadCount: 24
+  boardingInterval: 0.1
+  carLeaveDelay: 0.5
   tapRayDistance: 200

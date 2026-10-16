@@ -1,3 +1,5 @@
+using BusOut.Core;
+using BusOut.DesignPattern;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -5,7 +7,8 @@ namespace BusOut.Gameplay
 {
     /// Vòng đời một ván: khởi tạo, dựng level, chơi lại (sau: thắng / thua / hồi sinh).
     /// MonoBehaviour duy nhất của tầng Presenter; giữ tham chiếu scene và tạo các presenter con:
-    /// LevelSpawner (xe trong level), BusStopPresenter (ô đỗ), CarFlowPresenter (điều khiển xe).
+    /// LevelSpawner (xe trong level), BusStopPresenter (ô đỗ), CarFlowPresenter (điều khiển xe),
+    /// PassengerPresenter (hàng khách), BoardingPresenter (khách lên xe, xe đầy rời bến).
     public class GameplayPresenter : MonoBehaviour
     {
         [SerializeField] private GameplayConfig config;
@@ -25,11 +28,22 @@ namespace BusOut.Gameplay
         [SerializeField] private CarView sixSeatPrefab;
         [SerializeField] private CarView tenSeatPrefab;
 
+        [Header("Hành khách")]
+        [Tooltip("PassengerLineView trên GAMEOBJECT/ObjectPoint/PassengerPoint.")]
+        [SerializeField] private PassengerLineView passengerLine;
+        [Tooltip("Prefab hành khách (có PassengerView trên root).")]
+        [SerializeField] private PassengerView passengerPrefab;
+
         private LevelCurveData curveData;
         private LevelSpawner spawner;
         private BusStopPresenter busStop;
         private CarFlowPresenter carFlow;
+        private PassengerPresenter passengers; // null khi thiếu tham chiếu hành khách: xe vẫn chơi được
+        private BoardingPresenter boarding;    // null cùng lúc với passengers
         private bool isReady;
+        // true khi không có ván nào đang chơi (đã thắng, hoặc level không tải được): ngừng kiểm tra thắng.
+        private bool levelFinished = true;
+        private int currentLevel;
 
         private void Start()
         {
@@ -43,6 +57,8 @@ namespace BusOut.Gameplay
             spawner = new LevelSpawner(config, parkingLot, fourSeatPrefab, sixSeatPrefab, tenSeatPrefab);
             busStop = new BusStopPresenter(busStopView, config);
             carFlow = new CarFlowPresenter(config, parkingLot, spawner, busStop);
+            passengers = CreatePassengerPresenter();
+            if (passengers != null) boarding = new BoardingPresenter(config, spawner, busStop, passengers, carFlow);
             isReady = true;
             LoadLevel(levelNumber);
         }
@@ -71,6 +87,7 @@ namespace BusOut.Gameplay
         /// sau khi reset sẽ đánh dấu ô của level mới là có xe.
         public void LoadLevel(int number)
         {
+            passengers?.DespawnAll();
             spawner.DespawnAll();
             busStop.ResetForLevel(config.openSlotCount);
 
@@ -78,9 +95,54 @@ namespace BusOut.Gameplay
             if (level == null || level.vehicles == null)
             {
                 Debug.LogError($"[BusOut] Không có level {number} trong {levelCurve.name}. Đổi Level Number trên GameplayPresenter.", this);
+                // ⚠️ Dọn hết trạng thái ván cũ: giữ lại thì bộ lên kế hoạch cũ chạy trên danh sách xe đã xoá (lỗi mỗi frame),
+                // và "không xe + không khách" bị tính là thắng.
+                passengers?.ResetForLevel(null);
+                boarding?.ResetForLevel();
+                levelFinished = true;
                 return;
             }
             spawner.Spawn(level);
+            currentLevel = number;
+            levelFinished = false;
+            if (passengers != null)
+            {
+                // Hạt giống = số level: cùng level luôn ra cùng thứ tự màu, dễ thử lại.
+                var planner = new PassengerColorPlanner(spawner.Cars, spawner.BuildBlockingGraph(), new System.Random(number));
+                passengers.ResetForLevel(planner);
+            }
+            boarding?.ResetForLevel();
+            EventBus.Publish(new LevelStartedEvent { LevelIndex = number, LevelName = level.index.ToString() });
+        }
+
+        private void Update()
+        {
+            if (!isReady) return;
+            float deltaTime = Time.deltaTime;
+            passengers?.Tick(deltaTime);
+            boarding?.Tick(deltaTime);
+            CheckLevelCompleted();
+        }
+
+        /// Thắng: mọi xe đã rời đi và không còn khách nào phải chở (tổng khách = tổng ghế nên hai điều kiện đi cùng nhau).
+        private void CheckLevelCompleted()
+        {
+            if (levelFinished || passengers == null) return;
+            if (!spawner.AllCarsGone || passengers.RemainingCount > 0) return;
+            levelFinished = true;
+            Debug.Log($"[BusOut] Thắng level {currentLevel}.", this);
+            EventBus.Publish(new LevelCompletedEvent { LevelIndex = currentLevel });
+        }
+
+        private PassengerPresenter CreatePassengerPresenter()
+        {
+            if (passengerLine == null || passengerPrefab == null)
+            {
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Passenger Line hoặc Passenger Prefab: chưa có hàng khách " +
+                               "(xe vẫn chơi được). Kéo PassengerPoint và prefab Passenger vào mục Hành khách.", this);
+                return null;
+            }
+            return passengerLine.Init() ? new PassengerPresenter(config, passengerLine, passengerPrefab) : null;
         }
 
         private void HandleCarTapped(CarView view)

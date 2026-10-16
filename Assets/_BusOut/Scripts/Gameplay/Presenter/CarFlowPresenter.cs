@@ -5,7 +5,8 @@ using Random = UnityEngine.Random;
 
 namespace BusOut.Gameplay
 {
-    /// Điều khiển xe sau khi chạm: bị chặn thì đâm và lùi, đường trống thì giữ ô và chạy lên bến, ở bến thì rời đi.
+    /// Điều khiển xe: chạm xe trong bãi → bị chặn thì đâm và lùi, đường trống thì giữ ô và chạy lên bến;
+    /// xe đủ khách → BoardingPresenter gọi LeaveBusStop để xe rời bến.
     public sealed class CarFlowPresenter
     {
         private readonly GameplayConfig config;
@@ -32,18 +33,8 @@ namespace BusOut.Gameplay
 
         public void HandleCarTapped(CarView view)
         {
-            if (!spawner.TryGetCar(view, out CarModel car)) return;
-            switch (car.State)
-            {
-                case CarState.Parked:
-                    TryMoveOut(car, view);
-                    break;
-                case CarState.InSlot:
-                    // ⚠️ TẠM: chưa có hành khách nên xe không bao giờ đầy. Chạm xe ở bến cho nó rời đi để thử tiếp được.
-                    // Bỏ nhánh này khi làm xong khách lên xe (xe đầy tự rời bến).
-                    StartLeaving(car, view);
-                    break;
-            }
+            // Chỉ xe còn trong bãi mới chạm được; xe ở bến tự rời đi khi đủ khách.
+            if (spawner.TryGetCar(view, out CarModel car) && car.State == CarState.Parked) TryMoveOut(car, view);
         }
 
         private void TryMoveOut(CarModel car, CarView view)
@@ -89,12 +80,14 @@ namespace BusOut.Gameplay
             if (!spawner.TryGetCar(view, out CarModel car)) return;
             car.ArriveSlot();
             busStop.NotifyCarArrived(car.SlotIndex);
-            // Bật lại vùng chạm cho nhánh TẠM "chạm xe ở bến để rời đi"; thân xe vẫn tắt vì bến nằm ngoài bãi.
-            view.SetCollidersEnabled(false, true);
         }
 
-        private void StartLeaving(CarModel car, CarView view)
+        /// Xe đủ khách rời bến: lùi ra theo trục ô rồi chạy sang trái/phải, tới nơi thì biến mất.
+        public void LeaveBusStop(CarModel car)
         {
+            CarView view = spawner.GetView(car.Id);
+            if (view == null || car.State != CarState.InSlot) return;
+
             int slotIndex = car.SlotIndex;
             busStop.Release(slotIndex);
             car.StartLeaving();

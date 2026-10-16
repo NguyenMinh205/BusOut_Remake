@@ -63,6 +63,34 @@ namespace BusOut.Gameplay
         [Tooltip("Thời gian rung (giây).")]
         public float noSlotShakeDuration = 0.25f;
 
+        [Header("Hành khách")]
+        [Tooltip("Số khách đứng trong hàng cùng lúc. Khoảng cách giữa 2 khách tự tính = độ dài đường hàng / (số khách − 1). " +
+                 "Đường hiện dài 21 → 25 khách cách 0.875; khách scale 1.4 chiếm ~0.79 nên tối đa ~27.")]
+        public int passengerQueueCount = 25;
+
+        [Tooltip("Tốc độ khách mới đi từ SpawnPoint vào chỗ trong hàng (đơn vị/giây). Gốc: 10.")]
+        public float passengerJoinSpeed = 10f;
+
+        [Tooltip("Tốc độ cả hàng dồn lên khi người đầu rời đi (đơn vị/giây). Gốc: 15.")]
+        public float passengerForwardSpeed = 15f;
+
+        [Tooltip("Tốc độ khách rời hàng đi tới xe (đơn vị/giây). Gốc: 15.")]
+        public float passengerToBusSpeed = 15f;
+
+        [Tooltip("Độ gắt khi khách quay mặt theo hướng đi (1/giây).")]
+        public float passengerTurnSharpness = 20f;
+
+        [Tooltip("Số màu khách luôn được lên kế hoạch sẵn phía sau hàng (gốc: 24). Ít quá thì xe người chơi vừa lấy ra " +
+                 "được ưu tiên sớm hơn; nhiều quá thì khách của xe đó phải chờ lâu.")]
+        public int passengerPlanAheadCount = 24;
+
+        [Header("Lên xe")]
+        [Tooltip("Thời gian giữa 2 khách liên tiếp rời hàng lên xe (giây). Gốc: 0.1.")]
+        public float boardingInterval = 0.1f;
+
+        [Tooltip("Xe đủ khách chờ bao lâu rồi mới rời bến (giây). Gốc: 0.5.")]
+        public float carLeaveDelay = 0.5f;
+
         [Header("Chạm")]
         [Tooltip("Độ dài tia chạm từ camera (đơn vị). Phải lớn hơn khoảng cách camera tới bãi.")]
         public float tapRayDistance = 200f;

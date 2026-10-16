@@ -118,6 +118,32 @@ namespace BusOut.Gameplay
             return blocker != null;
         }
 
+        /// Mọi xe nằm trên đường ra (3 tia như FindBlocker, nhưng lấy hết chứ không chỉ xe gần nhất), thêm vào
+        /// <paramref name="result"/> (không trùng). Dùng dựng đồ thị chặn lúc vào level.
+        public void FindAllAhead(float maxDistance, float sideInset, List<CarView> result)
+        {
+            Transform bodyTransform = bodyCollider.transform;
+            Vector3 center = bodyTransform.TransformPoint(bodyCollider.center);
+            Vector3 forward = transform.forward;
+            forward.y = 0f;
+            forward.Normalize();
+            Vector3 right = Vector3.Cross(Vector3.up, forward);
+            float halfWidth = Mathf.Max(0f, bodyCollider.size.x * 0.5f * bodyTransform.lossyScale.x - sideInset);
+
+            for (int side = -1; side <= 1; side++)
+            {
+                Vector3 origin = center + right * (halfWidth * side);
+                int count = Physics.RaycastNonAlloc(origin, forward, HitBuffer, maxDistance, Physics.DefaultRaycastLayers,
+                    QueryTriggerInteraction.Ignore);
+                for (int i = 0; i < count; i++)
+                {
+                    var other = HitBuffer[i].collider.GetComponentInParent<CarView>();
+                    if (other == null || other == this || !other.IsBody(HitBuffer[i].collider) || result.Contains(other)) continue;
+                    result.Add(other);
+                }
+            }
+        }
+
         /// Bị chặn: lao tới sát xe chặn, gọi <paramref name="onImpact"/> lúc chạm, rồi lùi về chỗ cũ.
         public void PlayRam(float travel, GameplayConfig config, Action onImpact)
         {

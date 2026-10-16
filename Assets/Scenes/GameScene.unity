@@ -3459,6 +3459,37 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!1 &459537733
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 459537734}
+  m_Layer: 0
+  m_Name: Passengers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &459537734
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 459537733}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1744166108}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &459538673
 GameObject:
   m_ObjectHideFlags: 0
@@ -4448,7 +4479,7 @@ MonoBehaviour:
   topLaneMargin: 2.5
   leftLeavingPoint: {fileID: 1625855756}
   rightLeavingPoint: {fileID: 1811345136}
-  carsRoot: {fileID: 1744166108}
+  carsRoot: {fileID: 6702859434448470757}
 --- !u!1 &577163330
 GameObject:
   m_ObjectHideFlags: 0
@@ -6387,6 +6418,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 866136075}
+  - component: {fileID: 1692820717}
   m_Layer: 0
   m_Name: PassengerPoint
   m_TagString: Untagged
@@ -6937,6 +6969,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1001225887}
   m_Mesh: {fileID: 4300000, guid: b1cdbcb8fd879e14b856ccc52d70616c, type: 2}
+--- !u!114 &1029442578
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 29513047}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 1586571896}
+  warningSprite: {fileID: 511532861}
+  adsObject: {fileID: 548444804}
+  entryPoint: {fileID: 1602225349}
+  parkPoint: {fileID: 737149447}
+  tapCollider: {fileID: 254856672}
 --- !u!1 &1042605279
 GameObject:
   m_ObjectHideFlags: 0
@@ -7875,6 +7925,24 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1244212274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1709363512}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 822173956}
+  warningSprite: {fileID: 1270513451}
+  adsObject: {fileID: 462993504}
+  entryPoint: {fileID: 2046671160}
+  parkPoint: {fileID: 1629929742}
+  tapCollider: {fileID: 1067660579}
 --- !u!1 &1267613636
 GameObject:
   m_ObjectHideFlags: 0
@@ -8677,6 +8745,26 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1424904130}
   m_Mesh: {fileID: 4300000, guid: 03559061bf27e064099521d0473981e0, type: 2}
+--- !u!114 &1445562263
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1701485266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 61df5f7e1d654894b84d845616a16ddc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopView
+  slots:
+  - {fileID: 1836132305}
+  - {fileID: 1029442578}
+  - {fileID: 1673465235}
+  - {fileID: 1891363643}
+  - {fileID: 1916567190}
+  - {fileID: 1244212274}
+  - {fileID: 1719151478}
 --- !u!1 &1490709281
 GameObject:
   m_ObjectHideFlags: 0
@@ -10807,6 +10895,24 @@ Transform:
   m_Children: []
   m_Father: {fileID: 790066475}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1673465235
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1872223464}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 221772690}
+  warningSprite: {fileID: 566769489}
+  adsObject: {fileID: 734617850}
+  entryPoint: {fileID: 27781788}
+  parkPoint: {fileID: 1630915518}
+  tapCollider: {fileID: 18593238}
 --- !u!1 &1681466413
 GameObject:
   m_ObjectHideFlags: 0
@@ -10841,6 +10947,25 @@ Transform:
   - {fileID: 1771136630}
   m_Father: {fileID: 108614674}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1692820717
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 866136074}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 92ab1a9f61982104aab8902a758f1e28, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.PassengerLineView
+  spawnPoint: {fileID: 1282074914}
+  queuePoints:
+  - {fileID: 609975748}
+  - {fileID: 1164960575}
+  - {fileID: 1534658522}
+  moveToBusPoint: {fileID: 1300972007}
+  passengersRoot: {fileID: 0}
 --- !u!1 &1700594591
 GameObject:
   m_ObjectHideFlags: 0
@@ -11109,6 +11234,24 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
   m_SpriteSortPoint: 0
+--- !u!114 &1719151478
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1394325227}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 651591318}
+  warningSprite: {fileID: 93554500}
+  adsObject: {fileID: 1753143256}
+  entryPoint: {fileID: 1724307085}
+  parkPoint: {fileID: 2138499000}
+  tapCollider: {fileID: 1630022751}
 --- !u!1 &1720825304
 GameObject:
   m_ObjectHideFlags: 0
@@ -11402,7 +11545,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 6702859434448470757}
+  - {fileID: 459537734}
   m_Father: {fileID: 338078319}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1747016101
@@ -12136,6 +12281,24 @@ Transform:
   - {fileID: 71051709}
   m_Father: {fileID: 1701485267}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1836132305
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 132388858}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 62502515}
+  warningSprite: {fileID: 1747016103}
+  adsObject: {fileID: 713656155}
+  entryPoint: {fileID: 1191358145}
+  parkPoint: {fileID: 1417228790}
+  tapCollider: {fileID: 1978667244}
 --- !u!1 &1845031917
 GameObject:
   m_ObjectHideFlags: 0
@@ -12570,6 +12733,8 @@ MonoBehaviour:
   fourSeatPrefab: {fileID: 7713094401120568301, guid: 9d74f82ad378b804eb33730c9b2c8b6b, type: 3}
   sixSeatPrefab: {fileID: 7713094401120568302, guid: a56c50adb4d764648a9fc2afae2237bb, type: 3}
   tenSeatPrefab: {fileID: 7713094401120568303, guid: b701d974710606648b484c36b92b1e44, type: 3}
+  passengerLine: {fileID: 1692820717}
+  passengerPrefab: {fileID: 7843253502548500285, guid: 35232453ef62c234397275f373311fea, type: 3}
 --- !u!1 &1872223464
 GameObject:
   m_ObjectHideFlags: 0
@@ -12787,6 +12952,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1880932460}
   m_Mesh: {fileID: 4300000, guid: 52b125d26ab5dbf48aa148e759e977f1, type: 2}
+--- !u!114 &1891363643
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1822168975}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 618649931}
+  warningSprite: {fileID: 1559481367}
+  adsObject: {fileID: 71051708}
+  entryPoint: {fileID: 822567302}
+  parkPoint: {fileID: 1935050911}
+  tapCollider: {fileID: 381825589}
 --- !u!1 &1893063781
 GameObject:
   m_ObjectHideFlags: 0
@@ -12969,6 +13152,24 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1905002771}
   m_Mesh: {fileID: 4300000, guid: aefdf69fc5b91204189b181dee94aab7, type: 2}
+--- !u!114 &1916567190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1156503587}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
+  normalObject: {fileID: 313771865}
+  warningSprite: {fileID: 649816391}
+  adsObject: {fileID: 849037856}
+  entryPoint: {fileID: 1946522205}
+  parkPoint: {fileID: 159982442}
+  tapCollider: {fileID: 1630252840}
 --- !u!1 &1934438625
 GameObject:
   m_ObjectHideFlags: 0
@@ -13951,152 +14152,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 1945187853}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1836132305
-MonoBehaviour:
+--- !u!4 &6702859434448470757
+Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 132388858}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 62502515}
-  warningSprite: {fileID: 1747016103}
-  adsObject: {fileID: 713656155}
-  entryPoint: {fileID: 1191358145}
-  parkPoint: {fileID: 1417228790}
-  tapCollider: {fileID: 1978667244}
---- !u!114 &1029442578
-MonoBehaviour:
+  m_GameObject: {fileID: 8990843113485921355}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1744166108}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &8990843113485921355
+GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 29513047}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 1586571896}
-  warningSprite: {fileID: 511532861}
-  adsObject: {fileID: 548444804}
-  entryPoint: {fileID: 1602225349}
-  parkPoint: {fileID: 737149447}
-  tapCollider: {fileID: 254856672}
---- !u!114 &1673465235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1872223464}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 221772690}
-  warningSprite: {fileID: 566769489}
-  adsObject: {fileID: 734617850}
-  entryPoint: {fileID: 27781788}
-  parkPoint: {fileID: 1630915518}
-  tapCollider: {fileID: 18593238}
---- !u!114 &1891363643
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1822168975}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 618649931}
-  warningSprite: {fileID: 1559481367}
-  adsObject: {fileID: 71051708}
-  entryPoint: {fileID: 822567302}
-  parkPoint: {fileID: 1935050911}
-  tapCollider: {fileID: 381825589}
---- !u!114 &1916567190
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1156503587}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 313771865}
-  warningSprite: {fileID: 649816391}
-  adsObject: {fileID: 849037856}
-  entryPoint: {fileID: 1946522205}
-  parkPoint: {fileID: 159982442}
-  tapCollider: {fileID: 1630252840}
---- !u!114 &1244212274
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1709363512}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 822173956}
-  warningSprite: {fileID: 1270513451}
-  adsObject: {fileID: 462993504}
-  entryPoint: {fileID: 2046671160}
-  parkPoint: {fileID: 1629929742}
-  tapCollider: {fileID: 1067660579}
---- !u!114 &1719151478
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1394325227}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57ce7f04cddb41fbb7c237022302c589, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopSlotView
-  normalObject: {fileID: 651591318}
-  warningSprite: {fileID: 93554500}
-  adsObject: {fileID: 1753143256}
-  entryPoint: {fileID: 1724307085}
-  parkPoint: {fileID: 2138499000}
-  tapCollider: {fileID: 1630022751}
---- !u!114 &1445562263
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1701485266}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 61df5f7e1d654894b84d845616a16ddc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.BusStopView
-  slots:
-  - {fileID: 1836132305}
-  - {fileID: 1029442578}
-  - {fileID: 1673465235}
-  - {fileID: 1891363643}
-  - {fileID: 1916567190}
-  - {fileID: 1244212274}
-  - {fileID: 1719151478}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 6702859434448470757}
+  m_Layer: 0
+  m_Name: Vehicles
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

@@ -16,6 +16,8 @@ namespace BusOut.Gameplay
 
         public bool Init()
         {
+            // BusStop mới tạo đếm Version lại từ đầu: không reset thì có thể trùng số cũ và lần vẽ đầu bị bỏ qua.
+            renderedVersion = -1;
             if (slots == null || slots.Length == 0)
             {
                 Debug.LogError("[BusOut] BusStopView chưa có ô nào. Kéo BusStopSlotView của Slot1..Slot7 vào danh sách Slots.", this);
