@@ -43,6 +43,7 @@ MonoBehaviour:
   passengerToBusSpeed: 15
   passengerTurnSharpness: 20
   passengerPlanAheadCount: 24
+  seatedPassengerScale: 0.65
   boardingInterval: 0.1
   carLeaveDelay: 0.5
   tapRayDistance: 200

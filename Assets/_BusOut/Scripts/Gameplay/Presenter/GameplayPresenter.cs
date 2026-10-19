@@ -33,6 +33,8 @@ namespace BusOut.Gameplay
         [SerializeField] private PassengerLineView passengerLine;
         [Tooltip("Prefab hành khách (có PassengerView trên root).")]
         [SerializeField] private PassengerView passengerPrefab;
+        [Tooltip("Biển đếm khách còn lại (PassengerCountView trên ENVIRONMENT/CountSign).")]
+        [SerializeField] private PassengerCountView passengerCount;
 
         private LevelCurveData curveData;
         private LevelSpawner spawner;
@@ -59,6 +61,11 @@ namespace BusOut.Gameplay
             carFlow = new CarFlowPresenter(config, parkingLot, spawner, busStop);
             passengers = CreatePassengerPresenter();
             if (passengers != null) boarding = new BoardingPresenter(config, spawner, busStop, passengers, carFlow);
+            // Thiếu biển đếm chỉ mất con số trên biển, game vẫn chơi được.
+            if (passengerCount == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Passenger Count: biển đếm khách không cập nhật. " +
+                               "Kéo CountSign (có PassengerCountView) vào mục Hành khách.", this);
+            else if (!passengerCount.Init()) passengerCount = null;
             isReady = true;
             LoadLevel(levelNumber);
         }
@@ -121,6 +128,7 @@ namespace BusOut.Gameplay
             float deltaTime = Time.deltaTime;
             passengers?.Tick(deltaTime);
             boarding?.Tick(deltaTime);
+            if (passengers != null && passengerCount != null) passengerCount.SetCount(passengers.RemainingCount);
             CheckLevelCompleted();
         }
 

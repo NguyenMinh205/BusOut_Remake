@@ -35,7 +35,8 @@ namespace BusOut.Gameplay
         /// Hình của người đầu hàng (null khi hàng rỗng).
         public PassengerView HeadView => lineViews.Count > 0 ? lineViews[0] : null;
 
-        /// Khách rời hàng đã tới xe. Gọi xong thì PassengerPresenter trả khách về pool.
+        /// Khách rời hàng đã tới xe. Từ lúc này khách thuộc về xe (BoardingPresenter gắn vào ghế); PassengerPresenter
+        /// không còn giữ hay dọn khách đó nữa.
         public event Action<PassengerView> PassengerReachedCar;
 
         public PassengerPresenter(GameplayConfig config, PassengerLineView lineView, PassengerView prefab)
@@ -144,9 +145,6 @@ namespace BusOut.Gameplay
         {
             leavingViews.Remove(view);
             PassengerReachedCar?.Invoke(view);
-            // ⚠️ TẠM: xe chưa có ghế nên khách tới xe là biến mất. Khi có ghế: gắn khách vào ghế (cha = xe),
-            // trả về pool lúc xe bị xoá.
-            PoolingManager.Despawn(view);
         }
     }
 }

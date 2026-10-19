@@ -8,5 +8,7 @@
   <Project Path="LeanTouch.csproj" />
   <Project Path="CW.Common.csproj" />
   <Project Path="Assembly-CSharp-firstpass.csproj" />
+  <Project Path="BusOut.Core.csproj" />
   <Project Path="Assembly-CSharp-Editor-firstpass.csproj" />
+  <Project Path="BusOut.DesignPattern.csproj" />
 </Solution>

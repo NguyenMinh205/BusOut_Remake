@@ -80,6 +80,8 @@ namespace BusOut.Gameplay
             if (!spawner.TryGetCar(view, out CarModel car)) return;
             car.ArriveSlot();
             busStop.NotifyCarArrived(car.SlotIndex);
+            // Mở nóc lộ ghế để khách lên.
+            view.SetRoofOpen(true);
         }
 
         /// Xe đủ khách rời bến: lùi ra theo trục ô rồi chạy sang trái/phải, tới nơi thì biến mất.
@@ -92,6 +94,8 @@ namespace BusOut.Gameplay
             busStop.Release(slotIndex);
             car.StartLeaving();
             view.SetCollidersEnabled(false, false);
+            // Đủ khách: đóng nóc rồi chạy như xe bình thường (khách ngồi ẩn theo ghế).
+            view.SetRoofOpen(false);
             // Random trái/phải cho đa dạng (game gốc chỉ rời sang phải).
             Vector3 leavingPoint = Random.value < 0.5f ? parkingLot.LeftLeavingPoint : parkingLot.RightLeavingPoint;
             int reverseCount = ParkingRoute.BuildLeave(view.transform.position, busStop.GetEntryPoint(slotIndex),

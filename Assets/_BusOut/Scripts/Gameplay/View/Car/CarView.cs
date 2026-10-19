@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BusOut.DesignPattern;
 using DG.Tweening;
 using UnityEngine;
 
@@ -10,6 +11,8 @@ namespace BusOut.Gameplay
     public class CarView : MonoBehaviour
     {
         private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
+        // Shader BusOut/Vehicle: _Fill = 0 cắt bỏ phần thân cao hơn _RoofCut (mở nóc), 1 = xe bình thường.
+        private static readonly int FillPropertyId = Shader.PropertyToID("_Fill");
 
         // Dùng chung cho mọi xe: kiểm tra chặn chỉ chạy khi chạm, không chạy song song.
         private static readonly RaycastHit[] HitBuffer = new RaycastHit[32];
@@ -25,6 +28,12 @@ namespace BusOut.Gameplay
 
         [Tooltip("Mũi tên chỉ hướng đi trên nóc (object Mark). Ẩn khi xe đã ra tới làn trên.")]
         [SerializeField] private GameObject markObject;
+
+        [Tooltip("Object chứa các ghế (Body/Seat): chỉ bật khi xe mở nóc ở bến. Khách ngồi là con của ghế nên ẩn theo.")]
+        [SerializeField] private GameObject seatRoot;
+
+        [Tooltip("Các ghế theo thứ tự khách lên (Seat1, Seat2, …). Số phần tử phải bằng số chỗ của loại xe (4 / 6 / 10).")]
+        [SerializeField] private Transform[] seats;
 
         private readonly List<Vector3> drivePath = new List<Vector3>(12);
         private int drivePathIndex;
@@ -42,6 +51,9 @@ namespace BusOut.Gameplay
         private Tween tiltTween;
         private Tween shakeTween;
         private Quaternion restRotation;
+        private MaterialPropertyBlock propertyBlock;
+        // Khách đang ngồi trên xe (con của ghế): trả về pool trước khi xe bị xoá, không thì bị Destroy theo xe.
+        private readonly List<GameObject> seatedPassengers = new List<GameObject>(10);
 
         public int CarId { get; private set; }
 
@@ -51,23 +63,63 @@ namespace BusOut.Gameplay
         /// Nửa chiều dài thân xe theo hướng đầu xe (thế giới), tính từ tâm collider thân.
         public float HalfLength => bodyCollider.size.z * 0.5f * transform.lossyScale.z;
 
-        public bool Init(int carId, Color color)
+        public bool Init(int carId, Color color, int seatCount)
         {
             CarId = carId;
-            if (bodyCollider == null || selectionCollider == null || bodyRenderer == null || markObject == null)
+            if (bodyCollider == null || selectionCollider == null || bodyRenderer == null || markObject == null || seatRoot == null)
             {
-                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu tham chiếu (bodyCollider / selectionCollider / bodyRenderer / markObject). " +
-                               "Mở prefab trong Assets/_BusOut/Prefab, kéo BoxCollider ở root, BoxCollider của SelectionBox, MeshRenderer của Body và object Mark vào.", this);
+                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu tham chiếu (bodyCollider / selectionCollider / bodyRenderer / markObject / seatRoot). " +
+                               "Mở prefab trong Assets/_BusOut/Prefab/GameObject, kéo BoxCollider ở root, BoxCollider của SelectionBox, MeshRenderer của Body, " +
+                               "object Mark và object Body/Seat vào.", this);
+                return false;
+            }
+            if (seats == null || seats.Length != seatCount)
+            {
+                Debug.LogError($"[BusOut] Prefab {name}: CarView có {(seats == null ? 0 : seats.Length)} ghế nhưng loại xe này chở {seatCount} khách. " +
+                               "Kéo đủ Seat1..SeatN (đúng thứ tự) vào danh sách Seats.", this);
                 return false;
             }
 
-            var block = new MaterialPropertyBlock();
-            bodyRenderer.GetPropertyBlock(block);
-            block.SetColor(ColorPropertyId, color);
-            bodyRenderer.SetPropertyBlock(block);
+            if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+            bodyRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(ColorPropertyId, color);
+            bodyRenderer.SetPropertyBlock(propertyBlock);
+            // Đặt rõ nóc đóng: không dựa vào giá trị _Fill trong material (đổi tay trong material là cả loại xe mở nóc).
+            SetRoofOpen(false);
 
             restRotation = transform.rotation;
             return true;
+        }
+
+        /// Mở nóc (xe đang đỗ ở bến, lộ ghế) hoặc đóng nóc (trong bãi, đang chạy). Ghế và khách ngồi ẩn khi đóng nóc:
+        /// khách đứng trên ghế cao hơn nóc, không ẩn là đầu thò ra ngoài.
+        public void SetRoofOpen(bool open)
+        {
+            bodyRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetFloat(FillPropertyId, open ? 0f : 1f);
+            bodyRenderer.SetPropertyBlock(propertyBlock);
+            seatRoot.SetActive(open);
+        }
+
+        /// Đặt khách ngồi vào ghế thứ <paramref name="seatIndex"/>: thành con của ghế, quay theo đầu xe,
+        /// scale sao cho trên màn hình cao bằng <paramref name="worldScale"/> × khách gốc (xe đã scale 0.85).
+        public void SeatPassenger(Transform passenger, int seatIndex, float worldScale)
+        {
+            Transform seat = seats[Mathf.Clamp(seatIndex, 0, seats.Length - 1)];
+            passenger.SetParent(seat, false);
+            passenger.localPosition = Vector3.zero;
+            passenger.localRotation = Quaternion.identity;
+            float parentScale = seat.lossyScale.x;
+            passenger.localScale = Vector3.one * (parentScale > 1e-4f ? worldScale / parentScale : worldScale);
+            seatedPassengers.Add(passenger.gameObject);
+        }
+
+        /// Trả mọi khách đang ngồi về pool. Gọi TRƯỚC khi Destroy xe.
+        public void DespawnSeatedPassengers()
+        {
+            foreach (GameObject passenger in seatedPassengers)
+                if (passenger != null) PoolingManager.Despawn(passenger);
+            seatedPassengers.Clear();
         }
 
         public void SetCollidersEnabled(bool body, bool selection)

@@ -54,6 +54,7 @@ namespace BusOut.Gameplay
                 // ⚠️ Destroy chỉ xoá cuối frame: tắt collider NGAY, không thì dựng đồ thị chặn cho level mới
                 // (cùng frame) vẫn bắn trúng xe cũ đang nằm đúng chỗ đó.
                 view.SetCollidersEnabled(false, false);
+                view.DespawnSeatedPassengers();
                 Object.Destroy(view.gameObject);
             }
             cars.Clear();
@@ -66,6 +67,7 @@ namespace BusOut.Gameplay
             if (!TryGetCar(view, out CarModel car)) return;
             car.MarkGone();
             carViews[view.CarId] = null;
+            view.DespawnSeatedPassengers();
             Object.Destroy(view.gameObject);
         }
 
@@ -132,7 +134,7 @@ namespace BusOut.Gameplay
 
             cars.Add(new CarModel(id, data.Type, data.color));
             carViews.Add(view);
-            if (!view.Init(id, config.GetCarColor(data.color))) view.gameObject.SetActive(false);
+            if (!view.Init(id, config.GetCarColor(data.color), CarModel.SeatsOf(data.Type))) view.gameObject.SetActive(false);
         }
 
         private CarView GetPrefab(VehicleType type)

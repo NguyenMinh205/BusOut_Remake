@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BusOut.DesignPattern;
 
 namespace BusOut.Gameplay
 {
@@ -88,11 +89,23 @@ namespace BusOut.Gameplay
 
         private void HandlePassengerReachedCar(PassengerView view)
         {
-            if (!passengerTargets.TryGetValue(view, out int carId)) return;
-            passengerTargets.Remove(view);
+            CarView carView = null;
+            if (passengerTargets.TryGetValue(view, out int carId))
+            {
+                passengerTargets.Remove(view);
+                carView = spawner.GetView(carId);
+            }
+            if (carView == null)
+            {
+                // Không còn xe để ngồi (không xảy ra trong luồng thường): trả khách về pool, không để khách đứng giữa đường.
+                PoolingManager.Despawn(view);
+                return;
+            }
 
             CarModel car = spawner.Cars[carId];
             car.BoardSeat();
+            // Ghế theo thứ tự khách tới: khách thứ n ngồi ghế n. Xe xoá thì CarView trả khách về pool.
+            carView.SeatPassenger(view.transform, car.BoardedSeats - 1, config.seatedPassengerScale);
             // Đủ khách: chờ một chút cho người cuối "ngồi xuống" rồi mới chạy (gốc: 0.5s).
             if (car.IsFull) pendingLeaves.Add(new PendingLeave { CarId = carId, Remaining = config.carLeaveDelay });
         }

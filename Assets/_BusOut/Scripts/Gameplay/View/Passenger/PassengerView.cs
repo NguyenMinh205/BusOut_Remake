@@ -28,6 +28,9 @@ namespace BusOut.Gameplay
         private Action<PassengerView> onArrived;
         private MaterialPropertyBlock propertyBlock;
 
+        private Vector3 defaultLocalScale;
+        private bool hasDefaultScale;
+
         public int PassengerId { get; private set; } = -1;
         public bool IsWalking => isWalking;
 
@@ -116,11 +119,23 @@ namespace BusOut.Gameplay
 
         private void SetMovingAnimation(bool moving)
         {
-            // Chưa gắn Animator / chưa có Controller thì bỏ qua: gọi SetBool lúc đó Unity in cảnh báo mỗi lần.
-            if (animator != null && animator.runtimeAnimatorController != null) animator.SetBool(IsMovingHash, moving);
+            // Chưa gắn Animator / chưa có Controller / đang tắt thì bỏ qua: gọi SetBool lúc đó Unity in cảnh báo mỗi lần.
+            // ⚠️ Khách ngồi trên xe nằm dưới ghế, ghế tắt khi đóng nóc → lúc xe bị xoá, trả khách về pool gọi vào đây với
+            // Animator đang tắt (10 khách / bus). Bật lại từ pool thì Animator tự về tham số mặc định (IsMoving = false).
+            if (animator != null && animator.runtimeAnimatorController != null && animator.isActiveAndEnabled)
+                animator.SetBool(IsMovingHash, moving);
         }
 
-        public void OnSpawned() { }
+        /// Lấy lại scale của prefab: lần dùng trước khách có thể đã bị thu nhỏ khi ngồi trên xe.
+        public void OnSpawned()
+        {
+            if (!hasDefaultScale)
+            {
+                defaultLocalScale = transform.localScale;
+                hasDefaultScale = true;
+            }
+            transform.localScale = defaultLocalScale;
+        }
 
         /// Trả về pool: dừng đi, bỏ callback cũ (không thì khách của lượt trước gọi nhầm vào logic lượt sau).
         public void OnDespawned()

@@ -84,6 +84,11 @@ namespace BusOut.Gameplay
                  "được ưu tiên sớm hơn; nhiều quá thì khách của xe đó phải chờ lâu.")]
         public int passengerPlanAheadCount = 24;
 
+        [Tooltip("Cỡ khách khi ngồi trên xe so với khách gốc (mesh 1.48), tính trên màn hình. Gốc: 0.55 (nhìn bé). " +
+                 "2 ghế cạnh nhau cách 0.425, khách rộng 0.66 × số này → trên ~0.64 thì vai 2 khách chạm nhau. " +
+                 "Không phụ thuộc scale prefab khách hay scale xe.")]
+        public float seatedPassengerScale = 0.65f;
+
         [Header("Lên xe")]
         [Tooltip("Thời gian giữa 2 khách liên tiếp rời hàng lên xe (giây). Gốc: 0.1.")]
         public float boardingInterval = 0.1f;

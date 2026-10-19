@@ -3825,6 +3825,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 510555880}
+  - component: {fileID: 510555881}
   m_Layer: 0
   m_Name: CountSign
   m_TagString: Untagged
@@ -3850,6 +3851,19 @@ Transform:
   - {fileID: 1607936630}
   m_Father: {fileID: 13567898}
   m_LocalEulerAnglesHint: {x: 0, y: 180, z: 0}
+--- !u!114 &510555881
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 510555879}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b61a8418f3ee4c0aae81fe20cd49a941, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.PassengerCountView
+  countText: {fileID: 1966221983}
 --- !u!1 &511532859
 GameObject:
   m_ObjectHideFlags: 0
@@ -10238,7 +10252,7 @@ RectTransform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1607936629}
   m_LocalRotation: {x: 0, y: -1, z: 0, w: 0}
-  m_LocalPosition: {x: 0, y: 0, z: 0.42}
+  m_LocalPosition: {x: 0, y: 0, z: 0.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -10246,7 +10260,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 180, y: 0, z: 180}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -0.0096, y: 2.85}
+  m_AnchoredPosition: {x: -0.0096, y: 2.86}
   m_SizeDelta: {x: 3, y: 1.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1607936631
@@ -10271,15 +10285,15 @@ MonoBehaviour:
       m_Calls: []
   m_text: Left
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 4ea8a5ddd35d65d40a2b9fab9e9534b5, type: 2}
-  m_sharedMaterial: {fileID: 2310511672692862748, guid: 4ea8a5ddd35d65d40a2b9fab9e9534b5, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1f8ae2ff1c93d044c8800019e6e681bf, type: 2}
+  m_sharedMaterial: {fileID: -6188846744993016587, guid: 1f8ae2ff1c93d044c8800019e6e681bf, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4282466815
-  m_fontColor: {r: 1, g: 0.25471687, b: 0.25471687, a: 1}
+    rgba: 4282923775
+  m_fontColor: {r: 1, g: 0.22745098, b: 0.28235295, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -10296,8 +10310,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 12
-  m_fontSizeBase: 12
+  m_fontSize: 11
+  m_fontSizeBase: 11
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -10306,14 +10320,14 @@ MonoBehaviour:
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: 0
+  m_characterSpacing: 3
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
@@ -10369,7 +10383,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2310511672692862748, guid: 4ea8a5ddd35d65d40a2b9fab9e9534b5, type: 2}
+  - {fileID: -6188846744993016587, guid: 1f8ae2ff1c93d044c8800019e6e681bf, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -12735,6 +12749,7 @@ MonoBehaviour:
   tenSeatPrefab: {fileID: 7713094401120568303, guid: b701d974710606648b484c36b92b1e44, type: 3}
   passengerLine: {fileID: 1692820717}
   passengerPrefab: {fileID: 7843253502548500285, guid: 35232453ef62c234397275f373311fea, type: 3}
+  passengerCount: {fileID: 510555881}
 --- !u!1 &1872223464
 GameObject:
   m_ObjectHideFlags: 0
@@ -13458,7 +13473,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 4}
-  m_SizeDelta: {x: 3, y: 1.2}
+  m_SizeDelta: {x: 2.2, y: 1.2}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1966221983
 MonoBehaviour:
@@ -13482,8 +13497,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 300
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 818be0e9d953d2c45af66b297416caf9, type: 2}
-  m_sharedMaterial: {fileID: 1786692982604830682, guid: 818be0e9d953d2c45af66b297416caf9, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: eb901af6c8125dc48be08ea30de46cc3, type: 2}
+  m_sharedMaterial: {fileID: -5673206394467201830, guid: eb901af6c8125dc48be08ea30de46cc3, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -13507,24 +13522,24 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 14
-  m_fontSizeBase: 14
+  m_fontSize: 15
+  m_fontSizeBase: 15
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 2
+  m_HorizontalAlignment: 4
   m_VerticalAlignment: 512
   m_textAlignment: 65535
-  m_characterSpacing: 4
+  m_characterSpacing: 5
   m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
@@ -13580,7 +13595,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1786692982604830682, guid: 818be0e9d953d2c45af66b297416caf9, type: 2}
+  - {fileID: -5673206394467201830, guid: eb901af6c8125dc48be08ea30de46cc3, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
