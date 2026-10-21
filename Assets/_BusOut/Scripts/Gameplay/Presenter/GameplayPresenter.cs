@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 
 namespace BusOut.Gameplay
 {
-    /// Vòng đời một ván: khởi tạo, dựng level, chơi lại (sau: thắng / thua / hồi sinh).
+    /// Vòng đời một ván: khởi tạo, dựng level, thắng / thua, chơi lại (sau: hồi sinh).
     /// MonoBehaviour duy nhất của tầng Presenter; giữ tham chiếu scene và tạo các presenter con:
     /// LevelSpawner (xe trong level), BusStopPresenter (ô đỗ), CarFlowPresenter (điều khiển xe),
     /// PassengerPresenter (hàng khách), BoardingPresenter (khách lên xe, xe đầy rời bến).
@@ -20,8 +20,6 @@ namespace BusOut.Gameplay
         [Header("Level")]
         [Tooltip("File level đã giải mã (Assets/_BusOut/Data/Levels/curve_*.json).")]
         [SerializeField] private TextAsset levelCurve;
-        [Tooltip("Số level trong file (trường \"index\"), bắt đầu từ 1.")]
-        [SerializeField, Min(1)] private int levelNumber = 1;
 
         [Header("Prefab xe (có CarView trên root)")]
         [SerializeField] private CarView fourSeatPrefab;
@@ -36,14 +34,23 @@ namespace BusOut.Gameplay
         [Tooltip("Biển đếm khách còn lại (PassengerCountView trên ENVIRONMENT/CountSign).")]
         [SerializeField] private PassengerCountView passengerCount;
 
+        [Header("Giao diện trong ván")]
+        [Tooltip("TopBarView trên Canvas/TopUI.")]
+        [SerializeField] private TopBarView topBar;
+        [Tooltip("BoosterBarView trên Canvas/BottomUI/Boosters.")]
+        [SerializeField] private BoosterBarView boosterBar;
+
         private LevelCurveData curveData;
         private LevelSpawner spawner;
         private BusStopPresenter busStop;
         private CarFlowPresenter carFlow;
         private PassengerPresenter passengers; // null khi thiếu tham chiếu hành khách: xe vẫn chơi được
         private BoardingPresenter boarding;    // null cùng lúc với passengers
+        private HudPresenter hud;
+        private SecureGameData gameData;
         private bool isReady;
-        // true khi không có ván nào đang chơi (đã thắng, hoặc level không tải được): ngừng kiểm tra thắng.
+        // true khi không có ván nào đang chơi (đã thắng / thua, hoặc level không tải được): ngừng kiểm tra thắng thua,
+        // khoá chạm xe và chạm ô.
         private bool levelFinished = true;
         private int currentLevel;
 
@@ -66,8 +73,15 @@ namespace BusOut.Gameplay
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Passenger Count: biển đếm khách không cập nhật. " +
                                "Kéo CountSign (có PassengerCountView) vào mục Hành khách.", this);
             else if (!passengerCount.Init()) passengerCount = null;
+            gameData = DataManager.Instance.GameData;
+            hud = CreateHudPresenter();
             isReady = true;
-            LoadLevel(levelNumber);
+            LoadLevel(gameData.currentLevel);
+        }
+
+        private void OnDestroy()
+        {
+            hud?.Dispose();
         }
 
         private void OnEnable()
@@ -87,7 +101,7 @@ namespace BusOut.Gameplay
         [ContextMenu("Chơi lại level")]
         private void ReloadLevel()
         {
-            if (isReady) LoadLevel(levelNumber);
+            if (isReady) LoadLevel(gameData.currentLevel);
         }
 
         /// ⚠️ Thứ tự có nghĩa: xoá xe cũ (kèm tween/đường chạy) TRƯỚC khi đặt lại ô, không thì xe cũ tới nơi
@@ -101,7 +115,7 @@ namespace BusOut.Gameplay
             LevelData level = curveData.FindLevel(number);
             if (level == null || level.vehicles == null)
             {
-                Debug.LogError($"[BusOut] Không có level {number} trong {levelCurve.name}. Đổi Level Number trên GameplayPresenter.", this);
+                Debug.LogError($"[BusOut] Không có level {number} trong {levelCurve.name}. Level lấy từ save (SecureGameData.currentLevel): xoá save hoặc sửa file curve.", this);
                 // ⚠️ Dọn hết trạng thái ván cũ: giữ lại thì bộ lên kế hoạch cũ chạy trên danh sách xe đã xoá (lỗi mỗi frame),
                 // và "không xe + không khách" bị tính là thắng.
                 passengers?.ResetForLevel(null);
@@ -130,6 +144,7 @@ namespace BusOut.Gameplay
             boarding?.Tick(deltaTime);
             if (passengers != null && passengerCount != null) passengerCount.SetCount(passengers.RemainingCount);
             CheckLevelCompleted();
+            CheckLevelFailed();
         }
 
         /// Thắng: mọi xe đã rời đi và không còn khách nào phải chở (tổng khách = tổng ghế nên hai điều kiện đi cùng nhau).
@@ -139,7 +154,32 @@ namespace BusOut.Gameplay
             if (!spawner.AllCarsGone || passengers.RemainingCount > 0) return;
             levelFinished = true;
             Debug.Log($"[BusOut] Thắng level {currentLevel}.", this);
+            // Lưu ngay khi thắng (không chờ app vào nền): tắt app ngang lúc này vẫn giữ level mới và coin thưởng.
+            gameData.CompleteLevel(curveData.LastLevelNumber);
+            gameData.AddCoins(config.winCoinReward);
+            gameData.Save();
             EventBus.Publish(new LevelCompletedEvent { LevelIndex = currentLevel });
+        }
+
+        /// Thua: hết ô và không còn nước nào gỡ được (xem BoardingPresenter.IsStuck). Báo đúng một lần mỗi ván.
+        private void CheckLevelFailed()
+        {
+            if (levelFinished || boarding == null || !boarding.IsStuck()) return;
+            levelFinished = true;
+            Debug.Log($"[BusOut] Thua level {currentLevel}: hết ô đỗ, không xe nào ở bến cùng màu người đầu hàng.", this);
+            EventBus.Publish(new LevelFailedEvent { LevelIndex = currentLevel, Reason = "Out of slots" });
+        }
+
+        /// Thiếu thanh nào thì chỉ mất thanh đó, game vẫn chơi được.
+        private HudPresenter CreateHudPresenter()
+        {
+            if (topBar == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Top Bar: coin / level không hiện. Kéo Canvas/TopUI (có TopBarView) vào.", this);
+            else if (!topBar.Init()) topBar = null;
+            if (boosterBar == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Booster Bar: nút booster không cập nhật. Kéo Canvas/BottomUI/Boosters (có BoosterBarView) vào.", this);
+            else if (!boosterBar.Init()) boosterBar = null;
+            return new HudPresenter(config, gameData, topBar, boosterBar, ReloadLevel);
         }
 
         private PassengerPresenter CreatePassengerPresenter()
@@ -155,12 +195,12 @@ namespace BusOut.Gameplay
 
         private void HandleCarTapped(CarView view)
         {
-            if (isReady) carFlow.HandleCarTapped(view);
+            if (isReady && !levelFinished) carFlow.HandleCarTapped(view);
         }
 
         private void HandleSlotTapped(BusStopSlotView slot)
         {
-            if (isReady) busStop.HandleSlotTapped(slot.Index);
+            if (isReady && !levelFinished) busStop.HandleSlotTapped(slot.Index);
         }
 
         private bool ValidateReferences()

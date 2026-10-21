@@ -67,6 +67,23 @@ namespace BusOut.Core
         public int DeltaAmount; // âm = trừ, dương = cộng
     }
 
+    /// Booster theo thứ tự trên thanh dưới màn chơi (gốc: Sort, VIP trực thăng, Shuffle, Turbo).
+    /// ⚠️ Giá trị = chỉ số trong SecureGameData.boosterCounts (đã lưu): chỉ thêm vào cuối, không đổi thứ tự.
+    public enum BoosterType
+    {
+        Arrange,
+        VipSlot,
+        Jumble,
+        Turbo,
+    }
+
+    /// Số lượt một booster thay đổi.
+    public struct BoosterCountChangedEvent : IEvent
+    {
+        public BoosterType Type;
+        public int Count;
+    }
+
     /// Người chơi dùng một vật phẩm / booster.
     public struct ItemConsumedEvent : IEvent
     {

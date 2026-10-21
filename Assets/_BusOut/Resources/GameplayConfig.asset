@@ -47,3 +47,26 @@ MonoBehaviour:
   boardingInterval: 0.1
   carLeaveDelay: 0.5
   tapRayDistance: 200
+  winCoinReward: 20
+  levelLabelFormat: LEVEL {0}
+  boosters:
+  - type: 0
+    displayName: ARRANGE
+    icon: {fileID: 21300000, guid: c3c88591bc346ba47ab73097bad7989d, type: 2}
+    unlockLevel: 2
+  - type: 1
+    displayName: VIP SLOT
+    icon: {fileID: 21300000, guid: c5bcf12081dbac749a5a80ae4b7c6af3, type: 2}
+    unlockLevel: 3
+  - type: 2
+    displayName: JUMBLE
+    icon: {fileID: 21300000, guid: 12c9ba298c1470d4b8ceb558d53fc3cf, type: 2}
+    unlockLevel: 4
+  - type: 3
+    displayName: TURBO
+    icon: {fileID: 21300000, guid: 1bd1d2afdf2a6094aafbb0317b1dbe0a, type: 2}
+    unlockLevel: 5
+  boosterLockIcon: {fileID: 21300000, guid: 61568a6e5fe042d4495e3cb36886e5d8, type: 2}
+  boosterUnlockedBackground: {fileID: 21300000, guid: 83f00ce8cd2529945b33401d3d40db64, type: 2}
+  boosterLockedBackground: {fileID: 21300000, guid: 56f28ca8052b832499d4690c6a8aa2c1, type: 2}
+  boosterLockedLabelFormat: LEVEL {0}

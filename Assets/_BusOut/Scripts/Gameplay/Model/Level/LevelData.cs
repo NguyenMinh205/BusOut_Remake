@@ -22,6 +22,18 @@ namespace BusOut.Gameplay
                 if (levels[i].index == levelNumber) return levels[i];
             return null;
         }
+
+        /// Số level lớn nhất trong file (0 khi file rỗng).
+        public int LastLevelNumber
+        {
+            get
+            {
+                int last = 0;
+                if (levels != null)
+                    for (int i = 0; i < levels.Length; i++) last = Math.Max(last, levels[i].index);
+                return last;
+            }
+        }
     }
 
     [Serializable]

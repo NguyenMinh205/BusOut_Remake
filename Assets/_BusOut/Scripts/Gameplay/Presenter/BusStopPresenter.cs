@@ -13,6 +13,9 @@ namespace BusOut.Gameplay
         /// Trạng thái 7 ô (chỉ đọc), theo thứ tự trái → phải.
         public IReadOnlyList<BusStopSlot> Slots => busStop.Slots;
 
+        /// Số ô mở và chưa có xe giữ.
+        public int FreeCount => busStop.FreeCount;
+
         public BusStopPresenter(BusStopView view, GameplayConfig config)
         {
             this.view = view;

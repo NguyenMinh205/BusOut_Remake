@@ -3,9 +3,8 @@ using BusOut.DesignPattern;
 
 namespace BusOut.Gameplay
 {
-    /// Vòng lên xe (như RunProcessBusStopOperationAsync của game gốc): người đầu hàng tìm xe cùng màu đã đỗ ở bến,
-    /// còn ghế → rời hàng đi tới xe. Xe đủ khách → chờ một chút rồi rời bến.
-    /// GameplayPresenter tạo, gọi ResetForLevel khi vào level và Tick mỗi frame.
+    /// Vòng lên xe: người đầu hàng tìm xe cùng màu đã đỗ ở bến, còn ghế → rời hàng đi tới xe. Xe đủ khách → chờ một chút rồi
+    /// rời bến. GameplayPresenter tạo, gọi ResetForLevel khi vào level và Tick mỗi frame.
     public sealed class BoardingPresenter
     {
         private struct PendingLeave
@@ -50,6 +49,21 @@ namespace BusOut.Gameplay
             cooldown -= deltaTime;
             if (cooldown > 0f) return;
             if (TryBoardHead()) cooldown = config.boardingInterval;
+        }
+
+        /// Kẹt hẳn = thua: mọi ô mở đều có xe đứng, người đầu hàng đứng yên mà không xe nào ở bến cùng màu
+        /// còn ghế, và không còn gì đang chạy có thể gỡ thế kẹt (xe chạy lên / rời bến, khách đi tới xe, xe chờ rời bến).
+        /// ⚠️ Thiếu một điều kiện "đang chạy" là báo thua oan: vd. bỏ pendingLeaves thì xe vừa đủ khách (0.5s trước khi
+        /// rời bến, ô sắp trống) cũng bị tính là kẹt.
+        public bool IsStuck()
+        {
+            if (busStop.FreeCount > 0) return false;
+            if (spawner.HasMovingCar || passengerTargets.Count > 0 || pendingLeaves.Count > 0) return false;
+            PassengerModel head = passengers.Queue.Head;
+            PassengerView headView = passengers.HeadView;
+            // Hàng rỗng hoặc người đầu còn đang đi vào chỗ: chưa kết luận được.
+            if (head == null || headView == null || headView.IsWalking) return false;
+            return FindCarFor(head.ColorIndex) == null;
         }
 
         /// Một khách mỗi lần (gốc: 0.1s một người). True nếu đã cho một khách lên.

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using BusOut.Core;
 using UnityEngine;
 
 namespace BusOut.Gameplay
@@ -100,6 +102,35 @@ namespace BusOut.Gameplay
         [Tooltip("Độ dài tia chạm từ camera (đơn vị). Phải lớn hơn khoảng cách camera tới bãi.")]
         public float tapRayDistance = 200f;
 
+        [Header("Kinh tế")]
+        [Tooltip("Coin thưởng khi thắng một level thường. GDD: 20.")]
+        public int winCoinReward = 20;
+
+        [Header("Giao diện trong ván")]
+        [Tooltip("Chữ level trên thanh trên; {0} = số level.")]
+        public string levelLabelFormat = "LEVEL {0}";
+
+        [Tooltip("Booster theo thứ tự nút trên thanh dưới (trái → phải). Số phần tử phải bằng số nút trong BoosterBarView.")]
+        public List<BoosterDefinition> boosters = new List<BoosterDefinition>
+        {
+            new BoosterDefinition { type = BoosterType.Arrange, displayName = "ARRANGE", unlockLevel = 2 },
+            new BoosterDefinition { type = BoosterType.VipSlot, displayName = "VIP SLOT", unlockLevel = 3 },
+            new BoosterDefinition { type = BoosterType.Jumble, displayName = "JUMBLE", unlockLevel = 4 },
+            new BoosterDefinition { type = BoosterType.Turbo, displayName = "TURBO", unlockLevel = 5 },
+        };
+
+        [Tooltip("Icon ổ khoá trên nút booster chưa mở. Để trống thì giữ icon đang có.")]
+        public Sprite boosterLockIcon;
+
+        [Tooltip("Nền nút booster đã mở (gốc: xanh dương). Để trống thì giữ nền đang có.")]
+        public Sprite boosterUnlockedBackground;
+
+        [Tooltip("Nền nút booster chưa mở (gốc: xám). Để trống thì giữ nền đang có.")]
+        public Sprite boosterLockedBackground;
+
+        [Tooltip("Chữ trên nút booster chưa mở; {0} = level mở khoá.")]
+        public string boosterLockedLabelFormat = "LEVEL {0}";
+
         public Color GetCarColor(int colorIndex)
         {
             if (carColors == null || carColors.Count == 0) return Color.white;
@@ -112,5 +143,16 @@ namespace BusOut.Gameplay
         }
 
         public static GameplayConfig CreateDefault() => CreateInstance<GameplayConfig>();
+    }
+
+    /// Một booster trên thanh dưới: hiện gì, mở ở level nào.
+    [Serializable]
+    public class BoosterDefinition
+    {
+        public BoosterType type;
+        public string displayName;
+        public Sprite icon;
+        [Tooltip("Level bắt đầu dùng được (gốc curve 2.8: Arrange 2, VIP Slot 3, Jumble 4, Turbo 5).")]
+        [Min(1)] public int unlockLevel = 1;
     }
 }

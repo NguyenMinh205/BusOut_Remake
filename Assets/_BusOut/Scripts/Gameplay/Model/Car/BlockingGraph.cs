@@ -2,7 +2,7 @@ using System.Collections.Generic;
 
 namespace BusOut.Gameplay
 {
-    /// Xe nào nằm trên đường ra của xe nào (như AheadCarEntities của game gốc). Dựng một lần lúc vào level:
+    /// Xe nào nằm trên đường ra của xe nào. Dựng một lần lúc vào level:
     /// xe trong bãi chỉ đứng yên hoặc rời đi hẳn, không bao giờ quay lại, nên đồ thị chỉ cần lọc theo trạng thái xe.
     public sealed class BlockingGraph
     {

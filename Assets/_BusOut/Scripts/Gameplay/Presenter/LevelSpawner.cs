@@ -82,6 +82,17 @@ namespace BusOut.Gameplay
             }
         }
 
+        /// Có xe đang chạy lên bến hoặc đang rời bến: tới nơi / đi khỏi sẽ đổi tình thế (ô trống ra, xe mới tới).
+        public bool HasMovingCar
+        {
+            get
+            {
+                foreach (CarModel car in cars)
+                    if (car.State == CarState.MovingToSlot || car.State == CarState.Leaving) return true;
+                return false;
+            }
+        }
+
         /// Dựng đồ thị chặn cho các xe vừa spawn: mỗi xe ghi lại mọi xe nằm trên đường ra của nó.
         public BlockingGraph BuildBlockingGraph()
         {
