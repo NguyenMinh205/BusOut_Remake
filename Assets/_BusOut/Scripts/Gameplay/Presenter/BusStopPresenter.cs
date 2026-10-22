@@ -57,6 +57,17 @@ namespace BusOut.Gameplay
             if (busStop.Unlock(slotIndex)) Refresh();
         }
 
+        public bool HasLockedSlot => busStop.HasLockedSlot;
+
+        /// Hồi sinh: mở thêm 1 ô (ô khoá gần nhất). -1 khi không còn ô khoá.
+        /// ⚠️ TẠM: mở ngay, chưa qua quảng cáo / coin (như HandleSlotTapped).
+        public int UnlockNearest()
+        {
+            int slotIndex = busStop.UnlockNearest();
+            if (slotIndex >= 0) Refresh();
+            return slotIndex;
+        }
+
         public Vector3 GetEntryPoint(int slotIndex) => view.GetSlot(slotIndex).EntryPoint;
         public Vector3 GetParkPoint(int slotIndex) => view.GetSlot(slotIndex).ParkPoint;
 

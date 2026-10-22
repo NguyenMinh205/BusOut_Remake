@@ -5,8 +5,6 @@ using UnityEngine.UI;
 
 namespace BusOut.Gameplay
 {
-    /// Một nút booster (prefab UI/GameContext/Booster): khoá thì hiện ổ khoá + "LEVEL n",
-    /// mở thì hiện icon + tên + số lượt ở huy hiệu góc.
     public class BoosterButtonView : MonoBehaviour
     {
         [Tooltip("Button trên root Booster.")]
@@ -47,7 +45,6 @@ namespace BusOut.Gameplay
             if (button != null) button.onClick.RemoveListener(HandleClicked);
         }
 
-        /// Sprite null = giữ sprite đang có (chưa chọn sprite trong config thì nút vẫn hiện được).
         public void ShowLocked(Sprite lockIcon, Sprite lockedBackground, string labelFormat, int unlockLevel)
         {
             SetSprite(icon, lockIcon);

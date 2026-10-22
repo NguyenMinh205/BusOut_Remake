@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace BusOut.Gameplay
 {
-    /// Thanh booster dưới màn chơi. Gắn trên Canvas/BottomUI/Boosters.
     public class BoosterBarView : MonoBehaviour
     {
         [Tooltip("Các nút theo thứ tự trái → phải; nút thứ i ứng với GameplayConfig.boosters[i].")]

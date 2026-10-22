@@ -20,6 +20,9 @@ namespace BusOut.Gameplay
         private readonly Action<CarView> onLeft;
         private readonly Action<CarView> onReachedTopLane;
 
+        /// Chạm xe đường trống nhưng hết ô (để hiện chữ "Hết chỗ!").
+        public event Action NoSlotRejected;
+
         public CarFlowPresenter(GameplayConfig config, ParkingLotView parkingLot, LevelSpawner spawner, BusStopPresenter busStop)
         {
             this.config = config;
@@ -56,6 +59,7 @@ namespace BusOut.Gameplay
             if (slotIndex < 0)
             {
                 view.PlayRejectShake(config);
+                NoSlotRejected?.Invoke();
                 return;
             }
 

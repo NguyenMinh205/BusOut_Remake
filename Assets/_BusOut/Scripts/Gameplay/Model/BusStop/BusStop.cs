@@ -77,6 +77,25 @@ namespace BusOut.Gameplay
             return true;
         }
 
+        /// Còn ô khoá (hồi sinh còn mở thêm được).
+        public bool HasLockedSlot
+        {
+            get
+            {
+                for (int i = 0; i < slots.Length; i++)
+                    if (slots[i].IsLocked) return true;
+                return false;
+            }
+        }
+
+        /// Mở ô khoá số nhỏ nhất (hồi sinh: "UnlockNearestEmptySlot" của gốc). -1 khi không còn ô khoá.
+        public int UnlockNearest()
+        {
+            for (int i = 0; i < slots.Length; i++)
+                if (Unlock(i)) return i;
+            return -1;
+        }
+
         public void MarkOccupied(int slotIndex)
         {
             if (!IsValid(slotIndex)) return;

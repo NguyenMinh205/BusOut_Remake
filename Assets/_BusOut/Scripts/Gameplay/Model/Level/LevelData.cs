@@ -41,6 +41,32 @@ namespace BusOut.Gameplay
     {
         public int index;
         public VehicleData[] vehicles;
+        /// Tỉ lệ trộn nhóm khách theo tiến độ (ProgressMixData của gốc).
+        public MixData[] mix;
+        /// Các điểm khó theo tiến độ (ProgressHardPointData của gốc).
+        public HardPointData[] hardPoints;
+    }
+
+    /// Từ <see cref="at"/>% tiến độ: tỉ lệ trộn nội suy <see cref="from"/> → <see cref="to"/> (%) tới mốc sau (hoặc 100%).
+    [Serializable]
+    public class MixData
+    {
+        public float at;
+        /// MixGroupSizeType gốc (1 Easy, 2 Medium, 3 Hard). Remake hiểu là: trộn thêm tối đa <c>size</c> xe khác (ĐOÁN).
+        public int size;
+        public float from;
+        public float to;
+    }
+
+    /// Tới <see cref="at"/>% tiến độ: cố ý chọn một xe đang bị chặn.
+    [Serializable]
+    public class HardPointData
+    {
+        public float at;
+        /// harderBlockingPointsBonus gốc. Remake hiểu là: cộng vào số xe chặn tối đa được phép (ĐOÁN).
+        public int bonus;
+        /// SeriesPlanningType gốc — remake luôn lên kế hoạch liền chuỗi xe chặn, chưa phân biệt giá trị này.
+        public int series;
     }
 
     /// Toạ độ x/z nằm trong hệ toạ độ bãi đỗ gốc (x ±10.5, z -14.87..10.6) — đặt ParkingLot đúng gốc là khớp.

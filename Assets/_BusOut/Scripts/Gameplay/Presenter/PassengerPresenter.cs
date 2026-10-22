@@ -77,9 +77,13 @@ namespace BusOut.Gameplay
             while (queue.PendingCount < config.passengerPlanAheadCount && planner.HasMore)
             {
                 planBuffer.Clear();
-                if (planner.TryPlanNext(planBuffer) && planner.LastPickWasForced)
+                if (!planner.TryPlanNext(planBuffer)) break;
+                if (planner.LastPickWasForced)
                     Debug.LogWarning("[BusOut] Không còn xe nào chắc chắn lấy ra được, đã chọn tạm một xe — level có thể có " +
                                      "xe chặn vòng nhau (vd. 2 xe đâm đầu vào nhau) và không giải được.");
+                if (planner.LastPickWasHardPoint)
+                    Debug.Log($"[BusOut] Hard point: {planBuffer.Count} khách màu {planBuffer[0]} của một xe đang bị chặn " +
+                              $"(đứng sau {queue.PendingCount} khách đã lên kế hoạch).");
                 queue.AddPending(planBuffer);
             }
         }

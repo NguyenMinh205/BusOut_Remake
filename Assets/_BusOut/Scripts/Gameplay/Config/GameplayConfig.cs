@@ -86,6 +86,20 @@ namespace BusOut.Gameplay
                  "được ưu tiên sớm hơn; nhiều quá thì khách của xe đó phải chờ lâu.")]
         public int passengerPlanAheadCount = 24;
 
+        [Header("Sinh khách: mix và hard point (đo bằng docs/tools/sim_board.py — đổi số thì sửa cả sim)")]
+        [Tooltip("Nhóm khách cùng màu đứng liền nhau nhỏ nhất khi chia ghế một xe để trộn. GDD: 2.")]
+        public int passengerGroupMin = 2;
+
+        [Tooltip("Nhóm khách cùng màu đứng liền nhau lớn nhất. GDD: 4.")]
+        public int passengerGroupMax = 4;
+
+        [Tooltip("Hard point: số xe chặn (phải dọn trước) tối đa của xe được chọn, trước khi cộng bonus của level.")]
+        public int hardPointBaseBlockers = 2;
+
+        [Tooltip("Hard point: số ô mở phải chừa lại (1 cho chính xe khó + 1 dự phòng). Số xe chặn tối đa không vượt quá " +
+                 "openSlotCount trừ số này. Đo 22/10/2026: chừa 2 → bot biết kế hoạch thắng 582/600 với 4 ô; chừa 1 → 549/600.")]
+        public int hardPointSlotReserve = 2;
+
         [Tooltip("Cỡ khách khi ngồi trên xe so với khách gốc (mesh 1.48), tính trên màn hình. Gốc: 0.55 (nhìn bé). " +
                  "2 ghế cạnh nhau cách 0.425, khách rộng 0.66 × số này → trên ~0.64 thì vai 2 khách chạm nhau. " +
                  "Không phụ thuộc scale prefab khách hay scale xe.")]
@@ -130,6 +144,18 @@ namespace BusOut.Gameplay
 
         [Tooltip("Chữ trên nút booster chưa mở; {0} = level mở khoá.")]
         public string boosterLockedLabelFormat = "LEVEL {0}";
+
+        [Tooltip("Thắng xong chờ bao lâu mới hiện bảng thắng (giây): để xe cuối chạy đi. Gốc: 1.4.")]
+        public float winPopupDelay = 1.4f;
+
+        [Tooltip("Thua xong chờ bao lâu mới hiện bảng thua (giây). Gốc: 1.25.")]
+        public float losePopupDelay = 1.25f;
+
+        [Tooltip("Chữ \"Hết chỗ!\" hiện đứng yên bao lâu (giây) trước khi mờ dần.")]
+        public float noSlotMessageHold = 0.8f;
+
+        [Tooltip("Thời gian chữ \"Hết chỗ!\" mờ dần (giây).")]
+        public float noSlotMessageFade = 0.25f;
 
         public Color GetCarColor(int colorIndex)
         {
