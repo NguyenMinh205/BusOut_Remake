@@ -5,7 +5,7 @@ using UnityEngine.Serialization;
 
 namespace BusOut.Gameplay
 {
-    /// Vòng đời một ván: khởi tạo, dựng level, thắng / thua, chơi lại (sau: hồi sinh).
+    /// Vòng đời một ván: khởi tạo, dựng level, thắng / thua, hồi sinh, chơi lại.
     /// MonoBehaviour duy nhất của tầng Presenter; giữ tham chiếu scene và tạo các presenter con:
     /// LevelSpawner (xe trong level), BusStopPresenter (ô đỗ), CarFlowPresenter (điều khiển xe),
     /// PassengerPresenter (hàng khách), BoardingPresenter (khách lên xe, xe đầy rời bến).
@@ -39,6 +39,10 @@ namespace BusOut.Gameplay
         [SerializeField] private TopBarView topBar;
         [Tooltip("BoosterBarView trên Canvas/BottomUI/Boosters.")]
         [SerializeField] private BoosterBarView boosterBar;
+        [Tooltip("LevelResultView trên bảng kết quả (cha của panel Thắng / Thua).")]
+        [SerializeField] private LevelResultView levelResult;
+        [Tooltip("NoSlotMessageView trên chữ \"Hết chỗ!\".")]
+        [SerializeField] private NoSlotMessageView noSlotMessage;
 
         private LevelCurveData curveData;
         private LevelSpawner spawner;
@@ -47,6 +51,7 @@ namespace BusOut.Gameplay
         private PassengerPresenter passengers; // null khi thiếu tham chiếu hành khách: xe vẫn chơi được
         private BoardingPresenter boarding;    // null cùng lúc với passengers
         private HudPresenter hud;
+        private LevelResultPresenter result; // null khi thiếu bảng kết quả: thắng / thua chỉ còn log
         private SecureGameData gameData;
         private bool isReady;
         // true khi không có ván nào đang chơi (đã thắng / thua, hoặc level không tải được): ngừng kiểm tra thắng thua,
@@ -75,6 +80,8 @@ namespace BusOut.Gameplay
             else if (!passengerCount.Init()) passengerCount = null;
             gameData = DataManager.Instance.GameData;
             hud = CreateHudPresenter();
+            result = CreateResultPresenter();
+            CreateNoSlotMessage();
             isReady = true;
             LoadLevel(gameData.currentLevel);
         }
@@ -108,6 +115,8 @@ namespace BusOut.Gameplay
         /// sau khi reset sẽ đánh dấu ô của level mới là có xe.
         public void LoadLevel(int number)
         {
+            result?.Hide();
+            noSlotMessage?.Hide();
             passengers?.DespawnAll();
             spawner.DespawnAll();
             busStop.ResetForLevel(config.openSlotCount);
@@ -129,7 +138,15 @@ namespace BusOut.Gameplay
             if (passengers != null)
             {
                 // Hạt giống = số level: cùng level luôn ra cùng thứ tự màu, dễ thử lại.
-                var planner = new PassengerColorPlanner(spawner.Cars, spawner.BuildBlockingGraph(), new System.Random(number));
+                var settings = new PassengerPlanSettings
+                {
+                    GroupMin = config.passengerGroupMin,
+                    GroupMax = config.passengerGroupMax,
+                    HardPointBaseBlockers = config.hardPointBaseBlockers,
+                    HardPointSlotLimit = config.openSlotCount - config.hardPointSlotReserve,
+                };
+                var planner = new PassengerColorPlanner(spawner.Cars, spawner.BuildBlockingGraph(), new System.Random(number),
+                    level, settings);
                 passengers.ResetForLevel(planner);
             }
             boarding?.ResetForLevel();
@@ -142,6 +159,7 @@ namespace BusOut.Gameplay
             float deltaTime = Time.deltaTime;
             passengers?.Tick(deltaTime);
             boarding?.Tick(deltaTime);
+            result?.Tick(deltaTime);
             if (passengers != null && passengerCount != null) passengerCount.SetCount(passengers.RemainingCount);
             CheckLevelCompleted();
             CheckLevelFailed();
@@ -159,6 +177,7 @@ namespace BusOut.Gameplay
             gameData.AddCoins(config.winCoinReward);
             gameData.Save();
             EventBus.Publish(new LevelCompletedEvent { LevelIndex = currentLevel });
+            result?.ShowWinLater(config.winCoinReward);
         }
 
         /// Thua: hết ô và không còn nước nào gỡ được (xem BoardingPresenter.IsStuck). Báo đúng một lần mỗi ván.
@@ -168,6 +187,16 @@ namespace BusOut.Gameplay
             levelFinished = true;
             Debug.Log($"[BusOut] Thua level {currentLevel}: hết ô đỗ, không xe nào ở bến cùng màu người đầu hàng.", this);
             EventBus.Publish(new LevelFailedEvent { LevelIndex = currentLevel, Reason = "Out of slots" });
+            result?.ShowLoseLater(busStop.HasLockedSlot);
+        }
+
+        /// Hồi sinh: +1 ô (ô khoá gần nhất) rồi chơi tiếp đúng thế cờ đang có. Ô mới trống nên IsStuck tự hết đúng.
+        private void HandleRevive()
+        {
+            if (!isReady || !levelFinished || busStop.UnlockNearest() < 0) return;
+            result.Hide();
+            levelFinished = false;
+            Debug.Log($"[BusOut] Hồi sinh level {currentLevel}: mở thêm 1 ô.", this);
         }
 
         /// Thiếu thanh nào thì chỉ mất thanh đó, game vẫn chơi được.
@@ -181,6 +210,27 @@ namespace BusOut.Gameplay
             else if (!boosterBar.Init()) boosterBar = null;
             return new HudPresenter(config, gameData, topBar, boosterBar, ReloadLevel);
         }
+
+        private LevelResultPresenter CreateResultPresenter()
+        {
+            if (levelResult == null)
+            {
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Level Result: thắng / thua không hiện bảng. Kéo bảng kết quả (có LevelResultView) vào.", this);
+                return null;
+            }
+            // Level tiếp và Chơi lại đều nạp level đang lưu: thắng thì save đã sang level sau.
+            return levelResult.Init() ? new LevelResultPresenter(config, levelResult, ReloadLevel, HandleRevive, ReloadLevel) : null;
+        }
+
+        private void CreateNoSlotMessage()
+        {
+            if (noSlotMessage == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu No Slot Message: hết ô chỉ còn xe rung. Kéo chữ \"Hết chỗ!\" (có NoSlotMessageView) vào.", this);
+            else if (!noSlotMessage.Init()) noSlotMessage = null;
+            if (noSlotMessage != null) carFlow.NoSlotRejected += HandleNoSlotRejected;
+        }
+
+        private void HandleNoSlotRejected() => noSlotMessage.Show(config.noSlotMessageHold, config.noSlotMessageFade);
 
         private PassengerPresenter CreatePassengerPresenter()
         {
