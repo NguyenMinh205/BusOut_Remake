@@ -5,82 +5,150 @@ using UnityEngine.UI;
 
 namespace BusOut.Gameplay
 {
-    /// Bảng kết quả cuối ván: thắng (coin thưởng + Level tiếp) hoặc thua (Hồi sinh +1 ô / Chơi lại).
-    /// Gắn trên object cha của 2 panel (luôn bật); 2 panel con tắt / bật theo kết quả.
+    /// Các popup cuối ván. Thắng → WinPanel (nhận coin thường / nhận thêm bằng quảng cáo).
+    /// Thua → ContinuePanel (hồi sinh +1 ô bằng coin / quảng cáo, hoặc đóng) → đóng thì LosePanel (chơi lại).
+    /// Gắn trên Popup/.../LevelResult (luôn bật); panel con bật / tắt theo kết quả.
     public class LevelResultView : MonoBehaviour
     {
         [Header("Thắng")]
-        [SerializeField] private GameObject winPanel;
-        [Tooltip("Chữ coin thưởng, vd. \"+20\".")]
+        [SerializeField] private AnimatedPanel winPanel;
+        [Tooltip("WatchAdsAddCoinBtn: nhận coin thưởng nhân lên bằng quảng cáo.")]
+        [SerializeField] private Button winAdClaimButton;
+        [Tooltip("WatchAdsAddCoinBtn/CoinContent/CoinAmountTxt: số coin nhận được khi xem quảng cáo.")]
+        [SerializeField] private TMP_Text winAdRewardText;
+        [Tooltip("WinContent/TapToCollectBtn (\"Tap to collect\"): nhận coin thưởng thường.")]
+        [SerializeField] private Button winClaimButton;
+        [Tooltip("TapToCollectBtn/CoinContent/CoinAmountTxt: số coin thưởng thường.")]
         [SerializeField] private TMP_Text winRewardText;
-        [SerializeField] private Button nextButton;
+
+        [Header("Tiếp tục (hồi sinh)")]
+        [SerializeField] private AnimatedPanel continuePanel;
+        [Tooltip("ContinuePlayingBtn: trả coin để mở thêm 1 ô.")]
+        [SerializeField] private Button continueCoinButton;
+        [Tooltip("ContinuePlayingBtn/Cost/CostTxt: giá coin.")]
+        [SerializeField] private TMP_Text continueCostText;
+        [Tooltip("WatchAdsBtn: xem quảng cáo để mở thêm 1 ô.")]
+        [SerializeField] private Button continueAdButton;
+        [Tooltip("CloseBtn: không hồi sinh → sang LosePanel.")]
+        [SerializeField] private Button continueCloseButton;
 
         [Header("Thua")]
-        [SerializeField] private GameObject losePanel;
-        [Tooltip("Nút hồi sinh +1 ô (ẩn khi không còn ô khoá để mở).")]
-        [SerializeField] private Button reviveButton;
-        [SerializeField] private Button replayButton;
+        [SerializeField] private AnimatedPanel losePanel;
+        [Tooltip("LosePopup/TitleTxt: \"LEVEL n\".")]
+        [SerializeField] private TMP_Text loseLevelText;
+        [SerializeField] private Button loseReplayButton;
+        [Tooltip("LosePopup/CloseBtn: TẠM chơi lại (chưa có màn Home).")]
+        [SerializeField] private Button loseCloseButton;
 
-        public event Action NextClicked;
-        public event Action ReviveClicked;
+        /// true = nhận thêm bằng quảng cáo.
+        public event Action<bool> WinClaimed;
+        public event Action ReviveWithCoinsClicked;
+        public event Action ReviveWithAdClicked;
+        public event Action ContinueDeclined;
         public event Action ReplayClicked;
 
-        public bool Init()
+        private PanelAnimationSettings panelAnimation;
+
+        public bool Init(PanelAnimationSettings animationSettings)
         {
+            panelAnimation = animationSettings;
             string missing = "";
-            if (winPanel == null) missing += " WinPanel";
+            CheckPanel(winPanel, "WinPanel", ref missing);
+            CheckPanel(continuePanel, "ContinuePanel", ref missing);
+            CheckPanel(losePanel, "LosePanel", ref missing);
+            if (winAdClaimButton == null) missing += " WinAdClaimButton";
+            if (winAdRewardText == null) missing += " WinAdRewardText";
+            if (winClaimButton == null) missing += " WinClaimButton";
             if (winRewardText == null) missing += " WinRewardText";
-            if (nextButton == null) missing += " NextButton";
-            if (losePanel == null) missing += " LosePanel";
-            if (reviveButton == null) missing += " ReviveButton";
-            if (replayButton == null) missing += " ReplayButton";
+            if (continueCoinButton == null) missing += " ContinueCoinButton";
+            if (continueCostText == null) missing += " ContinueCostText";
+            if (continueAdButton == null) missing += " ContinueAdButton";
+            if (continueCloseButton == null) missing += " ContinueCloseButton";
+            if (loseLevelText == null) missing += " LoseLevelText";
+            if (loseReplayButton == null) missing += " LoseReplayButton";
+            if (loseCloseButton == null) missing += " LoseCloseButton";
             if (missing.Length > 0)
             {
-                Debug.LogError($"[BusOut] LevelResultView thiếu tham chiếu:{missing}. Kéo panel / nút trong bảng kết quả vào.", this);
+                Debug.LogError($"[BusOut] LevelResultView thiếu tham chiếu:{missing}. Kéo object trong các popup vào.", this);
                 return false;
             }
-            // ⚠️ Panel không được là chính object này: tắt object mang script là tắt luôn cả bảng lẫn Init sau này.
-            if (winPanel == gameObject || losePanel == gameObject)
+            // ⚠️ Panel không được là chính object này: tắt panel là tắt luôn script và mọi panel khác.
+            if (winPanel.root == gameObject || continuePanel.root == gameObject || losePanel.root == gameObject)
             {
-                Debug.LogError("[BusOut] LevelResultView: Win Panel / Lose Panel phải là object CON, không phải object gắn script.", this);
+                Debug.LogError("[BusOut] LevelResultView: Root của panel phải là object CON (WinPanel…), không phải LevelResult.", this);
                 return false;
             }
-            nextButton.onClick.AddListener(HandleNextClicked);
-            reviveButton.onClick.AddListener(HandleReviveClicked);
-            replayButton.onClick.AddListener(HandleReplayClicked);
+
+            winPanel.Init();
+            continuePanel.Init();
+            losePanel.Init();
+            winAdClaimButton.onClick.AddListener(HandleWinAdClaimed);
+            winClaimButton.onClick.AddListener(HandleWinClaimed);
+            continueCoinButton.onClick.AddListener(HandleReviveWithCoins);
+            continueAdButton.onClick.AddListener(HandleReviveWithAd);
+            continueCloseButton.onClick.AddListener(HandleContinueDeclined);
+            loseReplayButton.onClick.AddListener(HandleReplay);
+            loseCloseButton.onClick.AddListener(HandleReplay);
             Hide();
             return true;
         }
 
         private void OnDestroy()
         {
-            if (nextButton != null) nextButton.onClick.RemoveListener(HandleNextClicked);
-            if (reviveButton != null) reviveButton.onClick.RemoveListener(HandleReviveClicked);
-            if (replayButton != null) replayButton.onClick.RemoveListener(HandleReplayClicked);
+            if (winAdClaimButton != null) winAdClaimButton.onClick.RemoveListener(HandleWinAdClaimed);
+            if (winClaimButton != null) winClaimButton.onClick.RemoveListener(HandleWinClaimed);
+            if (continueCoinButton != null) continueCoinButton.onClick.RemoveListener(HandleReviveWithCoins);
+            if (continueAdButton != null) continueAdButton.onClick.RemoveListener(HandleReviveWithAd);
+            if (continueCloseButton != null) continueCloseButton.onClick.RemoveListener(HandleContinueDeclined);
+            if (loseReplayButton != null) loseReplayButton.onClick.RemoveListener(HandleReplay);
+            if (loseCloseButton != null) loseCloseButton.onClick.RemoveListener(HandleReplay);
         }
 
         public void Hide()
         {
-            winPanel.SetActive(false);
-            losePanel.SetActive(false);
+            winPanel.Hide();
+            continuePanel.Hide();
+            losePanel.Hide();
         }
 
-        public void ShowWin(int coinReward)
+        public void ShowWin(int reward, int adReward)
         {
-            losePanel.SetActive(false);
-            winRewardText.SetText("+{0}", coinReward);
-            winPanel.SetActive(true);
+            continuePanel.Hide();
+            losePanel.Hide();
+            winRewardText.SetText("{0}", reward);
+            winAdRewardText.SetText("{0}", adReward);
+            winPanel.Show(panelAnimation);
         }
 
-        public void ShowLose(bool canRevive)
+        /// <paramref name="canAfford"/> false → nút trả coin bấm không được (vẫn hiện giá để người chơi biết cần bao nhiêu).
+        public void ShowContinue(int coinCost, bool canAfford)
         {
-            winPanel.SetActive(false);
-            reviveButton.gameObject.SetActive(canRevive);
-            losePanel.SetActive(true);
+            winPanel.Hide();
+            losePanel.Hide();
+            continueCostText.SetText("{0}", coinCost);
+            continueCoinButton.interactable = canAfford;
+            continuePanel.Show(panelAnimation);
         }
 
-        private void HandleNextClicked() => NextClicked?.Invoke();
-        private void HandleReviveClicked() => ReviveClicked?.Invoke();
-        private void HandleReplayClicked() => ReplayClicked?.Invoke();
+        public void ShowLose(string levelFormat, int level)
+        {
+            winPanel.Hide();
+            continuePanel.Hide();
+            loseLevelText.SetText(levelFormat, level);
+            losePanel.Show(panelAnimation);
+        }
+
+        private static void CheckPanel(AnimatedPanel panel, string label, ref string missing)
+        {
+            if (panel == null) { missing += $" {label}"; return; }
+            if (!panel.IsValid(out string panelMissing)) missing += $" {label}:{panelMissing.Trim()}";
+        }
+
+        private void HandleWinAdClaimed() => WinClaimed?.Invoke(true);
+        private void HandleWinClaimed() => WinClaimed?.Invoke(false);
+        private void HandleReviveWithCoins() => ReviveWithCoinsClicked?.Invoke();
+        private void HandleReviveWithAd() => ReviveWithAdClicked?.Invoke();
+        private void HandleContinueDeclined() => ContinueDeclined?.Invoke();
+        private void HandleReplay() => ReplayClicked?.Invoke();
     }
 }

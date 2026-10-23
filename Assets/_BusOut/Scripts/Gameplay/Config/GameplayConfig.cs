@@ -116,9 +116,25 @@ namespace BusOut.Gameplay
         [Tooltip("Độ dài tia chạm từ camera (đơn vị). Phải lớn hơn khoảng cách camera tới bãi.")]
         public float tapRayDistance = 200f;
 
+        [Header("Màn hình")]
+        [Tooltip("Tỉ lệ rộng / cao của màn đã căn camera trong scene (1170×2532 → 0.462). Màn hẹp hơn thì tăng FOV giữ " +
+                 "bề ngang, màn rộng hơn giữ FOV gốc. Căn lại camera ở máy khác thì đổi số này theo máy đó.")]
+        public float cameraReferenceAspect = 1170f / 2532f;
+
+        [Header("Level")]
+        [Tooltip("Hết level cuối của file curve thì quay vòng từ level này (số level hiển thị vẫn tăng tiếp). Gốc để trên " +
+                 "remote config, không tìm được; chọn 21 vì đã qua các level dễ đầu game.")]
+        [Min(1)] public int loopStartLevel = 21;
+
         [Header("Kinh tế")]
         [Tooltip("Coin thưởng khi thắng một level thường. GDD: 20.")]
         public int winCoinReward = 20;
+
+        [Tooltip("Nhận coin thắng bằng quảng cáo thì nhân lên mấy lần (gốc: x2).")]
+        public int winAdCoinMultiplier = 2;
+
+        [Tooltip("Giá coin hồi sinh +1 ô (popup Continue). GDD: 100.")]
+        public int reviveCoinCost = 100;
 
         [Header("Giao diện trong ván")]
         [Tooltip("Chữ level trên thanh trên; {0} = số level.")]
@@ -150,6 +166,15 @@ namespace BusOut.Gameplay
 
         [Tooltip("Thua xong chờ bao lâu mới hiện bảng thua (giây). Gốc: 1.25.")]
         public float losePopupDelay = 1.25f;
+
+        [Tooltip("Mở popup: nền tối mờ dần vào trong bao lâu (giây).")]
+        public float popupDimFadeDuration = 0.2f;
+
+        [Tooltip("Mở popup: mỗi object phóng từ 0 lên cỡ gốc trong bao lâu (giây).")]
+        public float popupItemPopDuration = 0.3f;
+
+        [Tooltip("Mở popup: object sau hiện trễ hơn object trước bao lâu (giây).")]
+        public float popupItemInterval = 0.12f;
 
         [Tooltip("Chữ \"Hết chỗ!\" hiện đứng yên bao lâu (giây) trước khi mờ dần.")]
         public float noSlotMessageHold = 0.8f;

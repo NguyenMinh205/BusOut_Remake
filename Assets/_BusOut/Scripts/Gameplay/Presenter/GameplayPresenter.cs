@@ -17,6 +17,9 @@ namespace BusOut.Gameplay
         [FormerlySerializedAs("carInput")]
         [SerializeField] private GameplayInput gameplayInput;
 
+        [Tooltip("CameraFitView trên GameContext/Main Camera: chỉnh FOV theo tỉ lệ màn hình.")]
+        [SerializeField] private CameraFitView cameraFit;
+
         [Header("Level")]
         [Tooltip("File level đã giải mã (Assets/_BusOut/Data/Levels/curve_*.json).")]
         [SerializeField] private TextAsset levelCurve;
@@ -66,6 +69,11 @@ namespace BusOut.Gameplay
             if (!parkingLot.Init()) return;
             if (!busStopView.Init()) return;
             if (!gameplayInput.Init(config.tapRayDistance)) return;
+            // Thiếu chỉ mất phần chỉnh camera theo màn hình, game vẫn chơi được.
+            if (cameraFit == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Camera Fit: màn dài sẽ bị cắt hai mép bãi. " +
+                               "Thêm CameraFitView vào GameContext/Main Camera rồi kéo vào.", this);
+            else cameraFit.Init(config.cameraReferenceAspect);
 
             curveData = LevelCurveData.Parse(levelCurve.text);
             spawner = new LevelSpawner(config, parkingLot, fourSeatPrefab, sixSeatPrefab, tenSeatPrefab);
@@ -121,10 +129,12 @@ namespace BusOut.Gameplay
             spawner.DespawnAll();
             busStop.ResetForLevel(config.openSlotCount);
 
-            LevelData level = curveData.FindLevel(number);
+            // Số level hiển thị tăng mãi; quá level cuối của file thì quay vòng layout từ loopStartLevel.
+            int layoutNumber = curveData.ResolveLayoutNumber(number, config.loopStartLevel);
+            LevelData level = curveData.FindLevel(layoutNumber);
             if (level == null || level.vehicles == null)
             {
-                Debug.LogError($"[BusOut] Không có level {number} trong {levelCurve.name}. Level lấy từ save (SecureGameData.currentLevel): xoá save hoặc sửa file curve.", this);
+                Debug.LogError($"[BusOut] Không có level {layoutNumber} (level hiển thị {number}) trong {levelCurve.name}. Level lấy từ save (SecureGameData.currentLevel): xoá save hoặc sửa file curve.", this);
                 // ⚠️ Dọn hết trạng thái ván cũ: giữ lại thì bộ lên kế hoạch cũ chạy trên danh sách xe đã xoá (lỗi mỗi frame),
                 // và "không xe + không khách" bị tính là thắng.
                 passengers?.ResetForLevel(null);
@@ -137,7 +147,8 @@ namespace BusOut.Gameplay
             levelFinished = false;
             if (passengers != null)
             {
-                // Hạt giống = số level: cùng level luôn ra cùng thứ tự màu, dễ thử lại.
+                // Hạt giống = số level HIỂN THỊ: cùng level luôn ra cùng thứ tự màu (dễ thử lại), còn layout quay vòng
+                // (121 = layout 21) vẫn ra thứ tự khách khác lần trước.
                 var settings = new PassengerPlanSettings
                 {
                     GroupMin = config.passengerGroupMin,
@@ -172,12 +183,13 @@ namespace BusOut.Gameplay
             if (!spawner.AllCarsGone || passengers.RemainingCount > 0) return;
             levelFinished = true;
             Debug.Log($"[BusOut] Thắng level {currentLevel}.", this);
-            // Lưu ngay khi thắng (không chờ app vào nền): tắt app ngang lúc này vẫn giữ level mới và coin thưởng.
-            gameData.CompleteLevel(curveData.LastLevelNumber);
-            gameData.AddCoins(config.winCoinReward);
+            // Lưu ngay khi thắng (không chờ app vào nền): tắt app ngang lúc này vẫn giữ level mới.
+            gameData.CompleteLevel();
+            // Coin thưởng cộng khi người chơi bấm nhận ở WinPanel (thường / quảng cáo). Không có popup thì cộng luôn.
+            if (result == null) gameData.AddCoins(config.winCoinReward);
             gameData.Save();
             EventBus.Publish(new LevelCompletedEvent { LevelIndex = currentLevel });
-            result?.ShowWinLater(config.winCoinReward);
+            result?.ShowWinLater(currentLevel);
         }
 
         /// Thua: hết ô và không còn nước nào gỡ được (xem BoardingPresenter.IsStuck). Báo đúng một lần mỗi ván.
@@ -187,16 +199,18 @@ namespace BusOut.Gameplay
             levelFinished = true;
             Debug.Log($"[BusOut] Thua level {currentLevel}: hết ô đỗ, không xe nào ở bến cùng màu người đầu hàng.", this);
             EventBus.Publish(new LevelFailedEvent { LevelIndex = currentLevel, Reason = "Out of slots" });
-            result?.ShowLoseLater(busStop.HasLockedSlot);
+            result?.ShowLoseLater(currentLevel, busStop.HasLockedSlot);
         }
 
         /// Hồi sinh: +1 ô (ô khoá gần nhất) rồi chơi tiếp đúng thế cờ đang có. Ô mới trống nên IsStuck tự hết đúng.
-        private void HandleRevive()
+        /// False khi không hồi sinh được (không trong ván đã thua, hoặc hết ô khoá) — nơi gọi không được trừ coin.
+        private bool TryRevive()
         {
-            if (!isReady || !levelFinished || busStop.UnlockNearest() < 0) return;
-            result.Hide();
+            if (!isReady || !levelFinished || busStop.UnlockNearest() < 0) return false;
+            result?.Hide();
             levelFinished = false;
             Debug.Log($"[BusOut] Hồi sinh level {currentLevel}: mở thêm 1 ô.", this);
+            return true;
         }
 
         /// Thiếu thanh nào thì chỉ mất thanh đó, game vẫn chơi được.
@@ -218,8 +232,16 @@ namespace BusOut.Gameplay
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Level Result: thắng / thua không hiện bảng. Kéo bảng kết quả (có LevelResultView) vào.", this);
                 return null;
             }
-            // Level tiếp và Chơi lại đều nạp level đang lưu: thắng thì save đã sang level sau.
-            return levelResult.Init() ? new LevelResultPresenter(config, levelResult, ReloadLevel, HandleRevive, ReloadLevel) : null;
+            var panelAnimation = new PanelAnimationSettings
+            {
+                DimFadeDuration = config.popupDimFadeDuration,
+                ItemPopDuration = config.popupItemPopDuration,
+                ItemInterval = config.popupItemInterval,
+            };
+            // Nhận thưởng và Chơi lại đều nạp level đang lưu: thắng thì save đã sang level sau.
+            return levelResult.Init(panelAnimation)
+                ? new LevelResultPresenter(config, levelResult, gameData, TryRevive, ReloadLevel)
+                : null;
         }
 
         private void CreateNoSlotMessage()

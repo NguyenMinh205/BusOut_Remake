@@ -44,10 +44,10 @@ namespace BusOut.Core
         #endregion
 
         #region METHODS
-        /// Thắng level hiện tại: sang level sau. Đã là level cuối của curve thì ở lại level cuối.
-        public void CompleteLevel(int lastLevel)
+        /// Thắng level hiện tại: sang level sau. Số level tăng mãi; hết file level thì Gameplay tự quay vòng layout.
+        public void CompleteLevel()
         {
-            if (currentLevel < lastLevel) currentLevel++;
+            currentLevel++;
         }
 
         public void AddCoins(int amount)

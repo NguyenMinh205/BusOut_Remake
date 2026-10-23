@@ -22,6 +22,8 @@ namespace BusOut.Gameplay
             canvasGroup.blocksRaycasts = false;
             canvasGroup.interactable = false;
             canvasGroup.alpha = 0f;
+            // Ẩn bằng độ mờ, object luôn bật: để tắt sẵn trong scene thì đổi alpha cũng không hiện gì.
+            gameObject.SetActive(true);
             return true;
         }
 

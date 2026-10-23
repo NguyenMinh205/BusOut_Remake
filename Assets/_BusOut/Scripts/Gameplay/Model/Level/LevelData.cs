@@ -23,6 +23,17 @@ namespace BusOut.Gameplay
             return null;
         }
 
+        /// Số level hiển thị (tăng mãi) → số level trong file: quá level cuối thì quay vòng từ <paramref name="loopStart"/>.
+        /// Vd. file 1..120, loopStart 21: 120 → 120, 121 → 21, 220 → 120, 221 → 21.
+        public int ResolveLayoutNumber(int levelNumber, int loopStart)
+        {
+            int last = LastLevelNumber;
+            if (levelNumber <= last || last <= 0) return levelNumber;
+            int start = Math.Max(1, Math.Min(loopStart, last));
+            int cycle = last - start + 1;
+            return start + (levelNumber - start) % cycle;
+        }
+
         /// Số level lớn nhất trong file (0 khi file rỗng).
         public int LastLevelNumber
         {
