@@ -3,7 +3,6 @@ using UnityEngine;
 
 namespace BusOut.Gameplay
 {
-    /// Thứ tự giữ đúng như game gốc vì file level dùng số nguyên này.
     public enum VehicleType { FourSeat = 0, SixSeat = 1, TenSeat = 2, Vip = 3 }
 
     /// Một file curve_*.json (level gốc đã giải mã). Tên field phải trùng tên khoá JSON — JsonUtility đọc theo tên.

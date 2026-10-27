@@ -119,6 +119,16 @@ namespace BusOut.Gameplay
             if (isReady) LoadLevel(gameData.currentLevel);
         }
 
+        /// Nút chơi lại trên thanh trên.
+        /// ⚠️ Ván đã kết thúc + có popup kết quả → bỏ qua: thắng thì save đã sang level sau, bấm trong lúc chờ WinPanel
+        /// (1.4s) là sang level mới mà MẤT coin thưởng (coin chỉ cộng khi bấm nhận ở WinPanel). Không có popup thì vẫn cho
+        /// bấm — đó là đường duy nhất để chơi tiếp.
+        private void HandleTopBarReplay()
+        {
+            if (levelFinished && result != null) return;
+            ReloadLevel();
+        }
+
         /// ⚠️ Thứ tự có nghĩa: xoá xe cũ (kèm tween/đường chạy) TRƯỚC khi đặt lại ô, không thì xe cũ tới nơi
         /// sau khi reset sẽ đánh dấu ô của level mới là có xe.
         public void LoadLevel(int number)
@@ -222,7 +232,7 @@ namespace BusOut.Gameplay
             if (boosterBar == null)
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Booster Bar: nút booster không cập nhật. Kéo Canvas/BottomUI/Boosters (có BoosterBarView) vào.", this);
             else if (!boosterBar.Init()) boosterBar = null;
-            return new HudPresenter(config, gameData, topBar, boosterBar, ReloadLevel);
+            return new HudPresenter(config, gameData, topBar, boosterBar, HandleTopBarReplay);
         }
 
         private LevelResultPresenter CreateResultPresenter()
@@ -235,8 +245,10 @@ namespace BusOut.Gameplay
             var panelAnimation = new PanelAnimationSettings
             {
                 DimFadeDuration = config.popupDimFadeDuration,
-                ItemPopDuration = config.popupItemPopDuration,
+                ItemDuration = config.popupItemDuration,
                 ItemInterval = config.popupItemInterval,
+                LateDelay = config.popupLateDelay,
+                SlideDistance = config.popupSlideDistance,
             };
             // Nhận thưởng và Chơi lại đều nạp level đang lưu: thắng thì save đã sang level sau.
             return levelResult.Init(panelAnimation)

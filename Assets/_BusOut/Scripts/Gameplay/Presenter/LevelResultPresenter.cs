@@ -69,7 +69,8 @@ namespace BusOut.Gameplay
             if (pending == Pending.None) return;
             timer -= deltaTime;
             if (timer > 0f) return;
-            if (pending == Pending.Win) view.ShowWin(config.winCoinReward, config.winCoinReward * config.winAdCoinMultiplier);
+            if (pending == Pending.Win) view.ShowWin(config.winCoinReward, config.winCoinReward * config.winAdCoinMultiplier,
+                config.popupCoinCountDuration);
             else if (canRevive) view.ShowContinue(config.reviveCoinCost, gameData.coinCount >= config.reviveCoinCost);
             else view.ShowLose(config.levelLabelFormat, level);
             pending = Pending.None;

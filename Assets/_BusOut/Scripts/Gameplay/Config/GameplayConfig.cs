@@ -9,10 +9,10 @@ namespace BusOut.Gameplay
     public class GameplayConfig : ScriptableObject
     {
         [Header("Xe")]
-        [Tooltip("Scale xe khi spawn. Level gốc được xếp với xe scale 0.85 — đổi số này là xe chồng lên nhau hoặc hở ra.")]
+        [Tooltip("Scale xe khi spawn.")]
         public float carScale = 0.85f;
 
-        [Tooltip("Bảng màu xe theo mã màu trong level (0..7 = A..H của game gốc).")]
+        [Tooltip("Bảng màu xe theo mã màu trong level.")]
         public List<Color> carColors;
 
         [Header("Bến đỗ")]
@@ -22,7 +22,7 @@ namespace BusOut.Gameplay
         [Tooltip("Ô trống cuối cùng nhấp nháy bao nhiêu lần lúc vừa thành ô cuối, rồi sáng đứng. Gốc: 4.")]
         public int warningBlinkCount = 4;
 
-        [Tooltip("Thời gian một lần nhấp nháy (tắt + sáng), giây. Gốc: 0.5.")]
+        [Tooltip("Thời gian một lần nhấp nháy (tắt + sáng), giây.")]
         public float warningBlinkDuration = 0.5f;
 
         [Header("Chạy lên bến")]
@@ -170,11 +170,21 @@ namespace BusOut.Gameplay
         [Tooltip("Mở popup: nền tối mờ dần vào trong bao lâu (giây).")]
         public float popupDimFadeDuration = 0.2f;
 
-        [Tooltip("Mở popup: mỗi object phóng từ 0 lên cỡ gốc trong bao lâu (giây).")]
-        public float popupItemPopDuration = 0.3f;
+        [Tooltip("Mở popup: mỗi object hiện (phóng / rơi / trồi / hiện dần) trong bao lâu (giây).")]
+        public float popupItemDuration = 0.35f;
 
         [Tooltip("Mở popup: object sau hiện trễ hơn object trước bao lâu (giây).")]
         public float popupItemInterval = 0.12f;
+
+        [Tooltip("Mở popup: nút phụ (đóng, \"Tap to collect\") hiện trễ thêm bao lâu sau object cuối (giây). Để người " +
+                 "chơi kịp nhìn nút chính trước.")]
+        public float popupLateDelay = 0.8f;
+
+        [Tooltip("Mở popup: quãng trượt của kiểu rơi xuống / trồi lên (đơn vị UI, theo Reference Resolution 1170×2532).")]
+        public float popupSlideDistance = 160f;
+
+        [Tooltip("WinPanel: số coin đếm từ 0 lên trong bao lâu (giây), bắt đầu lúc nút chứa số đó hiện.")]
+        public float popupCoinCountDuration = 0.5f;
 
         [Tooltip("Chữ \"Hết chỗ!\" hiện đứng yên bao lâu (giây) trước khi mờ dần.")]
         public float noSlotMessageHold = 0.8f;

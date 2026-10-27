@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -111,13 +112,32 @@ namespace BusOut.Gameplay
             losePanel.Hide();
         }
 
-        public void ShowWin(int reward, int adReward)
+        /// Số coin đếm từ 0 lên, bắt đầu đúng lúc nút chứa số đó hiện.
+        public void ShowWin(int reward, int adReward, float coinCountDuration)
         {
             continuePanel.Hide();
             losePanel.Hide();
-            winRewardText.SetText("{0}", reward);
-            winAdRewardText.SetText("{0}", adReward);
-            winPanel.Show(panelAnimation);
+            Sequence sequence = winPanel.Show(panelAnimation);
+            AddCoinCount(sequence, winAdRewardText, adReward, (RectTransform)winAdClaimButton.transform, coinCountDuration);
+            AddCoinCount(sequence, winRewardText, reward, (RectTransform)winClaimButton.transform, coinCountDuration);
+        }
+
+        private void AddCoinCount(Sequence sequence, TMP_Text text, int target, RectTransform owner, float duration)
+        {
+            float at = winPanel.RevealTimeOf(owner);
+            // Nút không nằm trong danh sách hiện lần lượt: hiện số luôn, không đếm.
+            if (at < 0f || duration <= 0f)
+            {
+                text.SetText("{0}", target);
+                return;
+            }
+            text.SetText("0");
+            int shown = 0;
+            sequence.Insert(at, DOTween.To(() => shown, value =>
+            {
+                shown = value;
+                text.SetText("{0}", value);
+            }, target, duration).SetEase(Ease.OutQuad));
         }
 
         /// <paramref name="canAfford"/> false → nút trả coin bấm không được (vẫn hiện giá để người chơi biết cần bao nhiêu).
