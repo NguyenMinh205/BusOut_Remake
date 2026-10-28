@@ -3,9 +3,9 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace BusOut.Gameplay
+namespace BusOut.Core
 {
-    /// Thời gian hoạt ảnh mở panel (lấy từ GameplayConfig).
+    /// Thời gian hoạt ảnh mở panel (Gameplay lấy từ GameplayConfig; phần khác truyền số của mình).
     public struct PanelAnimationSettings
     {
         public float DimFadeDuration;
