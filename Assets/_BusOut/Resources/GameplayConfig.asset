@@ -12,6 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839ca57d89f1411092489a0b19dca398, type: 3}
   m_Name: GameplayConfig
   m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.GameplayConfig
+  targetFrameRate: 60
   carScale: 0.85
   carColors:
   - {r: 1, g: 0.2, b: 0.2431373, a: 1}
@@ -25,7 +26,15 @@ MonoBehaviour:
   openSlotCount: 4
   warningBlinkCount: 4
   warningBlinkDuration: 0.5
+  introCarDuration: 0.35
+  introSpread: 0.6
   carMoveSpeed: 30
+  craneLiftHeight: 6
+  craneRiseDuration: 0.25
+  craneFlyDuration: 0.6
+  craneDropDuration: 0.2
+  boosterArmedScale: 1.15
+  undoRewindSpeed: 60
   carTurnSharpness: 20
   blockerRayInset: 0.08
   rammedMoveSpeed: 40
@@ -43,30 +52,72 @@ MonoBehaviour:
   passengerToBusSpeed: 15
   passengerTurnSharpness: 20
   passengerPlanAheadCount: 24
+  passengerGroupMin: 2
+  passengerGroupMax: 4
+  hardPointBaseBlockers: 2
+  hardPointSlotReserve: 2
   seatedPassengerScale: 0.65
   boardingInterval: 0.1
   carLeaveDelay: 0.5
   tapRayDistance: 200
+  cameraReferenceAspect: 0.4620853
+  loopStartLevel: 21
   winCoinReward: 20
+  winAdCoinMultiplier: 2
+  reviveCoinCost: 100
+  slotUnlockCoinCost: 100
+  slotUnlockName: EXTRA SLOT
+  slotUnlockDescription: Unlock one more parking space for this level.
+  slotUnlockIcon: {fileID: 21300000, guid: c1137c047cc51dd4fbfaec129ab3efca, type: 2}
   levelLabelFormat: LEVEL {0}
   boosters:
-  - type: 0
-    displayName: ARRANGE
-    icon: {fileID: 21300000, guid: c3c88591bc346ba47ab73097bad7989d, type: 2}
-    unlockLevel: 2
-  - type: 1
-    displayName: VIP SLOT
-    icon: {fileID: 21300000, guid: c5bcf12081dbac749a5a80ae4b7c6af3, type: 2}
-    unlockLevel: 3
   - type: 2
-    displayName: JUMBLE
-    icon: {fileID: 21300000, guid: 12c9ba298c1470d4b8ceb558d53fc3cf, type: 2}
+    displayName: SHUFFLE
+    icon: {fileID: 21300000, guid: b0400dfba26e25a4b940d3f76401036c, type: 2}
+    unlockLevel: 2
+    coinPrice: 120
+    buyAmount: 1
+    description: Shuffle the queue to open up new moves.
+  - type: 0
+    displayName: SORT
+    icon: {fileID: 21300000, guid: c3c88591bc346ba47ab73097bad7989d, type: 2}
+    unlockLevel: 3
+    coinPrice: 150
+    buyAmount: 1
+    description: Line up passengers so every car at the stop fills up and leaves.
+  - type: 1
+    displayName: UNDO
+    icon: {fileID: 21300000, guid: c5bcf12081dbac749a5a80ae4b7c6af3, type: 2}
     unlockLevel: 4
+    coinPrice: 100
+    buyAmount: 1
+    description: Send the last car you moved back to its parking spot.
   - type: 3
-    displayName: TURBO
+    displayName: CRANE
     icon: {fileID: 21300000, guid: 1bd1d2afdf2a6094aafbb0317b1dbe0a, type: 2}
     unlockLevel: 5
+    coinPrice: 200
+    buyAmount: 1
+    description: Lift any car, even a blocked one, straight to the stop.
   boosterLockIcon: {fileID: 21300000, guid: 61568a6e5fe042d4495e3cb36886e5d8, type: 2}
   boosterUnlockedBackground: {fileID: 21300000, guid: 83f00ce8cd2529945b33401d3d40db64, type: 2}
   boosterLockedBackground: {fileID: 21300000, guid: 56f28ca8052b832499d4690c6a8aa2c1, type: 2}
+  boosterRecolorPunch: 0.25
+  boosterRecolorDuration: 0.3
+  boosterDeniedShake: 18
+  languages:
+  - code: en
+    displayName: English
+  - code: vi
+    displayName: "Ti\u1EBFng Vi\u1EC7t"
   boosterLockedLabelFormat: LEVEL {0}
+  winPopupDelay: 1.4
+  losePopupDelay: 1.25
+  popupDimFadeDuration: 0.2
+  popupItemDuration: 0.35
+  popupItemInterval: 0.12
+  popupLateDelay: 0.8
+  popupSlideDistance: 160
+  popupCoinCountDuration: 0.5
+  noSlotMessageHold: 0.8
+  noSlotMessageFade: 0.25

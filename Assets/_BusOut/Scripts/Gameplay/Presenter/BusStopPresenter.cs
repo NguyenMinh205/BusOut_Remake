@@ -50,17 +50,14 @@ namespace BusOut.Gameplay
             Refresh();
         }
 
-        /// Người chơi chạm vào một ô.
-        /// ⚠️ TẠM: ô khoá mở NGAY. Khi có quảng cáo (Core): xin rewarded ad, chỉ mở khi nhận AdCompletedEvent có thưởng.
-        public void HandleSlotTapped(int slotIndex)
-        {
-            if (busStop.Unlock(slotIndex)) Refresh();
-        }
+        /// Ô có đang khoá không (chạm ô khoá → popup mở thêm ô, mua bằng coin / quảng cáo).
+        public bool IsLocked(int slotIndex) =>
+            slotIndex >= 0 && slotIndex < busStop.SlotCount && busStop.Slots[slotIndex].IsLocked;
 
         public bool HasLockedSlot => busStop.HasLockedSlot;
 
-        /// Hồi sinh: mở thêm 1 ô (ô khoá gần nhất). -1 khi không còn ô khoá.
-        /// ⚠️ TẠM: mở ngay, chưa qua quảng cáo / coin (như HandleSlotTapped).
+        /// Mở thêm 1 ô (ô khoá gần nhất) — hồi sinh, hoặc mua ô ở popup mở ô. -1 khi không còn ô khoá.
+        /// Trả coin / xem quảng cáo do nơi gọi lo (LevelResultPresenter, PurchasePresenter).
         public int UnlockNearest()
         {
             int slotIndex = busStop.UnlockNearest();

@@ -51,6 +51,10 @@ namespace BusOut.Gameplay
         private readonly Stack<int> stack = new Stack<int>();
         private readonly List<int> layer = new List<int>();
         private readonly List<int> extractOrder = new List<int>();
+        // ⚠️ Dựng sẵn một lần: truyền method group (PickRandom(IsReachable)) là mỗi lần gọi cấp phát một delegate mới
+        // (C# của Unity chưa cache), mỗi lượt lên kế hoạch gọi 2–8 lần → rác GC giữa ván.
+        private readonly Func<CarModel, bool> hasLeftLot;
+        private readonly Func<CarModel, bool> isReachable;
 
         public bool HasMore => unplannedCount > 0;
 
@@ -80,6 +84,8 @@ namespace BusOut.Gameplay
             hardPoints = level?.hardPoints ?? new HardPointData[0];
             hardPointFired = new bool[hardPoints.Length];
             for (int i = 0; i < MaxMixedCars; i++) groupSizes[i] = new List<int>(8);
+            hasLeftLot = HasLeftLot;
+            isReachable = IsReachable;
         }
 
         /// Lên kế hoạch lượt tiếp theo, thêm màu khách vào <paramref name="colors"/>. False khi đã hết xe.
@@ -340,7 +346,7 @@ namespace BusOut.Gameplay
 
         #region Chọn xe an toàn
 
-        private CarModel PickSafe() => PickRandom(HasLeftLot) ?? PickRandom(IsReachable);
+        private CarModel PickSafe() => PickRandom(hasLeftLot) ?? PickRandom(isReachable);
 
         private static bool HasLeftLot(CarModel car) => car.State != CarState.Parked;
 

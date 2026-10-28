@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BusOut.Core;
 using BusOut.DesignPattern;
 using UnityEngine;
 
@@ -23,6 +24,7 @@ namespace BusOut.Gameplay
         private readonly Action<PassengerView> onLeftQueueArrived;
 
         private readonly List<int> planBuffer = new List<int>(16);
+        private readonly List<int> changedBuffer = new List<int>(32);
         private PassengerColorPlanner planner;
         private float spacing;
         private float joinCooldown;
@@ -47,6 +49,9 @@ namespace BusOut.Gameplay
             path = new QueuePath(lineView.QueuePositions);
             onLeftQueueArrived = HandleLeftQueueArrived;
         }
+
+        /// Tạo sẵn <paramref name="count"/> khách trong pool. Gọi một lần lúc load (cùng chỗ với LevelSpawner.Prewarm).
+        public void Prewarm(int count) => PoolingManager.Prewarm(prefab.gameObject, count);
 
         public void ResetForLevel(PassengerColorPlanner colorPlanner)
         {
@@ -82,10 +87,26 @@ namespace BusOut.Gameplay
                     Debug.LogWarning("[BusOut] Không còn xe nào chắc chắn lấy ra được, đã chọn tạm một xe — level có thể có " +
                                      "xe chặn vòng nhau (vd. 2 xe đâm đầu vào nhau) và không giải được.");
                 if (planner.LastPickWasHardPoint)
-                    Debug.Log($"[BusOut] Hard point: {planBuffer.Count} khách màu {planBuffer[0]} của một xe đang bị chặn " +
+                    GameLog.Info($"[BusOut] Hard point: {planBuffer.Count} khách màu {planBuffer[0]} của một xe đang bị chặn " +
                               $"(đứng sau {queue.PendingCount} khách đã lên kế hoạch).");
                 queue.AddPending(planBuffer);
             }
+        }
+
+        /// Màu cả hàng theo thứ tự (đang đứng rồi đã lên kế hoạch) — cho booster sắp lại hàng.
+        public void CopyQueueColors(List<int> into) => queue.CopyColors(into);
+
+        /// Booster đặt lại thứ tự màu cả hàng (cùng số lượng, cùng tập màu). Khách đang đứng bị đổi màu thì tô lại + nảy.
+        public bool ApplyQueueColors(IReadOnlyList<int> colors)
+        {
+            if (!queue.ApplyColors(colors, changedBuffer)) return false;
+            for (int i = 0; i < changedBuffer.Count; i++)
+            {
+                int index = changedBuffer[i];
+                lineViews[index].Recolor(config.GetCarColor(queue.Line[index].ColorIndex), config.boosterRecolorPunch,
+                    config.boosterRecolorDuration);
+            }
+            return true;
         }
 
         /// Người đầu hàng rời hàng: trả về hình của họ để đưa đi tiếp; cả hàng dồn lên một chỗ.

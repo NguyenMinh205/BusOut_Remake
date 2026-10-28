@@ -55,6 +55,13 @@ namespace BusOut.Gameplay
 
         public void ArriveSlot() => State = CarState.InSlot;
 
+        /// Booster Undo: xe chưa có khách nào nhận ghế quay về chỗ cũ trong bãi.
+        public void ReturnToParking()
+        {
+            SlotIndex = -1;
+            State = CarState.Parked;
+        }
+
         public void ReserveSeat()
         {
             if (HasFreeSeat) ReservedSeats++;

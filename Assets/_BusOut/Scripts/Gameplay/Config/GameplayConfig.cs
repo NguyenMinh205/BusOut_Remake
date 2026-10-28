@@ -8,6 +8,11 @@ namespace BusOut.Gameplay
     [CreateAssetMenu(menuName = "BusOut/Gameplay Config", fileName = "GameplayConfig")]
     public class GameplayConfig : ScriptableObject
     {
+        [Header("Hiệu năng")]
+        [Tooltip("Khung hình / giây mục tiêu (Application.targetFrameRate). ⚠️ Không đặt thì điện thoại chạy 30 fps mặc định: " +
+                 "xe chạy, khách đi trông giật dù máy còn dư sức. 60 = mượt, tốn pin hơn; ≤ 0 = để mặc định nền tảng.")]
+        public int targetFrameRate = 60;
+
         [Header("Xe")]
         [Tooltip("Scale xe khi spawn.")]
         public float carScale = 0.85f;
@@ -25,9 +30,35 @@ namespace BusOut.Gameplay
         [Tooltip("Thời gian một lần nhấp nháy (tắt + sáng), giây.")]
         public float warningBlinkDuration = 0.5f;
 
+        [Header("Vào level")]
+        [Tooltip("Mỗi xe phóng từ 0 lên cỡ thật trong bao lâu (giây).")]
+        public float introCarDuration = 0.35f;
+
+        [Tooltip("Xe xa tâm bãi nhất hiện trễ hơn xe gần tâm nhất bao lâu (giây). Chạm bị khoá tới khi xe cuối hiện xong " +
+                 "(introSpread + introCarDuration).")]
+        public float introSpread = 0.6f;
+
         [Header("Chạy lên bến")]
         [Tooltip("Tốc độ xe chạy từ bãi lên bến và rời bến (đơn vị/giây). Gốc: 30.")]
         public float carMoveSpeed = 30f;
+
+        [Tooltip("Booster Crane: xe được nhấc cao bao nhiêu (đơn vị) trước khi bay sang bến.")]
+        public float craneLiftHeight = 6f;
+
+        [Tooltip("Booster Crane: thời gian nhấc lên (giây).")]
+        public float craneRiseDuration = 0.25f;
+
+        [Tooltip("Booster Crane: thời gian bay sang ô ở bến (giây).")]
+        public float craneFlyDuration = 0.6f;
+
+        [Tooltip("Booster Crane: thời gian hạ xuống ô (giây).")]
+        public float craneDropDuration = 0.2f;
+
+        [Tooltip("Nút booster đang \"giương\" (Crane chờ chọn xe) phóng to đứng yên bao nhiêu lần.")]
+        public float boosterArmedScale = 1.15f;
+
+        [Tooltip("Booster Undo: tốc độ xe tua ngược về chỗ cũ (đơn vị/giây). Nhanh hơn chạy thường để đọc là \"tua lại\".")]
+        public float undoRewindSpeed = 60f;
 
         [Tooltip("Độ gắt khi xe bẻ lái theo hướng chạy (1/giây). Càng lớn xe quay đầu càng nhanh.")]
         public float carTurnSharpness = 20f;
@@ -136,17 +167,34 @@ namespace BusOut.Gameplay
         [Tooltip("Giá coin hồi sinh +1 ô (popup Continue). GDD: 100.")]
         public int reviveCoinCost = 100;
 
+        [Header("Mở thêm ô đỗ (chạm ô khoá ở bến)")]
+        [Tooltip("Giá coin mở 1 ô khoá (chỉ cho level đang chơi). Bằng giá hồi sinh: cùng là +1 ô.")]
+        public int slotUnlockCoinCost = 100;
+
+        [Tooltip("Tiêu đề popup mở ô (dùng chung popup mua).")]
+        public string slotUnlockName = "EXTRA SLOT";
+
+        [Tooltip("Mô tả trong popup mở ô (tiếng Anh, như UI).")]
+        [TextArea] public string slotUnlockDescription = "Unlock one more parking space for this level.";
+
+        [Tooltip("Icon trong popup mở ô (gốc: icon_addoneslot). Để trống thì giữ icon đang có trên popup.")]
+        public Sprite slotUnlockIcon;
+
         [Header("Giao diện trong ván")]
         [Tooltip("Chữ level trên thanh trên; {0} = số level.")]
         public string levelLabelFormat = "LEVEL {0}";
 
-        [Tooltip("Booster theo thứ tự nút trên thanh dưới (trái → phải). Số phần tử phải bằng số nút trong BoosterBarView.")]
+        [Tooltip("Booster theo thứ tự nút trên thanh dưới (trái → phải) = thứ tự mở khoá (27/10/2026: Shuffle, Sort, Undo, Crane). Số phần tử phải bằng số nút trong BoosterBarView.")]
         public List<BoosterDefinition> boosters = new List<BoosterDefinition>
         {
-            new BoosterDefinition { type = BoosterType.Arrange, displayName = "ARRANGE", unlockLevel = 2 },
-            new BoosterDefinition { type = BoosterType.VipSlot, displayName = "VIP SLOT", unlockLevel = 3 },
-            new BoosterDefinition { type = BoosterType.Jumble, displayName = "JUMBLE", unlockLevel = 4 },
-            new BoosterDefinition { type = BoosterType.Turbo, displayName = "TURBO", unlockLevel = 5 },
+            new BoosterDefinition { type = BoosterType.Shuffle, displayName = "SHUFFLE", unlockLevel = 2,
+                coinPrice = 120, buyAmount = 1, description = "Shuffle the queue to open up new moves." },
+            new BoosterDefinition { type = BoosterType.Sort, displayName = "SORT", unlockLevel = 3,
+                coinPrice = 150, buyAmount = 1, description = "Line up passengers so every car at the stop fills up and leaves." },
+            new BoosterDefinition { type = BoosterType.Undo, displayName = "UNDO", unlockLevel = 4,
+                coinPrice = 100, buyAmount = 1, description = "Send the last car you moved back to its parking spot." },
+            new BoosterDefinition { type = BoosterType.Crane, displayName = "CRANE", unlockLevel = 5,
+                coinPrice = 200, buyAmount = 1, description = "Lift any car, even a blocked one, straight to the stop." },
         };
 
         [Tooltip("Icon ổ khoá trên nút booster chưa mở. Để trống thì giữ icon đang có.")]
@@ -157,6 +205,23 @@ namespace BusOut.Gameplay
 
         [Tooltip("Nền nút booster chưa mở (gốc: xám). Để trống thì giữ nền đang có.")]
         public Sprite boosterLockedBackground;
+
+        [Tooltip("Sort / Shuffle: khách bị đổi màu nảy lên bao nhiêu (tỉ lệ cỡ) để người chơi thấy chỗ đổi.")]
+        public float boosterRecolorPunch = 0.25f;
+
+        [Tooltip("Sort / Shuffle: thời gian cú nảy khi khách đổi màu (giây).")]
+        public float boosterRecolorDuration = 0.3f;
+
+        [Tooltip("Nút booster rung ngang bao nhiêu (đơn vị UI) khi bấm mà không dùng được (không mất lượt).")]
+        public float boosterDeniedShake = 18f;
+
+        [Tooltip("Ngôn ngữ nút Language xoay vòng qua (code lưu vào save, displayName hiện trên nút). ⚠️ Font chữ phải có đủ " +
+                 "glyph của displayName (vd. dấu tiếng Việt), không thì hiện ô vuông.")]
+        public List<LanguageOption> languages = new List<LanguageOption>
+        {
+            new LanguageOption { code = "en", displayName = "English" },
+            new LanguageOption { code = "vi", displayName = "Tiếng Việt" },
+        };
 
         [Tooltip("Chữ trên nút booster chưa mở; {0} = level mở khoá.")]
         public string boosterLockedLabelFormat = "LEVEL {0}";
@@ -206,6 +271,14 @@ namespace BusOut.Gameplay
         public static GameplayConfig CreateDefault() => CreateInstance<GameplayConfig>();
     }
 
+    /// Một ngôn ngữ trong cài đặt.
+    [Serializable]
+    public class LanguageOption
+    {
+        public string code;
+        public string displayName;
+    }
+
     /// Một booster trên thanh dưới: hiện gì, mở ở level nào.
     [Serializable]
     public class BoosterDefinition
@@ -213,7 +286,13 @@ namespace BusOut.Gameplay
         public BoosterType type;
         public string displayName;
         public Sprite icon;
-        [Tooltip("Level bắt đầu dùng được (gốc curve 2.8: Arrange 2, VIP Slot 3, Jumble 4, Turbo 5).")]
+        [Tooltip("Level bắt đầu dùng được (remake: Shuffle 2, Sort 3, Undo 4, Crane 5).")]
         [Min(1)] public int unlockLevel = 1;
+        [Tooltip("Giá coin mua thêm khi hết lượt (popup mua). GDD: Sort 150, Shuffle 120; Undo 100, Crane 200 (mạnh nhất).")]
+        [Min(0)] public int coinPrice = 100;
+        [Tooltip("Mỗi lần mua (coin hoặc quảng cáo) được bao nhiêu lượt.")]
+        [Min(1)] public int buyAmount = 1;
+        [Tooltip("Mô tả ngắn trong popup mua (tiếng Anh, như UI).")]
+        [TextArea] public string description;
     }
 }

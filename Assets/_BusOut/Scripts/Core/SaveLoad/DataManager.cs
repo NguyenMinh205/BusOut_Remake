@@ -41,6 +41,8 @@ namespace BusOut.Core
         public bool musicOn = true;
         public bool sfxOn = true;
         public bool vibrationOn = true;
+        /// Mã ngôn ngữ đang chọn (vd. "en", "vi"). Chưa có hệ thống đa ngôn ngữ: chỉ lưu lựa chọn.
+        public string language = "en";
         #endregion
 
         #region METHODS
@@ -135,6 +137,7 @@ namespace BusOut.Core
             musicOn = other.musicOn;
             sfxOn = other.sfxOn;
             vibrationOn = other.vibrationOn;
+            language = string.IsNullOrEmpty(other.language) ? "en" : other.language;
         }
 
         public void ClearAllData()

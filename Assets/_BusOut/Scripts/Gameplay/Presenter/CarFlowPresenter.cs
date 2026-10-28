@@ -23,6 +23,17 @@ namespace BusOut.Gameplay
         /// Chạm xe đường trống nhưng hết ô (để hiện chữ "Hết chỗ!").
         public event Action NoSlotRejected;
 
+        // Booster Undo: xe gửi lên bến gần nhất + chỗ đỗ của nó trong bãi lúc chạm (-1 = không có gì để Undo).
+        private int lastSentCarId = -1;
+        private Vector3 lastSentPosition;
+        private Quaternion lastSentRotation;
+        private int rewindingCarId = -1;
+        private readonly Action<CarView> onRewound;
+
+        /// Có xe đang tua ngược về bãi (Undo). ⚠️ Lúc này collider xe đó tắt: chạm xe khác là xe kia tưởng đường trống,
+        /// chạy xuyên qua xe đang lùi về → GameplayPresenter khoá chạm xe và booster tới khi xong.
+        public bool IsRewinding => rewindingCarId >= 0;
+
         public CarFlowPresenter(GameplayConfig config, ParkingLotView parkingLot, LevelSpawner spawner, BusStopPresenter busStop)
         {
             this.config = config;
@@ -32,6 +43,68 @@ namespace BusOut.Gameplay
             onArrivedSlot = HandleArrivedSlot;
             onLeft = HandleLeft;
             onReachedTopLane = HandleReachedTopLane;
+            onRewound = HandleRewound;
+        }
+
+        /// Vào level mới: quên xe đã gửi (Undo không được trả xe của ván trước).
+        public void ResetForLevel()
+        {
+            lastSentCarId = -1;
+            rewindingCarId = -1;
+        }
+
+        /// Booster Crane: nhấc xe trong bãi (kể cả đang bị chặn) bay thẳng vào ô trống đầu tiên. False = không làm gì:
+        /// xe không còn trong bãi / đang bận, hoặc hết ô (báo "Hết chỗ!").
+        /// Vẫn luôn giải được: tương đương lấy sớm một xe ra; bộ lên kế hoạch ưu tiên xe đã rời bãi.
+        public bool TryCraneLift(CarView view)
+        {
+            if (!spawner.TryGetCar(view, out CarModel car) || car.State != CarState.Parked || view.IsBusy) return false;
+            int slotIndex = busStop.TryReserve(car.Id);
+            if (slotIndex < 0)
+            {
+                NoSlotRejected?.Invoke();
+                return false;
+            }
+            car.StartMoveToSlot(slotIndex);
+            view.SetCollidersEnabled(false, false);
+            view.SetMarkVisible(false);
+            // ⚠️ Xe bay không chạy theo đường → Undo không có đường để tua ngược: không cho Undo xe này.
+            lastSentCarId = -1;
+            Vector3 entry = busStop.GetEntryPoint(slotIndex);
+            Vector3 park = busStop.GetParkPoint(slotIndex);
+            Vector3 parkDirection = park - entry;
+            parkDirection.y = 0f;
+            view.PlayCraneLift(park, Quaternion.LookRotation(parkDirection), config.craneLiftHeight,
+                config.craneRiseDuration, config.craneFlyDuration, config.craneDropDuration, onArrivedSlot);
+            return true;
+        }
+
+        /// Booster Undo: đưa xe gửi lên bến GẦN NHẤT về đúng chỗ cũ trong bãi. Chỉ được khi chưa có khách nào nhận ghế xe
+        /// đó (đang chạy tới bến hoặc đã đỗ mà chưa ai lên). False = không làm gì (không mất lượt).
+        /// Vẫn luôn giải được: lúc chạm, đường ra của xe đã trống; xe khác chỉ rời bãi chứ không chen vào đường đó.
+        public bool TryUndoLast()
+        {
+            if (lastSentCarId < 0 || IsRewinding) return false;
+            CarModel car = spawner.Cars[lastSentCarId];
+            CarView view = spawner.GetView(lastSentCarId);
+            if (view == null || car.ReservedSeats > 0) return false;
+            if (car.State != CarState.MovingToSlot && car.State != CarState.InSlot) return false;
+
+            busStop.Release(car.SlotIndex);
+            car.ReturnToParking();
+            view.SetRoofOpen(false);
+            rewindingCarId = car.Id;
+            lastSentCarId = -1;
+            view.Rewind(lastSentPosition, lastSentRotation, config.undoRewindSpeed, onRewound);
+            return true;
+        }
+
+        private void HandleRewound(CarView view)
+        {
+            rewindingCarId = -1;
+            // Về chỗ: chặn xe khác và chạm được lại như trước khi gửi đi.
+            view.SetCollidersEnabled(true, true);
+            view.SetMarkVisible(true);
         }
 
         public void HandleCarTapped(CarView view)
@@ -63,6 +136,9 @@ namespace BusOut.Gameplay
                 return;
             }
 
+            lastSentCarId = car.Id;
+            lastSentPosition = carTransform.position;
+            lastSentRotation = carTransform.rotation;
             car.StartMoveToSlot(slotIndex);
             // Tắt collider ngay: xe đã rời chỗ không còn chặn ai, và không chạm được khi đang chạy.
             view.SetCollidersEnabled(false, false);

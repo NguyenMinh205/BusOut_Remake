@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using BusOut.DesignPattern;
+using DG.Tweening;
 using UnityEngine;
 
 namespace BusOut.Gameplay
@@ -48,6 +49,21 @@ namespace BusOut.Gameplay
             propertyBlock.SetFloat(VipPropertyId, isVip ? 1f : 0f);
             bodyRenderer.SetPropertyBlock(propertyBlock);
             return true;
+        }
+
+        /// Booster (Sort / Shuffle) đổi màu khách đang đứng: tô màu mới + nảy nhẹ cho người chơi thấy chỗ đổi.
+        public void Recolor(Color color, float punch, float duration)
+        {
+            if (propertyBlock == null || bodyRenderer == null) return;
+            bodyRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(ColorPropertyId, color);
+            bodyRenderer.SetPropertyBlock(propertyBlock);
+            // Nảy theo cỡ gốc: Complete cú nảy cũ trước để không cộng dồn lệch cỡ.
+            transform.DOComplete();
+            Vector3 baseScale = hasDefaultScale ? defaultLocalScale : transform.localScale;
+            transform.DOPunchScale(baseScale * punch, duration, 6, 0.5f)
+                .SetLink(gameObject)
+                .SetTarget(transform);
         }
 
         /// Đi lần lượt qua các điểm với tốc độ đều, mặt quay theo hướng đi; tới nơi quay về <paramref name="endRotation"/>.
@@ -126,6 +142,18 @@ namespace BusOut.Gameplay
                 animator.SetBool(IsMovingHash, moving);
         }
 
+        /// Đã ngồi lên ghế: chốt tư thế đứng (khung đầu của state mặc định = Idle) rồi tắt Animator.
+        /// ⚠️ Mỗi khách là Animator + SkinnedMesh; xe ở bến mở nóc thì tới ~40 khách ngồi cùng lúc vẫn chạy Idle cộng với
+        /// 25 người trong hàng. Khách ngồi không cần chuyển động. Rebind trước khi Update(0) để không đứng hình giữa bước
+        /// chân (vừa chuyển Walk → Idle chưa xong).
+        public void FreezeSeatedPose()
+        {
+            if (animator == null || animator.runtimeAnimatorController == null || !animator.isActiveAndEnabled) return;
+            animator.Rebind();
+            animator.Update(0f);
+            animator.enabled = false;
+        }
+
         /// Lấy lại scale của prefab: lần dùng trước khách có thể đã bị thu nhỏ khi ngồi trên xe.
         public void OnSpawned()
         {
@@ -135,6 +163,8 @@ namespace BusOut.Gameplay
                 hasDefaultScale = true;
             }
             transform.localScale = defaultLocalScale;
+            // Lần dùng trước đã ngồi trên xe (FreezeSeatedPose tắt Animator): bật lại, Animator tự về state mặc định.
+            if (animator != null) animator.enabled = true;
         }
 
         /// Trả về pool: dừng đi, bỏ callback cũ (không thì khách của lượt trước gọi nhầm vào logic lượt sau).
@@ -145,6 +175,9 @@ namespace BusOut.Gameplay
             walkPath.Clear();
             PassengerId = -1;
             SetMovingAnimation(false);
+            // ⚠️ Cú nảy đổi màu đang chạy dở mà trả về pool → lần lấy ra sau cỡ bị lệch. Dừng và trả cỡ gốc.
+            transform.DOKill();
+            if (hasDefaultScale) transform.localScale = defaultLocalScale;
         }
     }
 }

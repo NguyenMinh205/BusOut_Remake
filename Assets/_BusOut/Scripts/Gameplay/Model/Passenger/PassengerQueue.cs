@@ -49,6 +49,31 @@ namespace BusOut.Gameplay
             return true;
         }
 
+        /// Màu của cả hàng theo thứ tự: đang đứng (đầu → cuối) rồi đã lên kế hoạch chưa xuất hiện.
+        public void CopyColors(List<int> into)
+        {
+            into.Clear();
+            for (int i = 0; i < line.Count; i++) into.Add(line[i].ColorIndex);
+            foreach (int color in pendingColors) into.Add(color);
+        }
+
+        /// Đặt lại màu theo thứ tự mới (cùng số lượng với CopyColors). Ghi chỉ số khách ĐANG ĐỨNG bị đổi màu vào
+        /// <paramref name="changedLine"/> để View tô lại. False (không đổi gì) khi số lượng lệch.
+        public bool ApplyColors(IReadOnlyList<int> colors, List<int> changedLine)
+        {
+            changedLine.Clear();
+            if (colors.Count != line.Count + pendingColors.Count) return false;
+            for (int i = 0; i < line.Count; i++)
+            {
+                if (line[i].ColorIndex == colors[i]) continue;
+                line[i].ColorIndex = colors[i];
+                changedLine.Add(i);
+            }
+            pendingColors.Clear();
+            for (int i = line.Count; i < colors.Count; i++) pendingColors.Enqueue(colors[i]);
+            return true;
+        }
+
         /// Người đầu hàng rời hàng; cả hàng dồn lên một chỗ.
         public PassengerModel RemoveHead()
         {

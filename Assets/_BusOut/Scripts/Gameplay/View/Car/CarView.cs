@@ -6,9 +6,9 @@ using UnityEngine;
 
 namespace BusOut.Gameplay
 {
-    /// Hình và chuyển động của một xe. Gắn trên root prefab Car / Van / Bus.
+    /// Hình và chuyển động của một xe. Gắn trên root prefab Car / Van / Bus. Được pool (PoolingManager).
     /// Không giữ luật: Presenter quyết định xe đi đâu, View chỉ diễn.
-    public class CarView : MonoBehaviour
+    public class CarView : MonoBehaviour, IPoolable
     {
         private static readonly int ColorPropertyId = Shader.PropertyToID("_Color");
         // Shader BusOut/Vehicle: _Fill = 0 cắt bỏ phần thân cao hơn _RoofCut (mở nóc), 1 = xe bình thường.
@@ -50,15 +50,22 @@ namespace BusOut.Gameplay
         private Sequence ramSequence;
         private Tween tiltTween;
         private Tween shakeTween;
+        private Sequence craneSequence;
         private Quaternion restRotation;
         private MaterialPropertyBlock propertyBlock;
-        // Khách đang ngồi trên xe (con của ghế): trả về pool trước khi xe bị xoá, không thì bị Destroy theo xe.
+        // Khách đang ngồi trên xe (con của ghế): trả về pool cùng lúc xe về pool, không thì khách vẫn ngồi trên xe
+        // khi xe được lấy ra cho level sau.
         private readonly List<GameObject> seatedPassengers = new List<GameObject>(10);
 
         public int CarId { get; private set; }
 
-        /// Đang lao tới / lùi về / rung — chạm thêm thì bỏ qua để xe không bị dịch khỏi chỗ đỗ.
-        public bool IsBusy => (ramSequence != null && ramSequence.IsActive()) || (shakeTween != null && shakeTween.IsActive());
+        /// Đang lao tới / lùi về / lắc vì bị đâm / rung / tua ngược / bay (Crane) — chạm thêm thì bỏ qua.
+        /// ⚠️ Gồm cả lúc lắc (tiltTween): đang nghiêng 4° mà cho chạy thì tia kiểm chặn lệch theo (có thể chạy xuyên xe
+        /// chặn thật), và Undo nhớ luôn góc nghiêng làm chỗ đỗ.
+        public bool IsBusy => isDriving || (ramSequence != null && ramSequence.IsActive()) ||
+                              (tiltTween != null && tiltTween.IsActive()) ||
+                              (shakeTween != null && shakeTween.IsActive()) ||
+                              (craneSequence != null && craneSequence.IsActive());
 
         /// Nửa chiều dài thân xe theo hướng đầu xe (thế giới), tính từ tâm collider thân.
         public float HalfLength => bodyCollider.size.z * 0.5f * transform.lossyScale.z;
@@ -86,9 +93,28 @@ namespace BusOut.Gameplay
             bodyRenderer.SetPropertyBlock(propertyBlock);
             // Đặt rõ nóc đóng: không dựa vào giá trị _Fill trong material (đổi tay trong material là cả loại xe mở nóc).
             SetRoofOpen(false);
+            // ⚠️ Xe lấy lại từ pool mang trạng thái lần trước (đã chạy lên bến: tắt collider, ẩn mũi tên). Không bật lại
+            // thì xe trong bãi không chạm được và không chặn ai.
+            SetCollidersEnabled(true, true);
+            markObject.SetActive(true);
 
             restRotation = transform.rotation;
             return true;
+        }
+
+        public void OnSpawned() { }
+
+        /// Trả về pool: dừng chạy / tween, bỏ callback (không thì xe của level trước báo tới nơi vào level sau),
+        /// trả khách đang ngồi về pool của khách.
+        public void OnDespawned()
+        {
+            StopAll();
+            ramSequence = null;
+            tiltTween = null;
+            shakeTween = null;
+            craneSequence = null;
+            drivePath.Clear();
+            DespawnSeatedPassengers();
         }
 
         /// Mở nóc (xe đang đỗ ở bến, lộ ghế) hoặc đóng nóc (trong bãi, đang chạy). Ghế và khách ngồi ẩn khi đóng nóc:
@@ -114,8 +140,8 @@ namespace BusOut.Gameplay
             seatedPassengers.Add(passenger.gameObject);
         }
 
-        /// Trả mọi khách đang ngồi về pool. Gọi TRƯỚC khi Destroy xe.
-        public void DespawnSeatedPassengers()
+        /// Trả mọi khách đang ngồi về pool (tự gọi khi xe về pool).
+        private void DespawnSeatedPassengers()
         {
             foreach (GameObject passenger in seatedPassengers)
                 if (passenger != null) PoolingManager.Despawn(passenger);
@@ -237,6 +263,19 @@ namespace BusOut.Gameplay
                 .OnKill(RestoreRestRotation);
         }
 
+        /// Vào level: phóng từ 0 lên cỡ đang đặt (nảy nhẹ), trễ <paramref name="delay"/> giây.
+        /// Gọi SAU khi đã dựng đồ thị chặn: đồ thị bắn tia vào collider, xe cỡ 0 thì không chặn ai.
+        public void PlayIntro(float delay, float duration)
+        {
+            Vector3 targetScale = transform.localScale;
+            transform.localScale = Vector3.zero;
+            transform.DOScale(targetScale, duration)
+                .SetDelay(delay)
+                .SetEase(Ease.OutBack)
+                .SetLink(gameObject)
+                .SetTarget(transform);
+        }
+
         /// Hết ô đỗ: rung ngang tại chỗ.
         public void PlayRejectShake(GameplayConfig config)
         {
@@ -328,6 +367,42 @@ namespace BusOut.Gameplay
             Action<CarView> callback = onDriveFinished;
             onDriveFinished = null;
             callback?.Invoke(this);
+        }
+
+        /// Booster Undo: chạy LÙI ngược theo đúng đường vừa chạy (từ chỗ đang đứng về điểm đầu đường), đầu xe giữ hướng cũ,
+        /// rồi về hẳn <paramref name="startPosition"/> / <paramref name="startRotation"/> (chỗ đỗ trong bãi lúc chạm).
+        /// Dùng đường của lần Drive gần nhất (đường lên bến): đang chạy dở thì chỉ lùi qua những điểm đã đi qua.
+        public void Rewind(Vector3 startPosition, Quaternion startRotation, float speed, Action<CarView> onFinished)
+        {
+            var points = new List<Vector3>(drivePathIndex + 1);
+            for (int i = Mathf.Min(drivePathIndex, drivePath.Count) - 1; i >= 0; i--) points.Add(drivePath[i]);
+            points.Add(startPosition);
+            // Mọi điểm chạy lùi: đầu xe quay ngược hướng chạy = giữ hướng lúc tiến lên.
+            Drive(points, speed, driveTurnSharpness, startRotation, onFinished, points.Count);
+        }
+
+        /// Booster Crane: nhấc thẳng lên <paramref name="liftHeight"/>, bay (vừa bay vừa xoay thẳng ô) tới trên
+        /// <paramref name="parkPosition"/>, hạ xuống đúng chỗ. Không chạy theo đường nên không vướng xe nào.
+        public void PlayCraneLift(Vector3 parkPosition, Quaternion parkRotation, float liftHeight, float riseDuration,
+            float flyDuration, float dropDuration, Action<CarView> onArrived)
+        {
+            KillRam();
+            KillTilt();
+            isDriving = false;
+            if (craneSequence != null && craneSequence.IsActive()) craneSequence.Kill();
+            Vector3 lift = Vector3.up * liftHeight;
+            craneSequence = DOTween.Sequence()
+                .Append(transform.DOMove(transform.position + lift, riseDuration).SetEase(Ease.OutQuad))
+                .Append(transform.DOMove(parkPosition + lift, flyDuration).SetEase(Ease.InOutSine))
+                .Join(transform.DORotateQuaternion(parkRotation, flyDuration).SetEase(Ease.InOutSine))
+                .Append(transform.DOMove(parkPosition, dropDuration).SetEase(Ease.InQuad))
+                .SetLink(gameObject)
+                .SetTarget(transform)
+                .OnComplete(() =>
+                {
+                    restRotation = transform.rotation;
+                    onArrived?.Invoke(this);
+                });
         }
 
         public void StopAll()

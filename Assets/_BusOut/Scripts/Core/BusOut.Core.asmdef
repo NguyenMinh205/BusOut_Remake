@@ -2,7 +2,9 @@
     "name": "BusOut.Core",
     "rootNamespace": "BusOut.Core",
     "references": [
-        "BusOut.DesignPattern"
+        "BusOut.DesignPattern",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -120,6 +120,7 @@ namespace BusOut.Gameplay
             car.BoardSeat();
             // Ghế theo thứ tự khách tới: khách thứ n ngồi ghế n. Xe xoá thì CarView trả khách về pool.
             carView.SeatPassenger(view.transform, car.BoardedSeats - 1, config.seatedPassengerScale);
+            view.FreezeSeatedPose();
             // Đủ khách: chờ một chút cho người cuối "ngồi xuống" rồi mới chạy (gốc: 0.5s).
             if (car.IsFull) pendingLeaves.Add(new PendingLeave { CarId = carId, Remaining = config.carLeaveDelay });
         }

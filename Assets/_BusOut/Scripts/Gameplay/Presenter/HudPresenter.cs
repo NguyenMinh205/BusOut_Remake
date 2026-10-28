@@ -15,6 +15,9 @@ namespace BusOut.Gameplay
         private readonly TopBarView topBar;         // null khi thiếu: phần còn lại vẫn chạy
         private readonly BoosterBarView boosterBar; // null khi thiếu
         private readonly Action replayRequested;
+        private readonly Func<BoosterType, bool> boosterRequested;
+        private readonly Func<BoosterType, bool> shopRequested;
+        private readonly Action settingsRequested;
 
         // Dựng sẵn delegate: Subscribe / Unsubscribe phải cùng một instance.
         private readonly Action<CurrencyUpdatedEvent> onCurrencyUpdated;
@@ -23,14 +26,20 @@ namespace BusOut.Gameplay
 
         private int shownLevel = 1;
 
+        /// <paramref name="boosterRequested"/>: dùng booster; false = không dùng được (nút rung, không mất lượt).
+        /// <paramref name="shopRequested"/>: mở popup mua khi hết lượt; false = không mở được (nút rung).
         public HudPresenter(GameplayConfig config, SecureGameData gameData, TopBarView topBar, BoosterBarView boosterBar,
-            Action replayRequested)
+            Action replayRequested, Func<BoosterType, bool> boosterRequested, Func<BoosterType, bool> shopRequested,
+            Action settingsRequested)
         {
             this.config = config;
             this.gameData = gameData;
             this.topBar = topBar;
             this.boosterBar = boosterBar;
             this.replayRequested = replayRequested;
+            this.boosterRequested = boosterRequested;
+            this.shopRequested = shopRequested;
+            this.settingsRequested = settingsRequested;
 
             if (topBar != null)
             {
@@ -79,6 +88,14 @@ namespace BusOut.Gameplay
             if (index >= 0 && IsUnlocked(index)) boosterBar.GetButton(index).SetCount(e.Count);
         }
 
+        /// Booster đổi trạng thái giương (Crane chờ chọn xe): nút phóng to / thu lại.
+        public void SetBoosterArmed(BoosterType type, bool armed)
+        {
+            if (boosterBar == null) return;
+            int index = FindBoosterIndex(type);
+            if (index >= 0) boosterBar.GetButton(index).SetArmed(armed, config.boosterArmedScale);
+        }
+
         private void RefreshBoosters()
         {
             if (boosterBar == null) return;
@@ -101,14 +118,15 @@ namespace BusOut.Gameplay
             int index = IndexOf(button);
             if (index < 0 || index >= config.boosters.Count || !IsUnlocked(index)) return;
             BoosterDefinition booster = config.boosters[index];
-            // ⚠️ TẠM: chưa có tác dụng booster, chưa trừ lượt. Khi làm từng booster: TryUseBooster rồi mới chạy hiệu ứng.
-            Debug.Log($"[BusOut] Chạm booster {booster.type} (còn {gameData.GetBoosterCount(booster.type)} lượt) — chưa làm tác dụng.");
+            // Hết lượt (huy hiệu "+") → mở popup mua; còn lượt → dùng. Số lượt trên nút tự cập nhật qua
+            // BoosterCountChangedEvent khi dùng / mua thành công.
+            Func<BoosterType, bool> action = gameData.GetBoosterCount(booster.type) > 0 ? boosterRequested : shopRequested;
+            if (action == null || !action(booster.type)) button.PlayDenied(config.boosterDeniedShake);
         }
 
         private void HandleReplayClicked() => replayRequested?.Invoke();
 
-        // TẠM: chưa có popup cài đặt.
-        private static void HandleSettingsClicked() => Debug.Log("[BusOut] Chạm Cài đặt — chưa có popup.");
+        private void HandleSettingsClicked() => settingsRequested?.Invoke();
 
         private bool IsUnlocked(int boosterIndex) => shownLevel >= config.boosters[boosterIndex].unlockLevel;
 

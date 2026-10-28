@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -22,6 +23,8 @@ namespace BusOut.Gameplay
 
         public event Action<BoosterButtonView> Clicked;
 
+        private Vector3 baseScale = Vector3.one;
+
         public bool Init()
         {
             string missing = "";
@@ -37,6 +40,8 @@ namespace BusOut.Gameplay
                 return false;
             }
             button.onClick.AddListener(HandleClicked);
+            // ⚠️ Nhớ cỡ gốc trong scene: SetArmed thu về cỡ này (thu về 1 là méo nút nếu prefab đặt scale khác 1).
+            baseScale = transform.localScale;
             return true;
         }
 
@@ -72,6 +77,26 @@ namespace BusOut.Gameplay
         private static void SetSprite(Image image, Sprite sprite)
         {
             if (sprite != null) image.sprite = sprite;
+        }
+
+        /// Đang "giương" (Crane chờ chọn xe): phóng to và đứng yên; thôi giương thì về cỡ gốc. Không lặp (không pulse).
+        public void SetArmed(bool armed, float armedScale)
+        {
+            transform.DOKill();
+            transform.DOScale(baseScale * (armed ? armedScale : 1f), 0.15f)
+                .SetEase(Ease.OutBack)
+                .SetLink(gameObject)
+                .SetTarget(transform);
+        }
+
+        /// Bấm mà không dùng được: rung ngang ngắn, không đổi gì khác.
+        public void PlayDenied(float distance)
+        {
+            // Complete cú rung trước (nếu bấm liên tục) để nút về đúng chỗ rồi mới rung tiếp.
+            transform.DOComplete();
+            transform.DOPunchPosition(Vector3.right * distance, 0.3f, 10, 0.5f)
+                .SetLink(gameObject)
+                .SetTarget(transform);
         }
 
         private void HandleClicked() => Clicked?.Invoke(this);

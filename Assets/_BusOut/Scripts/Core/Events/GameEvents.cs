@@ -67,14 +67,15 @@ namespace BusOut.Core
         public int DeltaAmount; // âm = trừ, dương = cộng
     }
 
-    /// Booster theo thứ tự trên thanh dưới màn chơi (gốc: Sort, VIP trực thăng, Shuffle, Turbo).
+    /// Các booster. Sort và Shuffle như gốc (vai trò tách rõ 27/10/2026); Undo và Crane là booster riêng của remake
+    /// (thay VIP trực thăng và Turbo — cùng chỉ số 1 và 3). Thứ tự trên thanh / mở khoá do GameplayConfig.boosters quyết.
     /// ⚠️ Giá trị = chỉ số trong SecureGameData.boosterCounts (đã lưu): chỉ thêm vào cuối, không đổi thứ tự.
     public enum BoosterType
     {
-        Arrange,
-        VipSlot,
-        Jumble,
-        Turbo,
+        Sort,
+        Undo,
+        Shuffle,
+        Crane,
     }
 
     /// Số lượt một booster thay đổi.
@@ -112,6 +113,20 @@ namespace BusOut.Core
     #endregion
 
     #region Âm thanh, phản hồi
+
+    /// Người chơi đổi cài đặt âm thanh / rung (đã lưu). Hệ thống âm thanh / rung nghe sự kiện này.
+    public struct SettingsChangedEvent : IEvent
+    {
+        public bool MusicOn;
+        public bool SoundOn;
+        public bool VibrationOn;
+    }
+
+    /// Người chơi đổi ngôn ngữ (đã lưu). Hệ thống đa ngôn ngữ (chưa có) nghe sự kiện này.
+    public struct LanguageChangedEvent : IEvent
+    {
+        public string Code;
+    }
 
     /// Yêu cầu phát âm thanh: Gameplay không cần biết tới AudioManager.
     public struct PlayAudioEvent : IEvent

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using BusOut.DesignPattern;
 using UnityEngine;
 
 namespace BusOut.Gameplay
@@ -44,31 +45,77 @@ namespace BusOut.Gameplay
                 Debug.LogWarning($"[BusOut] Level {level.index}: bỏ qua {skippedInTool} xe trong garage/băng chuyền và {skippedVip} xe VIP (chưa hỗ trợ).");
         }
 
-        /// Xoá mọi xe, dừng mọi chuyển động. Gọi trước khi dựng level mới.
-        public void DespawnAll()
+        /// Xe "bung" ra từ tâm bãi: xe gần tâm hiện trước, xe xa nhất trễ <paramref name="spread"/> giây.
+        /// Trả về thời gian tới khi xe cuối cùng hiện xong (để khoá chạm trong lúc đó).
+        public float PlayIntro(float duration, float spread)
         {
+            if (carViews.Count == 0) return 0f;
+            Vector3 center = Vector3.zero;
+            int count = 0;
             foreach (CarView view in carViews)
             {
                 if (view == null) continue;
-                view.StopAll();
-                // ⚠️ Destroy chỉ xoá cuối frame: tắt collider NGAY, không thì dựng đồ thị chặn cho level mới
-                // (cùng frame) vẫn bắn trúng xe cũ đang nằm đúng chỗ đó.
-                view.SetCollidersEnabled(false, false);
-                view.DespawnSeatedPassengers();
-                Object.Destroy(view.gameObject);
+                center += view.transform.position;
+                count++;
             }
+            if (count == 0) return 0f;
+            center /= count;
+            float maxDistance = 0f;
+            foreach (CarView view in carViews)
+                if (view != null) maxDistance = Mathf.Max(maxDistance, Vector3.Distance(view.transform.position, center));
+            foreach (CarView view in carViews)
+            {
+                if (view == null) continue;
+                float t = maxDistance > 0f ? Vector3.Distance(view.transform.position, center) / maxDistance : 0f;
+                view.PlayIntro(spread * t, duration);
+            }
+            return spread + duration;
+        }
+
+        /// Tạo sẵn xe trong pool, mỗi loại đủ cho level đông loại đó nhất của file curve: vào level / chơi lại không còn
+        /// Instantiate. Gọi một lần lúc load (TẠM: GameplayPresenter.Start; có màn Loading thì gọi trong lúc Loading).
+        public void Prewarm(LevelCurveData curve)
+        {
+            int four = 0, six = 0, ten = 0;
+            if (curve?.levels != null)
+                foreach (LevelData level in curve.levels)
+                {
+                    if (level?.vehicles == null) continue;
+                    int levelFour = 0, levelSix = 0, levelTen = 0;
+                    foreach (VehicleData data in level.vehicles)
+                    {
+                        if (data.IsInTool) continue; // như Spawn: xe garage / băng chuyền chưa spawn
+                        if (data.Type == VehicleType.FourSeat) levelFour++;
+                        else if (data.Type == VehicleType.SixSeat) levelSix++;
+                        else if (data.Type == VehicleType.TenSeat) levelTen++;
+                    }
+                    four = Mathf.Max(four, levelFour);
+                    six = Mathf.Max(six, levelSix);
+                    ten = Mathf.Max(ten, levelTen);
+                }
+            PoolingManager.Prewarm(fourSeatPrefab.gameObject, four);
+            PoolingManager.Prewarm(sixSeatPrefab.gameObject, six);
+            PoolingManager.Prewarm(tenSeatPrefab.gameObject, ten);
+        }
+
+        /// Trả mọi xe về pool, dừng mọi chuyển động. Gọi trước khi dựng level mới.
+        /// ⚠️ Pool TẮT object ngay nên collider ra khỏi vật lý ngay. Đừng đổi lại thành Destroy mà không tắt collider trước:
+        /// Destroy cuối frame mới xoá, dựng đồ thị chặn cho level mới (cùng frame) sẽ bắn trúng xe cũ nằm đúng chỗ đó.
+        public void DespawnAll()
+        {
+            foreach (CarView view in carViews)
+                if (view != null) PoolingManager.Despawn(view);
             cars.Clear();
             carViews.Clear();
         }
 
-        /// Xe đã rời bãi hẳn: xoá hình, giữ chỗ trong list để CarId của xe khác không đổi.
+        /// Xe đã rời bãi hẳn: trả hình về pool, giữ chỗ trong list để CarId của xe khác không đổi.
         public void Despawn(CarView view)
         {
             if (!TryGetCar(view, out CarModel car)) return;
             car.MarkGone();
             carViews[view.CarId] = null;
-            view.DespawnSeatedPassengers();
-            Object.Destroy(view.gameObject);
+            PoolingManager.Despawn(view);
         }
 
         /// Mọi xe đã rời đi hẳn (hoặc level không có xe).
@@ -93,6 +140,9 @@ namespace BusOut.Gameplay
             }
         }
 
+        /// Đồ thị chặn của level hiện tại (lần dựng gần nhất); null trước khi dựng.
+        public BlockingGraph Graph { get; private set; }
+
         /// Dựng đồ thị chặn cho các xe vừa spawn: mỗi xe ghi lại mọi xe nằm trên đường ra của nó.
         public BlockingGraph BuildBlockingGraph()
         {
@@ -115,6 +165,7 @@ namespace BusOut.Gameplay
                     if (TryGetCar(other, out CarModel otherCar)) aheadIds.Add(otherCar.Id);
                 graph.SetAhead(id, aheadIds);
             }
+            Graph = graph;
             return graph;
         }
 
@@ -139,9 +190,14 @@ namespace BusOut.Gameplay
             int id = cars.Count;
             Vector3 position = parkingLot.LevelToWorld(data.x, data.z);
             Quaternion rotation = Quaternion.Euler(0f, data.rotY, 0f);
-            CarView view = Object.Instantiate(prefab, position, rotation, parkingLot.CarsRoot);
+            // ⚠️ Pool thay Instantiate: dựng ~84 xe mỗi lần vào level / chơi lại là khung giật. Xe lấy lại giữ scale lần
+            // trước (có thể đang 0 nếu bị trả về giữa hoạt ảnh vào level) → luôn đặt lại scale ở đây, trước PlayIntro.
+            CarView view = PoolingManager.Spawn(prefab, position, rotation, parkingLot.CarsRoot);
             view.transform.localScale = prefab.transform.localScale * config.carScale;
+#if UNITY_EDITOR
+            // Tên theo CarId chỉ để dò trong Hierarchy; bản build bỏ (mỗi xe một chuỗi mới mỗi level).
             view.name = $"{prefab.name}_{id:00}";
+#endif
 
             cars.Add(new CarModel(id, data.Type, data.color));
             carViews.Add(view);
