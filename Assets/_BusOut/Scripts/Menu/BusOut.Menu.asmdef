@@ -1,0 +1,19 @@
+{
+    "name": "BusOut.Menu",
+    "rootNamespace": "BusOut.Menu",
+    "references": [
+        "BusOut.DesignPattern",
+        "BusOut.Core",
+        "UnityEngine.UI",
+        "Unity.TextMeshPro"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
