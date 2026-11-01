@@ -29,7 +29,7 @@ namespace BusOut.Menu
     /// View chỉ kéo theo tay và chạy tới trang được bảo; thả tay thì về trang nào do presenter quyết.
     /// Gắn trên ViewPort. ViewPort cần Image trong suốt (Raycast Target bật), không thì vuốt ở chỗ trống không ăn.
     /// ⚠️ Không dùng ScrollRect: nó nhận cả vuốt dọc, mà vuốt dọc là để quay bản đồ level (cùng một vùng màn hình).
-    /// Ở đây hướng vuốt chốt ngay lúc bắt đầu kéo: ngang → trang, dọc → bỏ qua.
+    /// Ở đây hướng vuốt chốt ngay lúc bắt đầu kéo: ngang → trang, dọc → chuyển nguyên cho ai nghe VerticalDrag* (bản đồ).
     public class MenuPageView : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
     {
         [Tooltip("Content: cha của các trang, căn kín ViewPort. Code dời nó sang ngang để đổi trang.")]
@@ -39,6 +39,10 @@ namespace BusOut.Menu
 
         public event Action<float> ProgressChanged;
         public event Action<PageSwipe> SwipeReleased;
+        /// Vuốt dọc: bắt đầu / mỗi lần ngón tay di chuyển (độ dời dọc, pixel; dương = lên) / thả tay.
+        public event Action VerticalDragBegan;
+        public event Action<float> VerticalDragged;
+        public event Action VerticalDragEnded;
 
         public int PageCount => pages.Length;
         public float Progress { get; private set; }
@@ -47,6 +51,7 @@ namespace BusOut.Menu
         private Canvas rootCanvas;
         private bool isReady;
         private bool isDraggingPages;
+        private bool isDraggingVertically;
         private float dragStartProgress;
         private float dragStartTime;
         private Tween scrollTween;
@@ -97,7 +102,12 @@ namespace BusOut.Menu
             // Hướng tính từ chỗ bắt đầu chạm (đã qua ngưỡng kéo của EventSystem) — delta của một khung quá nhỏ, dễ sai hướng.
             Vector2 movement = eventData.position - eventData.pressPosition;
             isDraggingPages = Mathf.Abs(movement.x) >= Mathf.Abs(movement.y);
-            if (!isDraggingPages) return;
+            isDraggingVertically = !isDraggingPages;
+            if (isDraggingVertically)
+            {
+                VerticalDragBegan?.Invoke();
+                return;
+            }
             KillScrollTween();
             dragStartProgress = Progress;
             dragStartTime = Time.unscaledTime;
@@ -105,6 +115,11 @@ namespace BusOut.Menu
 
         public void OnDrag(PointerEventData eventData)
         {
+            if (isDraggingVertically)
+            {
+                VerticalDragged?.Invoke(eventData.delta.y);
+                return;
+            }
             if (!isDraggingPages) return;
             float pageWidthPixels = viewport.rect.width * rootCanvas.scaleFactor;
             if (pageWidthPixels <= 0f) return;
@@ -114,6 +129,12 @@ namespace BusOut.Menu
 
         public void OnEndDrag(PointerEventData eventData)
         {
+            if (isDraggingVertically)
+            {
+                isDraggingVertically = false;
+                VerticalDragEnded?.Invoke();
+                return;
+            }
             if (!isDraggingPages) return;
             isDraggingPages = false;
             float distance = (eventData.position.x - eventData.pressPosition.x) / rootCanvas.scaleFactor;

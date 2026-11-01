@@ -24,6 +24,9 @@ namespace BusOut.Menu
             pageView.ScrollTo(ClampPage(config.startPage), 0f);
         }
 
+        /// Đang đứng ở trang <paramref name="page"/> (không ở giữa hai trang).
+        public bool IsOnPage(int page) => Mathf.Abs(pageView.Progress - page) < 0.01f;
+
         private void HandleProgressChanged(float progress) => tabBar.Render(progress, config.selectedTabY);
 
         private void HandleTabClicked(int tab) => pageView.ScrollTo(ClampPage(tab), config.pageSnapDuration);

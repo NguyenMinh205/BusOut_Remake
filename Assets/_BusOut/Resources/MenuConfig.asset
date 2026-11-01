@@ -17,3 +17,109 @@ MonoBehaviour:
   fastSwipeMaxTime: 0.5
   fastSwipeMinDistance: 50
   selectedTabY: 0
+  levelsPerTheme: 5
+  themes:
+  - name: Default
+    modules:
+    - {fileID: 8067022363958200230, guid: ad26c4c19e43bdf4b8887722bc500fd0, type: 3}
+    - {fileID: 3039133360465534493, guid: 674044595dde63b4c8ffd58df1882e6a, type: 3}
+    - {fileID: 6568475039374105018, guid: ca55d5b14dff1ce4b8d6d925e897ee96, type: 3}
+    - {fileID: 8453360332503277037, guid: c14d10aaf3a35e542ad583208b4fd416, type: 3}
+    - {fileID: 6801715920216073989, guid: 45d94aa1c6b0ccc4ebb31f02900c9580, type: 3}
+    sky: {fileID: 2800000, guid: abc46f3508062104c8828137c6f32e8a, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: Airport
+    modules:
+    - {fileID: 2448852853874124994, guid: 90b73c423348732304977a624d45e7ac, type: 3}
+    - {fileID: 2884702945112093595, guid: 960ea9cf3056f85a37d50a685f104ad7, type: 3}
+    - {fileID: 6795920777988896764, guid: e940df8111c28cba610a0f8dabd7b7c8, type: 3}
+    - {fileID: 2149308146374244279, guid: 03b613436303b1257eec2e8c878e047c, type: 3}
+    - {fileID: 3428380052269583445, guid: 7a2086203aed102c29a9587a81148995, type: 3}
+    sky: {fileID: 2800000, guid: abc46f3508062104c8828137c6f32e8a, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: Habor
+    modules:
+    - {fileID: 5319144229019949105, guid: 1be80ae30458ae0fd7522479c11b20e3, type: 3}
+    - {fileID: 7590352872145806361, guid: dac3009a36ae92f0335372902e2d8afb, type: 3}
+    - {fileID: 348458250557233243, guid: 38d6d1d4e5cef113c30759936a5f7058, type: 3}
+    - {fileID: 4158329645175774800, guid: dc357866eaf93ee92163b31dcc738995, type: 3}
+    - {fileID: 8380733566691761543, guid: 837ca0b306b9a3bd8ea5ad570f3132ce, type: 3}
+    sky: {fileID: 2800000, guid: abc46f3508062104c8828137c6f32e8a, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: Stadium
+    modules:
+    - {fileID: 7180325478622740126, guid: 604ace91cf58f29cd2bf99a9c4bd4ac7, type: 3}
+    - {fileID: 3789071446620274697, guid: 33013c32b002f9a683b58a514b4fdff0, type: 3}
+    - {fileID: 2821045591901339951, guid: 63058e6fc2266ac5e6c72682bc91ebc9, type: 3}
+    - {fileID: 4139788426600578182, guid: 7d52edce6f6e3168b242e5d76ae3832a, type: 3}
+    - {fileID: 4170444710646406190, guid: 0434867ec3a2fca94513b7ae43facd1b, type: 3}
+    sky: {fileID: 2800000, guid: 652d7f0c6cc005e4ea33dcd4bcee9814, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: USA
+    modules:
+    - {fileID: 8153182527146459033, guid: 3c65d557bfdd921c2bec96ba7722d6c1, type: 3}
+    - {fileID: 211082760510867924, guid: b89aa64e9a4eee6bae31527add723d57, type: 3}
+    - {fileID: 5191307922706231690, guid: b1d6c55270f84ca37e942ad803c856a9, type: 3}
+    - {fileID: 1437817813515997606, guid: a7205411872ba571635a005dc99e1bb4, type: 3}
+    - {fileID: 6393340727438741163, guid: cf9392580842ee33da255ed32d911728, type: 3}
+    sky: {fileID: 2800000, guid: ff260c6a194bf8c4e8abb696945b3bc8, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: India
+    modules:
+    - {fileID: 5782370373571280216, guid: ca42998248c706ec3ab000072320755b, type: 3}
+    - {fileID: 5379173065905595102, guid: 2894914b0dea98033806108403f8a4a3, type: 3}
+    - {fileID: 2641323008479363696, guid: 42ce11f9c4a1cc58a140b04c11f332a2, type: 3}
+    - {fileID: 205865834733842484, guid: 099986c2f66f92d4a60f934a5ffcaf11, type: 3}
+    - {fileID: 6925470183383088169, guid: e334d6476f0922336115b826049f2305, type: 3}
+    sky: {fileID: 2800000, guid: 1f1a0f32e82fc81469889462d279aeaf, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: Mexico
+    modules:
+    - {fileID: 3803159178447429402, guid: 54b7963cfb6c7c9c2bb4e00d4e2ccd5c, type: 3}
+    - {fileID: 2500784497770227956, guid: d6c8b34d1c12a44ece9c01b44bf8f199, type: 3}
+    - {fileID: 1596942114592688567, guid: f1994bf4f4f521dc593341a1693d9c26, type: 3}
+    - {fileID: 5168462235518845697, guid: def0838f79e249b498c1022ea4a4e603, type: 3}
+    - {fileID: 8373675551419917786, guid: b9311e9502731f3979526954cfefdf61, type: 3}
+    sky: {fileID: 2800000, guid: 7238a65e0d84e484bbfe18dfff1f786c, type: 3}
+    cloud: {fileID: 2800000, guid: f735e7c46f574664589c803283705740, type: 3}
+  - name: Halloween
+    modules:
+    - {fileID: 2428130963286866790, guid: e81b156d55ac68ea3ec7ab519c38d486, type: 3}
+    - {fileID: 5915447615909957210, guid: ff7070bcee11989f9708ceffa96acc2b, type: 3}
+    - {fileID: 2246302402657052093, guid: 6b43952f1aa86421b0cedc1e69d5d2a7, type: 3}
+    - {fileID: 2904748104837666564, guid: 19fbfb3f68f7cdff23a9ee38a3716f55, type: 3}
+    - {fileID: 8983086348636808593, guid: 0686c5e4b476a932117aa74e8b7f309f, type: 3}
+    sky: {fileID: 2800000, guid: 2d753023fe4245149a5e1ff1a9a69158, type: 3}
+    cloud: {fileID: 2800000, guid: 0a93ac1bd68c4bbbac85cab5cb5aa48b, type: 3}
+  - name: Christmas
+    modules:
+    - {fileID: 7158457515245076865, guid: e7d6bdb7ab0aa7d9542f717b78dabdbf, type: 3}
+    - {fileID: 7082163965131466004, guid: 6ecf940395835777f7ddb178a908a082, type: 3}
+    - {fileID: 7385719554813863984, guid: 84696e10dddb2bef763dc50f13d1aa00, type: 3}
+    - {fileID: 4833340886596162747, guid: 6e9e73a62ee96ceff021ae5124442d57, type: 3}
+    - {fileID: 3590754185787307176, guid: b17b74824e5144c35fd276533112d9e4, type: 3}
+    sky: {fileID: 2800000, guid: 2c12d11e032b0ea439befdf1a2e96b9e, type: 3}
+    cloud: {fileID: 2800000, guid: 0a93ac1bd68c4bbbac85cab5cb5aa48b, type: 3}
+  - name: NewYear
+    modules:
+    - {fileID: 2046699320797810891, guid: 1f8f050beec0b7d111e5818c92616d8d, type: 3}
+    - {fileID: 3482040276885254687, guid: e27e93b53cb0ef0157b1525dd49b0c7a, type: 3}
+    - {fileID: 1490766098992805945, guid: d2ad14264bb2a672c019857bc2d58e57, type: 3}
+    - {fileID: 8841618875877822256, guid: 2defa40d9a77225b41d5ffb0de6d3431, type: 3}
+    - {fileID: 1427339442666429585, guid: 635c6f01f8a2afd54e9b6865368de7ac, type: 3}
+    sky: {fileID: 2800000, guid: 016da2d00c6f4a8f813284307019253c, type: 3}
+    cloud: {fileID: 2800000, guid: 0a93ac1bd68c4bbbac85cab5cb5aa48b, type: 3}
+  preloadModulesPerFrame: 5
+  mapPage: 1
+  mapLevelsPerScreenHeight: 3
+  mapViewAheadLevels: 10
+  mapFlingTime: 0.3
+  mapReleaseIdleTime: 0.1
+  mapSnapDuration: 0.3
+  mapSnapDurationPerLevel: 0.08
+  mapSnapMaxDuration: 1.2
+  mapCarVisibleViewportBottom: 0
+  mapCarVisibleViewportTop: 1
+  mapAdvanceDelay: 0.5
+  mapAdvanceDuration: 1.4
+  playButtonLevelFormat: LEVEL {0}

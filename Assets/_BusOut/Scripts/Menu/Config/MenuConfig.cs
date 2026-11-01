@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BusOut.Menu
@@ -23,6 +25,77 @@ namespace BusOut.Menu
         [Tooltip("Tab đang chọn tiến lên tới y này (anchoredPosition.y). Tab khác giữ y dựng trong scene.")]
         public float selectedTabY = 0f;
 
+        [Header("Bản đồ level")]
+        [Tooltip("Mỗi chủ đề kéo dài bấy nhiêu level; mỗi chủ đề phải có đúng chừng ấy module (mảnh cổng + mảnh thường).")]
+        public int levelsPerTheme = 5;
+
+        [Tooltip("Chủ đề theo thứ tự xuất hiện; hết danh sách thì quay lại chủ đề đầu.")]
+        public List<MenuTheme> themes = new List<MenuTheme>();
+
+        [Tooltip("Màn Loading tạo sẵn mỗi prefab module một bản (lăn bản đồ sang chủ đề mới không khựng): mỗi khung tạo tối đa " +
+                 "bấy nhiêu module, để thanh tiến trình vẫn chạy.")]
+        [Min(1)] public int preloadModulesPerFrame = 5;
+
+        [Header("Vuốt bản đồ (chỉ để xem, như gốc: Play luôn chơi level hiện tại)")]
+        [Tooltip("Trang có bản đồ phía sau (Home). Vuốt dọc ở trang khác không quay bản đồ.")]
+        public int mapPage = 1;
+
+        [Tooltip("Kéo dọc hết một chiều cao màn hình thì bản đồ đi bấy nhiêu level.")]
+        public float mapLevelsPerScreenHeight = 3f;
+
+        [Tooltip("Xem trước được tới level hiện tại + bấy nhiêu (level chưa chơi); lùi lại thì xem được tới level 1.")]
+        public int mapViewAheadLevels = 10;
+
+        [Tooltip("Vuốt mạnh rồi thả: bản đồ trôi thêm (tốc độ lúc thả, level/giây) × số này, rồi dừng ở level gần nhất. " +
+                 "0 = không trôi, chỉ hít về level gần nhất.")]
+        public float mapFlingTime = 0.3f;
+
+        [Tooltip("Ngón tay đứng yên lâu hơn bấy nhiêu giây rồi mới thả thì coi như không vuốt (không trôi thêm).")]
+        public float mapReleaseIdleTime = 0.1f;
+
+        [Tooltip("Thời gian hít về level đích: phần cố định (giây)...")]
+        public float mapSnapDuration = 0.3f;
+
+        [Tooltip("... cộng thêm mỗi level phải đi (giây / level)...")]
+        public float mapSnapDurationPerLevel = 0.08f;
+
+        [Tooltip("... nhưng không quá bấy nhiêu giây.")]
+        public float mapSnapMaxDuration = 1.2f;
+
+        [Tooltip("Nút \"về level hiện tại\" hiện khi xe (ở bệ level hiện tại) ra khỏi vùng màn hình từ mép dưới này (0 = đáy " +
+                 "màn, 1 = đỉnh)... Nâng lên (vd. 0.19) nếu thanh tab che xe thì cũng tính là khuất.")]
+        public float mapCarVisibleViewportBottom = 0f;
+
+        [Tooltip("... tới mép trên này (1 = đỉnh màn; hạ xuống nếu thanh trên che xe).")]
+        public float mapCarVisibleViewportTop = 1f;
+
+        [Header("Thắng về Menu: xe chạy sang bệ level mới")]
+        [Tooltip("Đứng yên ở bệ vừa qua bấy nhiêu giây (bệ bật lớp \"đã qua\") rồi mới chạy. Gốc: 0.5.")]
+        public float mapAdvanceDelay = 0.5f;
+
+        [Tooltip("Thời gian xe chạy sang bệ mới (giây, chậm–nhanh–chậm). Gốc: 1.4.")]
+        public float mapAdvanceDuration = 1.4f;
+
+        [Header("Nút Play")]
+        [Tooltip("Chữ trên nút Play; {0} = level đang lưu.")]
+        public string playButtonLevelFormat = "LEVEL {0}";
+
         public static MenuConfig CreateDefault() => CreateInstance<MenuConfig>();
+    }
+
+    /// Một chủ đề (địa điểm) trên bản đồ: các module đường + trời + mây.
+    [Serializable]
+    public class MenuTheme
+    {
+        public string name;
+
+        [Tooltip("Prefab module theo thứ tự level trong khối: mảnh cổng Module<X>Start trước, rồi Module<X>1..4.")]
+        public GameObject[] modules;
+
+        [Tooltip("Tranh trời (_SkyTex của shader BusOut/Skybox).")]
+        public Texture2D sky;
+
+        [Tooltip("Dải mây trôi (_CloudTex).")]
+        public Texture2D cloud;
     }
 }
