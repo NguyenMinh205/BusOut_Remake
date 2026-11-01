@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace BusOut.Core
 {
-    /// Thời gian hoạt ảnh mở panel (Gameplay lấy từ GameplayConfig; phần khác truyền số của mình).
+    /// Thời gian hoạt ảnh mở panel (mọi popup lấy từ UIConfig.PanelAnimation).
     public struct PanelAnimationSettings
     {
         public float DimFadeDuration;

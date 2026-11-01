@@ -39,7 +39,7 @@ namespace BusOut.Gameplay
         [Tooltip("LosePopup/TitleTxt: \"LEVEL n\".")]
         [SerializeField] private TMP_Text loseLevelText;
         [SerializeField] private Button loseReplayButton;
-        [Tooltip("LosePopup/CloseBtn: TẠM chơi lại (chưa có màn Home).")]
+        [Tooltip("LosePopup/CloseBtn: về Menu.")]
         [SerializeField] private Button loseCloseButton;
 
         /// true = nhận thêm bằng quảng cáo.
@@ -48,6 +48,7 @@ namespace BusOut.Gameplay
         public event Action ReviveWithAdClicked;
         public event Action ContinueDeclined;
         public event Action ReplayClicked;
+        public event Action LoseClosed;
 
         private PanelAnimationSettings panelAnimation;
 
@@ -90,7 +91,7 @@ namespace BusOut.Gameplay
             continueAdButton.onClick.AddListener(HandleReviveWithAd);
             continueCloseButton.onClick.AddListener(HandleContinueDeclined);
             loseReplayButton.onClick.AddListener(HandleReplay);
-            loseCloseButton.onClick.AddListener(HandleReplay);
+            loseCloseButton.onClick.AddListener(HandleLoseClosed);
             Hide();
             return true;
         }
@@ -103,7 +104,7 @@ namespace BusOut.Gameplay
             if (continueAdButton != null) continueAdButton.onClick.RemoveListener(HandleReviveWithAd);
             if (continueCloseButton != null) continueCloseButton.onClick.RemoveListener(HandleContinueDeclined);
             if (loseReplayButton != null) loseReplayButton.onClick.RemoveListener(HandleReplay);
-            if (loseCloseButton != null) loseCloseButton.onClick.RemoveListener(HandleReplay);
+            if (loseCloseButton != null) loseCloseButton.onClick.RemoveListener(HandleLoseClosed);
         }
 
         public void Hide()
@@ -171,5 +172,6 @@ namespace BusOut.Gameplay
         private void HandleReviveWithAd() => ReviveWithAdClicked?.Invoke();
         private void HandleContinueDeclined() => ContinueDeclined?.Invoke();
         private void HandleReplay() => ReplayClicked?.Invoke();
+        private void HandleLoseClosed() => LoseClosed?.Invoke();
     }
 }

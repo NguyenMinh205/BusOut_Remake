@@ -1,3 +1,5 @@
+using System;
+using System.Collections;
 using BusOut.Core;
 using BusOut.DesignPattern;
 using UnityEngine;
@@ -9,9 +11,13 @@ namespace BusOut.Gameplay
     /// MonoBehaviour duy nhất của tầng Presenter; giữ tham chiếu scene và tạo các presenter con:
     /// LevelSpawner (xe trong level), BusStopPresenter (ô đỗ), CarFlowPresenter (điều khiển xe),
     /// PassengerPresenter (hàng khách), BoardingPresenter (khách lên xe, xe đầy rời bến).
-    public class GameplayPresenter : MonoBehaviour
+    /// Khởi tạo + tạo sẵn pool chạy trong màn Loading (IPreloadStep, GameContext còn tắt) để lần bấm Play đầu không giật;
+    /// không có màn Loading (chạy thẳng GameScene) thì Start làm lúc GameContext bật lần đầu.
+    public class GameplayPresenter : MonoBehaviour, IPreloadStep
     {
         [SerializeField] private GameplayConfig config;
+        [Tooltip("Assets/_BusOut/Resources/UIConfig.asset: số hoạt ảnh popup (dùng chung Menu + màn chơi).")]
+        [SerializeField] private UIConfig uiConfig;
         [SerializeField] private ParkingLotView parkingLot;
         [SerializeField] private BusStopView busStopView;
         [FormerlySerializedAs("carInput")]
@@ -46,11 +52,8 @@ namespace BusOut.Gameplay
         [SerializeField] private LevelResultView levelResult;
         [Tooltip("NoSlotMessageView trên chữ \"Hết chỗ!\".")]
         [SerializeField] private NoSlotMessageView noSlotMessage;
-        [Tooltip("PurchasePopupView trên Popup/PurchasePanel: popup mua chung (lượt booster khi hết, mở thêm ô đỗ).")]
-        [FormerlySerializedAs("boosterShop")]
-        [SerializeField] private PurchasePopupView purchasePopup;
-        [Tooltip("SettingsView trên Popup/SettingPanel: popup cài đặt (nút bánh răng ở thanh trên).")]
-        [SerializeField] private SettingsView settingsView;
+        [Tooltip("SharedPopupsPresenter trên SharedUI: popup dùng chung (Cài đặt, Leave game) — nút bánh răng ở thanh trên mở.")]
+        [SerializeField] private SharedPopupsPresenter sharedPopups;
 
         private LevelCurveData curveData;
         private LevelSpawner spawner;
@@ -62,8 +65,9 @@ namespace BusOut.Gameplay
         private BoosterPresenter booster; // null khi thiếu hàng khách: booster nào cũng sắp lại hàng
         private LevelResultPresenter result; // null khi thiếu bảng kết quả: thắng / thua chỉ còn log
         private PurchasePresenter shop;   // null khi thiếu popup mua: hết lượt thì nút booster chỉ rung
-        private SettingsPresenter settings;  // null khi thiếu popup cài đặt: nút bánh răng không làm gì
+        private bool hasSharedPopups; // false khi thiếu SharedUI: nút bánh răng không làm gì
         private SecureGameData gameData;
+        private bool isInitialized; // InitializeCore đã chạy (thành công hay không) — chỉ chạy một lần
         private bool isReady;
         // true khi không có ván nào đang chơi (đã thắng / thua, hoặc level không tải được): ngừng kiểm tra thắng thua,
         // khoá chạm xe và chạm ô.
@@ -72,15 +76,50 @@ namespace BusOut.Gameplay
         // Còn bao lâu nữa mới cho chạm (xe đang "bung" ra lúc vào level). Chạm xe khi xe còn cỡ 0 là chạm vào thứ chưa thấy.
         private float interactionLockRemaining;
 
+        /// Không qua màn Loading: khởi tạo + tạo sẵn ngay lúc GameContext bật lần đầu (lần bấm Play đầu), rồi nạp level.
+        /// Qua màn Loading thì Preload đã làm hết: lần bấm Play đầu đi qua GameplayShownEvent như các lần sau.
         private void Start()
         {
+            if (isInitialized) return;
+            if (!InitializeCore()) return;
+            PrewarmCars();
+            PrewarmPassengers();
+            isReady = true;
+            LoadLevel(gameData.currentLevel);
+        }
+
+        /// Màn Loading (GameFlowController) gọi khi GameContext còn tắt. Gọi method trên script đang tắt thì được; Awake /
+        /// Start của nó chưa chạy — các view được gọi Init ở đây không dựa vào Awake (soát 1/11).
+        public IEnumerator Preload(Action<float> reportProgress)
+        {
+            if (!isInitialized && InitializeCore())
+            {
+                reportProgress(0.4f);
+                yield return null;
+                PrewarmCars();
+                reportProgress(0.7f);
+                yield return null;
+                PrewarmPassengers();
+                isReady = true;
+            }
+            reportProgress(1f);
+        }
+
+        /// Dựng mọi presenter con + view (không tạo pool). False khi thiếu tham chiếu bắt buộc (đã báo lỗi) — game không chơi được.
+        private bool InitializeCore()
+        {
+            isInitialized = true;
             if (config == null) config = GameplayConfig.CreateDefault();
-            // TẠM đặt ở đây vì GameplayPresenter đang là điểm vào duy nhất; có Boot / Menu thì chuyển sang đó.
-            if (config.targetFrameRate > 0) Application.targetFrameRate = config.targetFrameRate;
-            if (!ValidateReferences()) return;
-            if (!parkingLot.Init()) return;
-            if (!busStopView.Init()) return;
-            if (!gameplayInput.Init(config.tapRayDistance)) return;
+            if (uiConfig == null)
+            {
+                Debug.LogError("[BusOut] GameplayPresenter thiếu UI Config: popup chạy số mặc định trong code. " +
+                               "Kéo Assets/_BusOut/Resources/UIConfig.asset vào.", this);
+                uiConfig = UIConfig.CreateDefault();
+            }
+            if (!ValidateReferences()) return false;
+            if (!parkingLot.Init()) return false;
+            if (!busStopView.Init()) return false;
+            if (!gameplayInput.Init(config.tapRayDistance)) return false;
             // Thiếu chỉ mất phần chỉnh camera theo màn hình, game vẫn chơi được.
             if (cameraFit == null)
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Camera Fit: màn dài sẽ bị cắt hai mép bãi. " +
@@ -104,20 +143,34 @@ namespace BusOut.Gameplay
             hud = CreateHudPresenter();
             if (booster != null) booster.ArmedChanged += hud.SetBoosterArmed;
             result = CreateResultPresenter();
+            hasSharedPopups = InitSharedPopups();
             shop = CreateShopPresenter();
-            settings = CreateSettingsPresenter();
             CreateNoSlotMessage();
-            // TẠM tạo sẵn pool ở đây (điểm vào duy nhất); có màn Loading thì chuyển vào Loading để vào level không giật.
-            // Khách: cả hàng + mọi ô đỗ đều là bus đầy khách (trường hợp đông nhất có thể).
-            spawner.Prewarm(curveData);
-            passengers?.Prewarm(config.passengerQueueCount + busStopView.SlotCount * CarModel.SeatsOf(VehicleType.TenSeat));
-            isReady = true;
-            LoadLevel(gameData.currentLevel);
+            // Mỗi lần GameFlowController bật xong GameContext (bấm Play). Lần bấm Play đầu mà KHÔNG qua màn Loading thì sự
+            // kiện đã phát trước Start (lúc chưa nghe) — Start tự nạp level.
+            EventBus.Subscribe<GameplayShownEvent>(HandleGameplayShown);
+            return true;
         }
+
+        /// Pool xe theo level đông nhất của file curve (LevelSpawner.Prewarm).
+        private void PrewarmCars() => spawner.Prewarm(curveData);
+
+        /// Khách: cả hàng + mọi ô đỗ đều là bus đầy khách (trường hợp đông nhất có thể).
+        private void PrewarmPassengers() =>
+            passengers?.Prewarm(config.passengerQueueCount + busStopView.SlotCount * CarModel.SeatsOf(VehicleType.TenSeat));
 
         private void OnDestroy()
         {
             hud?.Dispose();
+            EventBus.Unsubscribe<GameplayShownEvent>(HandleGameplayShown);
+        }
+
+        /// Menu bấm Play = vào ván mới với level đang lưu.
+        /// ⚠️ Không nạp trong OnEnable: lúc đó GameContext còn đang bật dở, Unity cấm SetParent (trả xe / khách cũ về pool,
+        /// lấy xe mới) — lệnh bị bỏ qua, ván mới lẫn xe cũ.
+        private void HandleGameplayShown(GameplayShownEvent _)
+        {
+            if (isReady) LoadLevel(gameData.currentLevel);
         }
 
         private void OnEnable()
@@ -144,7 +197,13 @@ namespace BusOut.Gameplay
 
         private bool HandleShopRequested(BoosterType type) => shop != null && shop.Open(type);
 
-        private void HandleSettingsRequested() => settings?.Open();
+        /// ⚠️ Không mở trong lúc chờ popup thắng / thua hiện (1.4s / 1.25s; hiện rồi thì Dim của popup chặn nút): mở được
+        /// thì Home → Leave game → về Menu, thắng là mất coin thưởng (coin chỉ cộng khi bấm nhận ở WinPanel).
+        private void HandleSettingsRequested()
+        {
+            if (result != null && result.IsPending) return;
+            if (hasSharedPopups) sharedPopups.OpenSettings(PopupContext.InGame);
+        }
 
         /// Chỉ dùng booster khi đang chơi thật sự: không trong lúc xe đang "bung" ra, không khi ván đã kết thúc.
         private bool CanUseBooster() => isReady && !levelFinished && interactionLockRemaining <= 0f && !carFlow.IsRewinding;
@@ -165,7 +224,7 @@ namespace BusOut.Gameplay
         {
             result?.Hide();
             shop?.Hide();
-            settings?.Hide();
+            if (hasSharedPopups) sharedPopups.HideAll();
             booster?.Disarm();
             noSlotMessage?.Hide();
             passengers?.DespawnAll();
@@ -238,7 +297,7 @@ namespace BusOut.Gameplay
             gameData.Save();
             EventBus.Publish(new LevelCompletedEvent { LevelIndex = currentLevel });
             shop?.Hide();
-            settings?.Hide();
+            if (hasSharedPopups) sharedPopups.HideAll();
             booster?.Disarm();
             result?.ShowWinLater(currentLevel);
         }
@@ -251,7 +310,7 @@ namespace BusOut.Gameplay
             GameLog.Info($"[BusOut] Thua level {currentLevel}: hết ô đỗ, không xe nào ở bến cùng màu người đầu hàng.", this);
             EventBus.Publish(new LevelFailedEvent { LevelIndex = currentLevel, Reason = "Out of slots" });
             shop?.Hide();
-            settings?.Hide();
+            if (hasSharedPopups) sharedPopups.HideAll();
             booster?.Disarm();
             result?.ShowLoseLater(currentLevel, busStop.HasLockedSlot);
             // Khoảng đứng yên trước popup Continue: báo lý do thua. Mờ xong đúng lúc popup hiện, không đè lên popup.
@@ -292,44 +351,47 @@ namespace BusOut.Gameplay
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Level Result: thắng / thua không hiện bảng. Kéo bảng kết quả (có LevelResultView) vào.", this);
                 return null;
             }
-            // Nhận thưởng và Chơi lại đều nạp level đang lưu: thắng thì save đã sang level sau.
+            // Nhận thưởng thắng → về Menu (save đã sang level sau, Menu cho xe chạy sang bệ mới); Replay → nạp lại level.
             return levelResult.Init(PanelAnimation())
-                ? new LevelResultPresenter(config, levelResult, gameData, TryRevive, ReloadLevel)
+                ? new LevelResultPresenter(config, levelResult, gameData, TryRevive, ReloadLevel, GoHome)
                 : null;
         }
 
         private PurchasePresenter CreateShopPresenter()
         {
+            // Popup mua nằm ở SharedUI (dùng chung với Shop ở Menu sau này), SharedPopupsPresenter khởi tạo sẵn.
+            PurchasePopupView purchasePopup = hasSharedPopups ? sharedPopups.PurchasePopup : null;
             if (purchasePopup == null)
             {
-                Debug.LogError("[BusOut] GameplayPresenter thiếu Purchase Popup: không mua thêm lượt booster / ô đỗ được. " +
-                               "Kéo Popup/PurchasePanel (có PurchasePopupView) vào.", this);
+                Debug.LogError("[BusOut] GameplayPresenter không có popup mua (SharedUI thiếu hoặc PurchasePanel chưa kéo vào " +
+                               "SharedPopupsPresenter): không mua thêm lượt booster / ô đỗ được.", this);
                 return null;
             }
-            return purchasePopup.Init(PanelAnimation())
-                ? new PurchasePresenter(config, gameData, purchasePopup, CanUseBooster, UnlockExtraSlot)
-                : null;
+            return new PurchasePresenter(config, gameData, purchasePopup, CanUseBooster, UnlockExtraSlot);
         }
 
-        private SettingsPresenter CreateSettingsPresenter()
+        /// Về Menu (GameFlowController tắt GameContext, bật HomeContext). Ván đang dở để nguyên: lần Play sau LoadLevel dọn hết.
+        private void GoHome()
         {
-            if (settingsView == null)
+            if (!EventBus<GoHomeRequestedEvent>.HasListeners)
+                Debug.LogError("[BusOut] Không có ai chuyển về Menu (thiếu GameFlowController): nút về Home không làm gì. " +
+                               "Tạo object GameFlow ở gốc scene, gắn GameFlowController, kéo HomeContext + GameContext vào.", this);
+            EventBus.Publish(new GoHomeRequestedEvent());
+        }
+
+        /// Thiếu SharedUI thì chỉ mất popup cài đặt (nút bánh răng không làm gì), game vẫn chơi được.
+        private bool InitSharedPopups()
+        {
+            if (sharedPopups == null)
             {
-                Debug.LogError("[BusOut] GameplayPresenter thiếu Settings View: nút cài đặt không mở popup. " +
-                               "Kéo Popup/SettingPanel (có SettingsView) vào.", this);
-                return null;
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Shared Popups: nút cài đặt không mở popup. " +
+                               "Kéo SharedUI (có SharedPopupsPresenter) vào.", this);
+                return false;
             }
-            return settingsView.Init(PanelAnimation()) ? new SettingsPresenter(config, gameData, settingsView) : null;
+            return true;
         }
 
-        private PanelAnimationSettings PanelAnimation() => new PanelAnimationSettings
-        {
-            DimFadeDuration = config.popupDimFadeDuration,
-            ItemDuration = config.popupItemDuration,
-            ItemInterval = config.popupItemInterval,
-            LateDelay = config.popupLateDelay,
-            SlideDistance = config.popupSlideDistance,
-        };
+        private PanelAnimationSettings PanelAnimation() => uiConfig.PanelAnimation;
 
         private void CreateNoSlotMessage()
         {

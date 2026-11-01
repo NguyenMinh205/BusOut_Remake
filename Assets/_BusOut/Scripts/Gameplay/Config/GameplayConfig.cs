@@ -8,10 +8,7 @@ namespace BusOut.Gameplay
     [CreateAssetMenu(menuName = "BusOut/Gameplay Config", fileName = "GameplayConfig")]
     public class GameplayConfig : ScriptableObject
     {
-        [Header("Hiệu năng")]
-        [Tooltip("Khung hình / giây mục tiêu (Application.targetFrameRate). ⚠️ Không đặt thì điện thoại chạy 30 fps mặc định: " +
-                 "xe chạy, khách đi trông giật dù máy còn dư sức. 60 = mượt, tốn pin hơn; ≤ 0 = để mặc định nền tảng.")]
-        public int targetFrameRate = 60;
+        // targetFrameRate: chuyển sang Core/Config/BootConfig (1/11, đặt ở GameBootstrap lúc mở game).
 
         [Header("Xe")]
         [Tooltip("Scale xe khi spawn.")]
@@ -215,14 +212,6 @@ namespace BusOut.Gameplay
         [Tooltip("Nút booster rung ngang bao nhiêu (đơn vị UI) khi bấm mà không dùng được (không mất lượt).")]
         public float boosterDeniedShake = 18f;
 
-        [Tooltip("Ngôn ngữ nút Language xoay vòng qua (code lưu vào save, displayName hiện trên nút). ⚠️ Font chữ phải có đủ " +
-                 "glyph của displayName (vd. dấu tiếng Việt), không thì hiện ô vuông.")]
-        public List<LanguageOption> languages = new List<LanguageOption>
-        {
-            new LanguageOption { code = "en", displayName = "English" },
-            new LanguageOption { code = "vi", displayName = "Tiếng Việt" },
-        };
-
         [Tooltip("Chữ trên nút booster chưa mở; {0} = level mở khoá.")]
         public string boosterLockedLabelFormat = "LEVEL {0}";
 
@@ -232,21 +221,7 @@ namespace BusOut.Gameplay
         [Tooltip("Thua xong chờ bao lâu mới hiện bảng thua (giây). Gốc: 1.25.")]
         public float losePopupDelay = 1.25f;
 
-        [Tooltip("Mở popup: nền tối mờ dần vào trong bao lâu (giây).")]
-        public float popupDimFadeDuration = 0.2f;
-
-        [Tooltip("Mở popup: mỗi object hiện (phóng / rơi / trồi / hiện dần) trong bao lâu (giây).")]
-        public float popupItemDuration = 0.35f;
-
-        [Tooltip("Mở popup: object sau hiện trễ hơn object trước bao lâu (giây).")]
-        public float popupItemInterval = 0.12f;
-
-        [Tooltip("Mở popup: nút phụ (đóng, \"Tap to collect\") hiện trễ thêm bao lâu sau object cuối (giây). Để người " +
-                 "chơi kịp nhìn nút chính trước.")]
-        public float popupLateDelay = 0.8f;
-
-        [Tooltip("Mở popup: quãng trượt của kiểu rơi xuống / trồi lên (đơn vị UI, theo Reference Resolution 1170×2532).")]
-        public float popupSlideDistance = 160f;
+        // Số hoạt ảnh popup + danh sách ngôn ngữ: chuyển sang Core/Config/UIConfig (1/11, dùng chung Menu + màn chơi).
 
         [Tooltip("WinPanel: số coin đếm từ 0 lên trong bao lâu (giây), bắt đầu lúc nút chứa số đó hiện.")]
         public float popupCoinCountDuration = 0.5f;
@@ -269,14 +244,6 @@ namespace BusOut.Gameplay
         }
 
         public static GameplayConfig CreateDefault() => CreateInstance<GameplayConfig>();
-    }
-
-    /// Một ngôn ngữ trong cài đặt.
-    [Serializable]
-    public class LanguageOption
-    {
-        public string code;
-        public string displayName;
     }
 
     /// Một booster trên thanh dưới: hiện gì, mở ở level nào.

@@ -8,7 +8,7 @@ namespace BusOut.Core
     /// Popup mua CHUNG: một món hàng (tiêu đề, icon, mô tả, giá coin), mua bằng coin / quảng cáo / đóng. Chỉ hiển thị và
     /// báo nút bấm — bán gì, trao gì do presenter của nơi dùng quyết (trong ván: PurchasePresenter — lượt booster, ô đỗ;
     /// sau này shop ở Menu dùng lại chính View này). Đặt ở Core để mọi phần dùng được.
-    /// Gắn trên Popup/PurchasePanel. Panel có thể là chính object này (view không cần Update, tắt vẫn gọi được).
+    /// Gắn trên SharedUI/PurchasePanel; SharedPopupsPresenter khởi tạo, nơi dùng lấy qua SharedPopupsPresenter.PurchasePopup. Panel có thể là chính object này (view không cần Update, tắt vẫn gọi được).
     public class PurchasePopupView : MonoBehaviour
     {
         [SerializeField] private AnimatedPanel panel;
