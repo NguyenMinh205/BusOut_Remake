@@ -48,6 +48,27 @@ namespace BusOut.Core
         public string Reason; // vd. "Out of slots"
     }
 
+    /// Menu bấm Play: chuyển sang màn chơi, chơi level đang lưu (SecureGameData.currentLevel). GameFlowController nghe.
+    public struct PlayLevelRequestedEvent : IEvent
+    {
+    }
+
+    /// Màn chơi xin về Menu (nhận thưởng thắng, đóng popup thua, rời ván). GameFlowController nghe.
+    public struct GoHomeRequestedEvent : IEvent
+    {
+    }
+
+    /// GameContext vừa bật XONG (GameFlowController phát sau SetActive). Bắt đầu ván ở đây, KHÔNG ở OnEnable:
+    /// ⚠️ trong OnEnable cây cha còn đang bật dở, Unity cấm SetParent (pool xe / khách) — lệnh bị bỏ qua, pool lệch.
+    public struct GameplayShownEvent : IEvent
+    {
+    }
+
+    /// HomeContext vừa bật XONG (về từ màn chơi). Dựng lại Menu ở đây, không ở OnEnable (cùng lý do GameplayShownEvent).
+    public struct HomeShownEvent : IEvent
+    {
+    }
+
     #endregion
 
     #region Kinh tế
