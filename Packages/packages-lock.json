@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.benoitfreslon.vibration": {
+      "version": "https://github.com/BenoitFreslon/Vibration.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "91bb0b64274699bf7befc0d4f8f49243164aad9d"
+    },
     "com.codewriter.triinspector": {
       "version": "https://github.com/codewriter-packages/Tri-Inspector.git",
       "depth": 0,
@@ -8,6 +15,16 @@
         "com.unity.localization": "1.0.0"
       },
       "hash": "f8232d86963294204b1f4ddd2b20d590143c6c2b"
+    },
+    "com.coffee.ui-particle": {
+      "version": "https://github.com/mob-sakai/ParticleEffectForUGUI.git#4.14.2",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.ugui": "1.0.0",
+        "com.unity.modules.particlesystem": "1.0.0"
+      },
+      "hash": "433071025490c0bcfc5f72508b3e1453f321789c"
     },
     "com.coplaydev.unity-mcp": {
       "version": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
