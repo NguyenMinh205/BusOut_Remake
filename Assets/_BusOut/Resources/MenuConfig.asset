@@ -112,7 +112,7 @@ MonoBehaviour:
   preloadModulesPerFrame: 5
   mapPage: 1
   mapLevelsPerScreenHeight: 3
-  mapViewAheadLevels: 10
+  mapViewAheadLevels: 50
   mapFlingTime: 0.3
   mapReleaseIdleTime: 0.1
   mapSnapDuration: 0.3

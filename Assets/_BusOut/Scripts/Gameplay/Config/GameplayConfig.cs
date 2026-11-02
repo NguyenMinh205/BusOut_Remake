@@ -114,7 +114,7 @@ namespace BusOut.Gameplay
                  "được ưu tiên sớm hơn; nhiều quá thì khách của xe đó phải chờ lâu.")]
         public int passengerPlanAheadCount = 24;
 
-        [Header("Sinh khách: mix và hard point (đo bằng docs/tools/sim_board.py — đổi số thì sửa cả sim)")]
+        [Header("Sinh khách: mix và hard point (số đã đo bằng bot mô phỏng ngoài Unity — đổi số thì đo lại)")]
         [Tooltip("Nhóm khách cùng màu đứng liền nhau nhỏ nhất khi chia ghế một xe để trộn. GDD: 2.")]
         public int passengerGroupMin = 2;
 

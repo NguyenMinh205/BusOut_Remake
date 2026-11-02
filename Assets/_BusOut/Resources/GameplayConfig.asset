@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839ca57d89f1411092489a0b19dca398, type: 3}
   m_Name: GameplayConfig
   m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.GameplayConfig
-  targetFrameRate: 60
   carScale: 0.85
   carColors:
   - {r: 1, g: 0.2, b: 0.2431373, a: 1}
@@ -105,19 +104,9 @@ MonoBehaviour:
   boosterRecolorPunch: 0.25
   boosterRecolorDuration: 0.3
   boosterDeniedShake: 18
-  languages:
-  - code: en
-    displayName: English
-  - code: vi
-    displayName: "Ti\u1EBFng Vi\u1EC7t"
   boosterLockedLabelFormat: LEVEL {0}
   winPopupDelay: 1.4
   losePopupDelay: 1.25
-  popupDimFadeDuration: 0.2
-  popupItemDuration: 0.35
-  popupItemInterval: 0.12
-  popupLateDelay: 0.8
-  popupSlideDistance: 160
   popupCoinCountDuration: 0.5
   noSlotMessageHold: 0.8
   noSlotMessageFade: 0.25

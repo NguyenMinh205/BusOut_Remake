@@ -99,6 +99,25 @@ namespace BusOut.Menu
             return point.z > 0f && point.x >= 0f && point.x <= 1f && point.y >= viewportBottom && point.y <= viewportTop;
         }
 
+#if UNITY_EDITOR
+        private static readonly int SpeedId = Shader.PropertyToID("_Speed");
+
+        /// Chỉ Editor: chỉnh Tiling / Offset / Speed của Skybox.mat lúc đang Play là thấy ngay — mỗi khung chép từ material gốc
+        /// sang bản sao (bản sao mới là cái đang vẽ). Sửa trên asset nên số được giữ sau khi thoát Play. Texture thì KHÔNG
+        /// chép: lúc Play trời do chủ đề quyết.
+        private void Update()
+        {
+            if (skybox == null) return;
+            Vector2 scale = sceneSkybox.GetTextureScale(SkyTexId);
+            Vector2 offset = sceneSkybox.GetTextureOffset(SkyTexId);
+            skybox.SetTextureScale(SkyTexId, scale);
+            skybox.SetTextureOffset(SkyTexId, offset);
+            skybox.SetTextureScale(BlendSkyTexId, scale);
+            skybox.SetTextureOffset(BlendSkyTexId, offset);
+            skybox.SetFloat(SpeedId, sceneSkybox.GetFloat(SpeedId));
+        }
+#endif
+
         private void OnDestroy()
         {
             if (skybox == null) return;

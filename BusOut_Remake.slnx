@@ -2,6 +2,7 @@
   <Project Path="BusOut.Gameplay.csproj" />
   <Project Path="LeanCommon.csproj" />
   <Project Path="Assembly-CSharp.csproj" />
+  <Project Path="BusOut.Menu.csproj" />
   <Project Path="LeanTouchPlus.csproj" />
   <Project Path="LeanCommonPlus.csproj" />
   <Project Path="Assembly-CSharp-Editor.csproj" />
@@ -11,4 +12,5 @@
   <Project Path="BusOut.Core.csproj" />
   <Project Path="Assembly-CSharp-Editor-firstpass.csproj" />
   <Project Path="BusOut.DesignPattern.csproj" />
+  <Project Path="BusOut.Core.Editor.csproj" />
 </Solution>

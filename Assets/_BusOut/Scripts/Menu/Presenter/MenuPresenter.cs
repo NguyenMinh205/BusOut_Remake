@@ -41,6 +41,7 @@ namespace BusOut.Menu
         private MenuMapPresenter map;
         private SecureGameData gameData;
         private bool hasPlayButton;
+        private bool hasTopBar;
 
         private void Start()
         {
@@ -57,7 +58,10 @@ namespace BusOut.Menu
             map = CreateMap();
             // Lần mở Menu đầu tiên dựng ngay dưới đây; các lần về từ màn chơi thì nghe sự kiện này.
             EventBus.Subscribe<HomeShownEvent>(HandleHomeShown);
+            // Coin đổi ở đâu (nhận thưởng, mua…) thì số trên Menu cũng đúng.
+            EventBus.Subscribe<CurrencyUpdatedEvent>(HandleCurrencyUpdated);
             RefreshPlayButton();
+            RefreshCoins();
             if (map == null) return;
             map.ShowCurrentLevel();
             // Vuốt dọc đi qua ViewPort (cùng chỗ nhận vuốt ngang đổi trang); thiếu trang thì bản đồ đứng yên.
@@ -67,7 +71,11 @@ namespace BusOut.Menu
             pageView.VerticalDragEnded += map.EndDrag;
         }
 
-        private void OnDestroy() => EventBus.Unsubscribe<HomeShownEvent>(HandleHomeShown);
+        private void OnDestroy()
+        {
+            EventBus.Unsubscribe<HomeShownEvent>(HandleHomeShown);
+            EventBus.Unsubscribe<CurrencyUpdatedEvent>(HandleCurrencyUpdated);
+        }
 
         /// Màn Loading (GameFlowController): tạo sẵn module bản đồ. Start đã chạy trước đó (HomeContext bật sẵn, màn Loading
         /// đợi một khung sau khi nạp scene).
@@ -87,6 +95,7 @@ namespace BusOut.Menu
         private void HandleHomeShown(HomeShownEvent _)
         {
             RefreshPlayButton();
+            RefreshCoins();
             map?.Refresh();
         }
 
@@ -103,6 +112,16 @@ namespace BusOut.Menu
                 Debug.LogError("[BusOut] Không có ai chuyển sang màn chơi (thiếu GameFlowController): nút Play không làm gì. " +
                                "Tạo object GameFlow ở gốc scene, gắn GameFlowController, kéo HomeContext + GameContext vào.", this);
             EventBus.Publish(new PlayLevelRequestedEvent());
+        }
+
+        private void HandleCurrencyUpdated(CurrencyUpdatedEvent e)
+        {
+            if (hasTopBar && e.Type == CurrencyType.SoftCurrency) topBar.SetCoins(e.NewTotalAmount);
+        }
+
+        private void RefreshCoins()
+        {
+            if (hasTopBar) topBar.SetCoins(gameData.coinCount);
         }
 
         private void RefreshPlayButton()
@@ -122,7 +141,8 @@ namespace BusOut.Menu
                                "Kéo TopUI (có MenuTopBarView) và SharedUI (có SharedPopupsPresenter) vào.", this);
                 return;
             }
-            if (topBar.Init()) topBar.SettingsClicked += HandleSettingsClicked;
+            hasTopBar = topBar.Init();
+            if (hasTopBar) topBar.SettingsClicked += HandleSettingsClicked;
         }
 
         /// Thiếu nút Play thì không vào được ván — báo to, Menu vẫn chạy.

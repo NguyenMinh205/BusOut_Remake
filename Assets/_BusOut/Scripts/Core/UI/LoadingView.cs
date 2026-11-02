@@ -25,6 +25,9 @@ namespace BusOut.Core
                 return false;
             }
             // Thanh chỉ để xem: Slider mặc định kéo được bằng tay / núm Handle.
+            // ⚠️ Bỏ Transition TRƯỚC khi tắt interactable: Slider tắt thì Color Tint phủ Disabled Color (xám, alpha ~0.5) lên
+            // Target Graphic (núm Handle) → icon trên núm bị mờ.
+            progressBar.transition = Selectable.Transition.None;
             progressBar.interactable = false;
             progressBar.minValue = 0f;
             progressBar.maxValue = 1f;

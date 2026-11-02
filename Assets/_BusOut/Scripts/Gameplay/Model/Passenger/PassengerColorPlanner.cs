@@ -22,7 +22,7 @@ namespace BusOut.Gameplay
     ///   kế hoạch LIỀN ngay sau nó các xe chặn (theo thứ tự gỡ được) → người chơi phải đưa xe chặn lên bến chờ trước.
     ///   ⚠️ Không lên kế hoạch liền chuỗi thì khách của xe chặn tới sau ~24 khách xe khác: bến kẹt cứng
     ///   (đo 22/10/2026, chỉ hard point không mix: bot biết kế hoạch chỉ thắng 438/600 thay vì 573/600).
-    /// Đo bằng docs/tools/sim_board.py (chép đúng logic này).
+    /// Số đo trên lấy từ bot mô phỏng chạy ngoài Unity, chép đúng logic lớp này — đổi logic thì sửa cả bản mô phỏng rồi đo lại.
     public sealed class PassengerColorPlanner
     {
         private const int MaxMixedCars = 4; // xe chính + tối đa 3 xe trộn (size 3 = Hard)
