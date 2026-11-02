@@ -12,7 +12,15 @@ namespace BusOut.Core
 
         protected override void OnSingletonAwake()
         {
-            GameData = new SecureGameData();
+            NewPlayerConfig newPlayer = Resources.Load<NewPlayerConfig>(NewPlayerConfig.ResourcePath);
+            if (newPlayer == null)
+            {
+                Debug.LogError($"[BusOut] Không thấy Resources/{NewPlayerConfig.ResourcePath}.asset: người chơi mới nhận số mặc định trong " +
+                               "code. Tạo bằng Create → BusOut → New Player Config, đặt trong Assets/_BusOut/Resources.", this);
+                newPlayer = NewPlayerConfig.CreateDefault();
+            }
+            // Save mới = giá trị ban đầu của NewPlayerConfig; có file save thì Load ghi đè.
+            GameData = SecureGameData.CreateNew(newPlayer);
             GameData.Load();
         }
 
@@ -28,22 +36,53 @@ namespace BusOut.Core
         }
     }
 
+    /// Dữ liệu người chơi, lưu thành một file mã hoá (JsonUtility). Giá trị của người chơi MỚI lấy từ NewPlayerConfig
+    /// (CreateNew) — khởi tạo field dưới đây chỉ là giá trị khi đọc save cũ THIẾU trường đó.
+    /// ⚠️ Thêm trường mới: an toàn (save cũ thiếu → nhận khởi tạo field). Đổi tên / đổi kiểu trường: save cũ mất giá trị đó →
+    /// tăng CurrentSaveVersion và chuyển đổi trong CopyFrom.
     [System.Serializable]
     public class SecureGameData
     {
+        /// Phiên bản cấu trúc save hiện tại. Lịch sử: 1 (1/11/2026) — thêm saveVersion, dữ liệu giữ nguyên.
+        public const int CurrentSaveVersion = 1;
+
         #region ATTRIBUTES
+        /// Phiên bản cấu trúc của file save này. 0 = save có từ trước khi đánh số phiên bản.
+        /// ⚠️ Không khởi tạo field: save cũ không có trường này phải đọc ra 0 (khởi tạo = 1 thì không phân biệt được).
+        public int saveVersion;
         /// Level đang chơi, tính từ 1 (= trường "index" của level trong file curve).
         public int currentLevel = 1;
-        public int coinCount = 100;
-        /// Số lượt mỗi booster, chỉ số = (int)BoosterType. Mỗi booster có sẵn 1 lượt (gốc: tặng 1 lượt khi mở khoá).
-        public List<int> boosterCounts = new List<int> { 1, 1, 1, 1 };
+        public int coinCount;
+        /// Số lượt mỗi booster, chỉ số = (int)BoosterType.
+        public List<int> boosterCounts = new List<int>();
 
         public bool musicOn = true;
         public bool sfxOn = true;
         public bool vibrationOn = true;
         /// Mã ngôn ngữ đang chọn (vd. "en", "vi"). Chưa có hệ thống đa ngôn ngữ: chỉ lưu lựa chọn.
-        public string language = "en";
+        public string language = "";
         #endregion
+
+        /// Giá trị ban đầu (người chơi mới, booster thêm sau này). Không lưu: private không có SerializeField.
+        [System.NonSerialized] private NewPlayerConfig defaults;
+
+        /// Save mới theo NewPlayerConfig (chưa đọc file).
+        public static SecureGameData CreateNew(NewPlayerConfig defaults)
+        {
+            var data = new SecureGameData
+            {
+                defaults = defaults,
+                saveVersion = CurrentSaveVersion,
+                currentLevel = Mathf.Max(1, defaults.startingLevel),
+                coinCount = Mathf.Max(0, defaults.startingCoins),
+                musicOn = defaults.musicOn,
+                sfxOn = defaults.soundOn,
+                vibrationOn = defaults.vibrationOn,
+                language = defaults.language,
+            };
+            data.EnsureBoosterSlots();
+            return data;
+        }
 
         #region METHODS
         /// Thắng level hiện tại: sang level sau. Số level tăng mãi; hết file level thì Gameplay tự quay vòng layout.
@@ -104,12 +143,16 @@ namespace BusOut.Core
         }
 
         /// ⚠️ Save cũ có thể ít phần tử hơn số booster hiện tại (thêm booster mới sau này): thiếu thì đọc là
-        /// out of range. Phần thêm vào lấy số lượt mặc định.
+        /// out of range. Phần thêm vào lấy số lượt ban đầu của booster đó (NewPlayerConfig).
         private void EnsureBoosterSlots()
         {
             int boosterCount = System.Enum.GetValues(typeof(BoosterType)).Length;
             if (boosterCounts == null) boosterCounts = new List<int>();
-            while (boosterCounts.Count < boosterCount) boosterCounts.Add(1);
+            while (boosterCounts.Count < boosterCount)
+            {
+                var type = (BoosterType)boosterCounts.Count;
+                boosterCounts.Add(defaults != null ? defaults.StartingBoosterCount(type) : 1);
+            }
         }
         #endregion
 
@@ -130,6 +173,9 @@ namespace BusOut.Core
         private void CopyFrom(SecureGameData other)
         {
             if (other == null) return;
+            // Chuyển đổi save cũ (other.saveVersion < CurrentSaveVersion) đặt ở đây khi đổi cấu trúc save.
+            // 0 → 1: không cần chuyển gì.
+            saveVersion = CurrentSaveVersion;
             currentLevel = Mathf.Max(1, other.currentLevel);
             coinCount = other.coinCount;
             boosterCounts = other.boosterCounts != null ? new List<int>(other.boosterCounts) : new List<int>();
@@ -137,14 +183,15 @@ namespace BusOut.Core
             musicOn = other.musicOn;
             sfxOn = other.sfxOn;
             vibrationOn = other.vibrationOn;
-            language = string.IsNullOrEmpty(other.language) ? "en" : other.language;
+            language = !string.IsNullOrEmpty(other.language) ? other.language
+                : defaults != null ? defaults.language : "en";
         }
 
         public void ClearAllData()
         {
             SaveGameManager.DeleteSave(SaveFileKey);
-            // Chép từ bản mới tạo: giá trị mặc định chỉ khai báo một chỗ (khởi tạo field ở trên).
-            CopyFrom(new SecureGameData());
+            // Chép từ bản mới tạo: giá trị ban đầu chỉ khai báo một chỗ (NewPlayerConfig).
+            CopyFrom(defaults != null ? CreateNew(defaults) : new SecureGameData());
         }
         #endregion
     }

@@ -1,0 +1,18 @@
+{
+    "name": "BusOut.Core.Editor",
+    "rootNamespace": "BusOut.Core.Editor",
+    "references": [
+        "BusOut.Core"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
