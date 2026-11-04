@@ -25,6 +25,15 @@ namespace BusOut.Core
         [Tooltip("Mở popup: quãng trượt của kiểu rơi xuống / trồi lên (đơn vị UI, theo Reference Resolution 1170×2532).")]
         public float popupSlideDistance = 160f;
 
+        [Header("Chuyển cảnh Menu ↔ màn chơi")]
+        [Tooltip("Tranh Loading hiện dần / mờ đi trong bao lâu (giây). Gốc: 0.25.")]
+        public float transitionFadeDuration = 0.25f;
+
+        [Tooltip("Tranh Loading che kín ít nhất bao lâu (giây) trước khi mờ đi: ngắn quá thì tranh chớp qua, không đọc kịp.")]
+        public float transitionMinHoldDuration = 1f;
+
+        // Hiệu ứng chạm + nút nhún khi bấm: chuyển sang FxConfig (4/11/2026).
+
         [Header("Cài đặt")]
         [Tooltip("Ngôn ngữ chọn được (code lưu vào save, displayName hiện ở SettingsView.languageText nếu có). Mã trên từng nút " +
                  "trong bảng chọn ngôn ngữ (SettingsView › Language Choices) phải có ở đây. ⚠️ Font chữ phải có đủ glyph của " +

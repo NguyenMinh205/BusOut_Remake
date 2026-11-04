@@ -58,6 +58,7 @@ namespace BusOut.Menu
             map = CreateMap();
             // Lần mở Menu đầu tiên dựng ngay dưới đây; các lần về từ màn chơi thì nghe sự kiện này.
             EventBus.Subscribe<HomeShownEvent>(HandleHomeShown);
+            EventBus.Subscribe<ScreenRevealedEvent>(HandleScreenRevealed);
             // Coin đổi ở đâu (nhận thưởng, mua…) thì số trên Menu cũng đúng.
             EventBus.Subscribe<CurrencyUpdatedEvent>(HandleCurrencyUpdated);
             RefreshPlayButton();
@@ -74,6 +75,7 @@ namespace BusOut.Menu
         private void OnDestroy()
         {
             EventBus.Unsubscribe<HomeShownEvent>(HandleHomeShown);
+            EventBus.Unsubscribe<ScreenRevealedEvent>(HandleScreenRevealed);
             EventBus.Unsubscribe<CurrencyUpdatedEvent>(HandleCurrencyUpdated);
         }
 
@@ -98,6 +100,10 @@ namespace BusOut.Menu
             RefreshCoins();
             map?.Refresh();
         }
+
+        /// Màn chuyển cảnh mờ đi: vừa thắng thì giờ mới cho xe chạy sang bệ mới (người chơi thấy). Vào màn chơi thì không có
+        /// gì chờ (Refresh chỉ đặt chờ khi về Menu).
+        private void HandleScreenRevealed(ScreenRevealedEvent _) => map?.PlayPendingAdvance();
 
         /// Chỉ quay bản đồ khi đang đứng ở trang có bản đồ (Home): trang Shop / Achievement che bản đồ.
         private void HandleMapDragBegan()

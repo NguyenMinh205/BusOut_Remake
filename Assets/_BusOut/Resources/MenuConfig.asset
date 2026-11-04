@@ -122,4 +122,7 @@ MonoBehaviour:
   mapCarVisibleViewportTop: 1
   mapAdvanceDelay: 0.5
   mapAdvanceDuration: 1.4
+  mapCarLeadLevels: 0.25
+  mapCarBackUpLevels: 0.03
+  mapCarBackUpDuration: 0.12
   playButtonLevelFormat: LEVEL {0}

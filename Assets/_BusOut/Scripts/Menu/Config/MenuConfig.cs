@@ -44,7 +44,7 @@ namespace BusOut.Menu
         public float mapLevelsPerScreenHeight = 3f;
 
         [Tooltip("Xem trước được tới level hiện tại + bấy nhiêu (level chưa chơi); lùi lại thì xem được tới level 1.")]
-        public int mapViewAheadLevels = 10;
+        public int mapViewAheadLevels = 50;
 
         [Tooltip("Vuốt mạnh rồi thả: bản đồ trôi thêm (tốc độ lúc thả, level/giây) × số này, rồi dừng ở level gần nhất. " +
                  "0 = không trôi, chỉ hít về level gần nhất.")]
@@ -70,11 +70,23 @@ namespace BusOut.Menu
         public float mapCarVisibleViewportTop = 1f;
 
         [Header("Thắng về Menu: xe chạy sang bệ level mới")]
-        [Tooltip("Đứng yên ở bệ vừa qua bấy nhiêu giây (bệ bật lớp \"đã qua\") rồi mới chạy. Gốc: 0.5.")]
+        [Tooltip("Đứng yên ở bệ vừa qua bấy nhiêu giây rồi mới chạy (lúc chạy: bệ bật lớp \"đã qua\" + pháo sáng). Gốc: 0.5.")]
         public float mapAdvanceDelay = 0.5f;
 
-        [Tooltip("Thời gian xe chạy sang bệ mới (giây, chậm–nhanh–chậm). Gốc: 1.4.")]
+        [Tooltip("Xe chạy dọc mặt đường sang bệ mới, bản đồ lăn CÙNG LÚC, trong bấy nhiêu giây (chậm–nhanh–chậm). Gốc: 1.4.")]
         public float mapAdvanceDuration = 1.4f;
+
+        [Tooltip("Lúc giữa đường xe dẫn trước khung nhìn tối đa bấy nhiêu level (0 = xe đứng yên giữa màn như gốc, đường lăn " +
+                 "bên dưới). Đầu / cuối đường xe luôn ở giữa màn. Nhìn ra xe đang lăn bánh chứ không trượt.")]
+        public float mapCarLeadLevels = 0.25f;
+
+        [Tooltip("Lấy đà: xe lùi bấy nhiêu level trước khi chạy (0 = không lùi).")]
+        public float mapCarBackUpLevels = 0.03f;
+
+        [Tooltip("Thời gian lùi lấy đà (giây).")]
+        public float mapCarBackUpDuration = 0.12f;
+
+        // Dáng xe khi chạy (phóng to, chúi, nhún, nảy) + pháo sáng bệ + vòng dưới gầm: chuyển sang FxConfig (4/11/2026).
 
         [Header("Nút Play")]
         [Tooltip("Chữ trên nút Play; {0} = level đang lưu.")]

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using BusOut.DesignPattern;
 
 namespace BusOut.Core
@@ -67,6 +68,21 @@ namespace BusOut.Core
     /// HomeContext vừa bật XONG (về từ màn chơi). Dựng lại Menu ở đây, không ở OnEnable (cùng lý do GameplayShownEvent).
     public struct HomeShownEvent : IEvent
     {
+    }
+
+    /// Màn chuyển cảnh bắt đầu mờ đi, lộ context vừa bật (sau GameplayShownEvent / HomeShownEvent, khi đã giữ đủ lâu).
+    /// Quy ước: *ShownEvent = dựng dưới màn che; ScreenRevealedEvent = bắt đầu hoạt ảnh người chơi phải thấy (xe "bung" vào
+    /// ván, xe chạy sang bệ mới). Không có màn che thì phát ngay sau *ShownEvent.
+    public struct ScreenRevealedEvent : IEvent
+    {
+    }
+
+    /// Các trang của màn Loading chuyển cảnh (hiện là các booster). Gameplay phát lúc khởi tạo (Core không đọc được
+    /// GameplayConfig); GameFlowController nhận, đưa cho màn che. ⚠️ EventBus không giữ sự kiện cũ: người nhận phải đăng ký
+    /// TRƯỚC lúc phát — GameFlowController đăng ký từ lúc nạp scene, Gameplay phát muộn hơn (màn Loading / lần Play đầu).
+    public struct LoadingTipsChangedEvent : IEvent
+    {
+        public IReadOnlyList<LoadingTip> Tips;
     }
 
     #endregion
@@ -147,13 +163,6 @@ namespace BusOut.Core
     public struct LanguageChangedEvent : IEvent
     {
         public string Code;
-    }
-
-    /// Yêu cầu phát âm thanh: Gameplay không cần biết tới AudioManager.
-    public struct PlayAudioEvent : IEvent
-    {
-        public string SoundId;
-        public float Volume;
     }
 
     /// Yêu cầu rung camera.

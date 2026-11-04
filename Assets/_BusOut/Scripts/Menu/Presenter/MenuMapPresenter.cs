@@ -7,7 +7,8 @@ namespace BusOut.Menu
     /// Bản đồ level ở Menu: level nào ở ô nào, module / chủ đề nào, bệ nào đã qua, xe đứng ở level hiện tại, trời theo
     /// chủ đề. Vuốt dọc để xem level đã qua / sắp tới (chỉ xem — như gốc, Play luôn chơi level hiện tại): kéo theo tay,
     /// thả thì trôi theo đà rồi dừng đúng một level; trời chuyển dần khi lăn qua ranh giới hai chủ đề.
-    /// Thắng về Menu: bệ vừa qua sáng "đã qua", xe chạy sang bệ level mới (xe đứng yên trên màn hình, đường lăn bên dưới).
+    /// Thắng về Menu: bệ vừa qua sáng "đã qua" + pháo sáng, xe CHẠY THẬT dọc mặt đường sang bệ level mới (có khói, phóng
+    /// to), bản đồ lăn theo sau để bệ mới về giữa khung nhìn (bạn chốt 3/11/2026 — gốc: xe đứng yên, đường lăn bên dưới).
     /// MenuPresenter tạo (null khi config chủ đề sai — Menu vẫn chạy, chỉ mất bản đồ).
     public sealed class MenuMapPresenter
     {
@@ -17,6 +18,7 @@ namespace BusOut.Menu
         private const float ScrolledAwayEpsilon = 0.01f;
 
         private readonly MenuConfig config;
+        private readonly FxConfig fx;
         private readonly MenuMapView view;
         private readonly MapReturnButtonView returnButton; // null khi thiếu nút: chỉ mất nút, vẫn vuốt được
         private readonly SecureGameData gameData;
@@ -32,15 +34,29 @@ namespace BusOut.Menu
         private Tween moveTween; // hít / về level hiện tại / xe chạy sang bệ mới: luôn chỉ một
         // Đang chạy sang bệ mới (cả lúc đứng chờ trước khi chạy): khoá vuốt + nút về, không đặt xe lên bệ.
         private bool isAdvancing;
-        private bool isCarOnPivot;
-        private float advanceStartPosition;
+        // Level xe sẽ chạy tới khi màn chuyển cảnh mờ đi (0 = không có).
+        private int pendingAdvanceLevel;
+        // Quãng xe đã chạy dọc mặt đường (level, 0..1) trong lúc sang bệ mới.
+        private float carDriven;
+        private readonly DG.Tweening.Core.DOGetter<float> getCarDriven;
+        private readonly DG.Tweening.Core.DOSetter<float> setCarDriven;
+        // Tiến độ đoạn chạy (0..1) và vị trí bản đồ lúc bắt đầu chạy.
+        private float advanceProgress;
+        private float advanceFromPosition;
+        private readonly DG.Tweening.Core.DOGetter<float> getAdvanceProgress;
+        private readonly DG.Tweening.Core.DOSetter<float> setAdvanceProgress;
 
         private MenuMapPresenter(MenuConfig config, MenuMapView view, MapReturnButtonView returnButton, SecureGameData gameData)
         {
             this.config = config;
+            fx = FxConfig.Instance;
             this.view = view;
             this.returnButton = returnButton;
             this.gameData = gameData;
+            getCarDriven = () => carDriven;
+            setCarDriven = SetCarDriven;
+            getAdvanceProgress = () => advanceProgress;
+            setAdvanceProgress = SetAdvanceProgress;
             if (returnButton != null) returnButton.Clicked += ReturnToCurrentLevel;
         }
 
@@ -48,7 +64,15 @@ namespace BusOut.Menu
             SecureGameData gameData)
         {
             if (!IsThemeListValid(config, view)) return null;
+            FxConfig fx = FxConfig.Instance;
+            if (fx.levelPassEffectPrefab == null)
+                Debug.LogError("[BusOut] FxConfig thiếu Level Pass Effect Prefab: thắng về Menu không có pháo sáng ở bệ. Kéo " +
+                               "Prefab/VFX/LevelPassEffect vào Resources/FxConfig.", fx);
+            if (fx.carIdleRingsPrefab == null)
+                Debug.LogError("[BusOut] FxConfig thiếu Car Idle Rings Prefab: xe Menu đứng yên không có vòng tỏa dưới gầm. Kéo " +
+                               "Prefab/VFX/CarIdleRings vào Resources/FxConfig.", fx);
             if (!view.Init(MenuMapLayout.SlotCount, MenuMapLayout.DegreesPerLevel)) return null;
+            view.InitCarEffects(fx.carIdleRingsPrefab);
             if (returnButton != null && !returnButton.Init()) returnButton = null;
             return new MenuMapPresenter(config, view, returnButton, gameData);
         }
@@ -72,27 +96,48 @@ namespace BusOut.Menu
                     yield return null;
                 }
             }
+            // Pháo sáng: lần thắng đầu tiên không phải Instantiate đúng lúc xe bắt đầu chạy.
+            if (fx.levelPassEffectPrefab != null) view.PrewarmModule(fx.levelPassEffectPrefab);
             reportProgress(1f);
         }
 
         /// Về đúng level đang lưu (không hoạt ảnh): xe ở bệ level đó, trời theo chủ đề của nó.
         public void ShowCurrentLevel() => JumpTo(Mathf.Max(1, gameData.currentLevel));
 
-        /// Mở lại Menu (về từ ván chơi): vừa thắng (level lưu = level đang hiện + 1) → xe chạy sang bệ mới;
-        /// còn lại (thua, rời ván) → đứng ở level lưu.
+        /// Mở lại Menu (về từ ván chơi, dưới màn chuyển cảnh): vừa thắng (level lưu = level đang hiện + 1) → đứng ở bệ vừa
+        /// thắng, chờ PlayPendingAdvance (màn che mờ đi) mới chạy sang bệ mới; còn lại (thua, rời ván) → đứng ở level lưu.
         public void Refresh()
         {
             int savedLevel = Mathf.Max(1, gameData.currentLevel);
-            if (savedLevel == currentLevel + 1 && !isAdvancing) PlayAdvance(currentLevel, savedLevel);
-            else ShowCurrentLevel();
+            if (savedLevel == currentLevel + 1 && !isAdvancing)
+            {
+                JumpTo(currentLevel);
+                pendingAdvanceLevel = savedLevel;
+            }
+            else
+            {
+                pendingAdvanceLevel = 0;
+                ShowCurrentLevel();
+            }
+        }
+
+        /// Màn chuyển cảnh bắt đầu mờ (ScreenRevealedEvent): chạy sang bệ mới nếu Refresh vừa thấy thắng. Chạy ngay lúc
+        /// Refresh thì xe đi xong (hoặc đi dở) dưới màn che, người chơi không thấy.
+        public void PlayPendingAdvance()
+        {
+            if (pendingAdvanceLevel <= 0) return;
+            int toLevel = pendingAdvanceLevel;
+            pendingAdvanceLevel = 0;
+            PlayAdvance(toLevel - 1, toLevel);
         }
 
         private void JumpTo(int level)
         {
             KillMove();
+            // Đang chạy dở bị cắt ngang (vd. bấm Play giữa lúc chạy): tắt khói, bỏ phóng to — FillWindow đặt lại xe lên bệ.
+            view.EndCarDrive();
             isDragging = false;
             isAdvancing = false;
-            isCarOnPivot = false;
             currentLevel = level;
             // Dựng lại cả cửa sổ dù vị trí không đổi: level hiện tại có thể vừa đổi (bệ "đã qua", chỗ đặt xe) và xe có thể
             // đang ở carPivot (chạy dở) — FillWindow đặt lại xe lên bệ.
@@ -100,37 +145,78 @@ namespace BusOut.Menu
             SetPosition(level - 1);
         }
 
-        /// Đứng ở bệ vừa thắng như lúc rời Menu, chờ mapAdvanceDelay, rồi chạy sang bệ mới (chậm–nhanh–chậm như gốc).
+        /// Đứng ở bệ vừa thắng như lúc rời Menu (mapAdvanceDelay), lùi lấy đà (mapCarBackUp*), rồi xe chạy dọc mặt đường
+        /// sang bệ mới và bản đồ lăn CÙNG LÚC trong mapAdvanceDuration (như gốc 1.4s): giữa đường xe dẫn trước khung nhìn tối
+        /// đa mapCarLeadLevels (thấy xe lăn bánh trên đường, không trượt), thân xe ngửa khi tăng tốc / chúi khi phanh và nhún
+        /// đều; gần tới thì tắt khói + thu cỡ; đỗ thì nảy một cái (bạn duyệt 4/11).
         private void PlayAdvance(int fromLevel, int toLevel)
         {
             JumpTo(fromLevel);
             isAdvancing = true;
+            float startTime = Mathf.Max(0f, config.mapAdvanceDelay);
+            float backUpDuration = Mathf.Max(0f, config.mapCarBackUpDuration);
+            float driveStart = startTime + backUpDuration;
+            float driveDuration = Mathf.Max(0.01f, config.mapAdvanceDuration);
+            float scaleBack = Mathf.Clamp(fx.mapCarDriveScaleDuration, 0f, driveDuration);
+            // ⚠️ Đặt về 0 NGAY ĐÂY, không trong StartAdvance: tween đọc giá trị đầu lúc nó bắt đầu, cùng thời điểm với callback
+            // StartAdvance — đọc trước callback là đọc số của lần thắng trước → xe đứng im / nhảy cóc.
+            carDriven = 0f;
+            advanceProgress = 0f;
+            advanceFromPosition = fromLevel - 1;
             moveTween = DOTween.Sequence()
-                .AppendInterval(config.mapAdvanceDelay)
-                .AppendCallback(() => StartAdvance(toLevel))
-                .Append(DOTween.To(() => position, SetPosition, toLevel - 1, config.mapAdvanceDuration).SetEase(Ease.InOutCubic))
+                .InsertCallback(startTime, () => StartAdvance(fromLevel, toLevel))
+                .Insert(startTime, DOTween.To(getCarDriven, setCarDriven, -config.mapCarBackUpLevels, backUpDuration)
+                    .SetEase(Ease.OutQuad))
+                // Tiến độ chạy tuyến tính 0 → 1; dáng chạy (ease, dẫn trước, chúi, nhún) tính trong SetAdvanceProgress.
+                .Insert(driveStart, DOTween.To(getAdvanceProgress, setAdvanceProgress, 1f, driveDuration).SetEase(Ease.Linear))
+                .InsertCallback(driveStart + driveDuration - scaleBack, EndCarMove)
                 .AppendCallback(FinishAdvance)
                 .SetLink(view.gameObject)
                 .SetTarget(this);
         }
 
-        private void StartAdvance(int toLevel)
+        /// <paramref name="t"/> 0..1 của đoạn chạy. Xe: InOutSine từ chỗ lùi lấy đà tới bệ mới. Bản đồ: cùng nhịp nhưng chậm
+        /// hơn xe một đoạn lead·sin(πt) (0 ở hai đầu → xe bắt đầu và dừng ở giữa màn). Gia tốc của InOutSine ∝ cos(πt) nên
+        /// dáng thân xe theo sin(2πt): dương nửa đầu (tăng tốc → ngửa đầu), âm nửa sau (phanh → chúi đầu), 0 ở hai đầu.
+        private void SetAdvanceProgress(float t)
+        {
+            advanceProgress = t;
+            float eased = 0.5f * (1f - Mathf.Cos(Mathf.PI * t));
+            SetCarDriven(Mathf.Lerp(-config.mapCarBackUpLevels, 1f, eased));
+            float road = Mathf.Clamp01(eased - config.mapCarLeadLevels * Mathf.Sin(Mathf.PI * t));
+            SetPosition(advanceFromPosition + road);
+            float elapsed = t * config.mapAdvanceDuration;
+            float tilt = fx.mapCarTiltDegrees * Mathf.Sin(2f * Mathf.PI * t);
+            float squash = fx.mapCarBounceAmount * Mathf.Abs(Mathf.Sin(Mathf.PI * fx.mapCarBounceFrequency * elapsed));
+            view.SetCarBody(tilt, squash);
+        }
+
+        private void EndCarMove() => view.EndCarMove(fx.mapCarDriveScaleDuration);
+
+        private void StartAdvance(int fromLevel, int toLevel)
         {
             // Xe sang carPivot TRƯỚC khi dựng lại cửa sổ: bệ cũ có thể bị trả về pool, xe còn là con của nó thì bị ẩn theo.
-            view.BeginCarAdvance();
-            isCarOnPivot = true;
-            advanceStartPosition = position;
+            view.BeginCarDrive(fx.mapCarDriveScale, fx.mapCarDriveScaleDuration);
+            view.PlayLevelPassEffect(MenuMapLayout.SlotOf(fromLevel), fx.levelPassEffectPrefab);
+            AudioService.Play(SoundId.CarMoveToBusStop);
             currentLevel = toLevel;
             // Dựng lại để bệ vừa qua bật lớp "đã qua" (level < currentLevel).
             windowCenter = int.MinValue;
             SetPosition(position);
         }
 
+        private void SetCarDriven(float value)
+        {
+            carDriven = value;
+            view.SetCarDrive(value);
+        }
+
         private void FinishAdvance()
         {
             isAdvancing = false;
-            isCarOnPivot = false;
+            view.EndCarDrive();
             view.PlaceCar(MenuMapLayout.SlotOf(currentLevel));
+            view.PlayCarArrive(fx.mapCarArrivePunch, fx.mapCarArrivePunchDuration);
             UpdateReturnButton();
         }
 
@@ -193,7 +279,6 @@ namespace BusOut.Menu
         {
             position = Mathf.Clamp(value, 0f, MaxPosition);
             view.SetRoadPosition(position);
-            if (isCarOnPivot) view.SetCarAdvance(position - advanceStartPosition);
             int center = Mathf.RoundToInt(position) + 1;
             if (center != windowCenter)
             {

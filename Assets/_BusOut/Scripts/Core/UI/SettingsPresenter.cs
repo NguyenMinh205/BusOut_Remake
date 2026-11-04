@@ -68,11 +68,10 @@ namespace BusOut.Core
         private void HandleVibrationChanged(bool isOn)
         {
             gameData.vibrationOn = isOn;
-            // Vừa bật rung: rung một nhịp cho người chơi biết rung đang hoạt động (chỉ máy thật mới rung).
-#if UNITY_ANDROID || UNITY_IOS
-            if (isOn) Handheld.Vibrate();
-#endif
             SaveAndPublish();
+            // Vừa bật rung: rung một nhịp cho người chơi biết rung đang hoạt động (chỉ máy thật mới rung).
+            // ⚠️ Sau SaveAndPublish: HapticService biết công tắc qua SettingsChangedEvent; gọi trước là nó còn tưởng đang tắt.
+            if (isOn) HapticService.Play(HapticType.Impact);
         }
 
         /// Chọn ngôn ngữ trong bảng: lưu + báo LanguageChangedEvent, đóng bảng. TẠM: chữ trong game chưa đổi (Task 10).

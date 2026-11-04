@@ -57,6 +57,8 @@ namespace BusOut.Core
             IsOn = !IsOn;
             Render(true);
             ValueChanged?.Invoke(this, IsOn);
+            // Phát SAU khi báo đổi: công tắc Sound vừa bật thì nghe ngay tiếng bấm, vừa tắt thì im.
+            AudioService.Play(SoundId.TapButton);
         }
 
         private void Render(bool animate)
