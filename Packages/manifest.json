@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "com.benoitfreslon.vibration": "https://github.com/BenoitFreslon/Vibration.git",
     "com.codewriter.triinspector": "https://github.com/codewriter-packages/Tri-Inspector.git",
     "com.coffee.ui-particle": "https://github.com/mob-sakai/ParticleEffectForUGUI.git#4.14.2",
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main",
@@ -16,6 +15,7 @@
     "com.unity.timeline": "1.8.12",
     "com.unity.ugui": "2.0.0",
     "com.unity.visualscripting": "1.9.11",
+    "xyz.candycoded.hapticfeedback": "https://github.com/CandyCoded/HapticFeedback.git#v1.0.3",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.adaptiveperformance": "1.0.0",
     "com.unity.modules.ai": "1.0.0",

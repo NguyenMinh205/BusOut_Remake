@@ -1,12 +1,5 @@
 {
   "dependencies": {
-    "com.benoitfreslon.vibration": {
-      "version": "https://github.com/BenoitFreslon/Vibration.git",
-      "depth": 0,
-      "source": "git",
-      "dependencies": {},
-      "hash": "91bb0b64274699bf7befc0d4f8f49243164aad9d"
-    },
     "com.codewriter.triinspector": {
       "version": "https://github.com/codewriter-packages/Tri-Inspector.git",
       "depth": 0,
@@ -285,6 +278,15 @@
         "com.unity.modules.jsonserialize": "1.0.0"
       },
       "url": "https://packages.unity.com"
+    },
+    "xyz.candycoded.hapticfeedback": {
+      "version": "https://github.com/CandyCoded/HapticFeedback.git#v1.0.3",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {
+        "com.unity.modules.androidjni": "1.0.0"
+      },
+      "hash": "4597a0376eafedee647bc3a02c6b574c309f3fa7"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
