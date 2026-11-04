@@ -4,7 +4,10 @@
     "references": [
         "BusOut.DesignPattern",
         "UnityEngine.UI",
-        "Unity.TextMeshPro"
+        "Unity.TextMeshPro",
+        "CandyCoded.HapticFeedback",
+        "Unity.InputSystem",
+        "Coffee.UIParticle"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

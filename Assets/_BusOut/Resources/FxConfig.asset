@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae4c686755ee4d42b4cbe9bff157cd47, type: 3}
+  m_Name: FxConfig
+  m_EditorClassIdentifier: BusOut.Core::BusOut.Core.FxConfig
+  mapCarDriveScale: 1.1
+  mapCarDriveScaleDuration: 0.15
+  mapCarTiltDegrees: 5
+  mapCarBounceAmount: 0.08
+  mapCarBounceFrequency: 4
+  mapCarArrivePunch: 0.12
+  mapCarArrivePunchDuration: 0.3
+  levelPassEffectPrefab: {fileID: 1208, guid: c67ea4a1618d4f54b8058442e2eb396c, type: 3}
+  carIdleRingsPrefab: {fileID: 1561, guid: 0d4e0c9b88834f49af897bae05c023f6, type: 3}
+  carMoveScale: 1.1
+  carMoveScaleDuration: 0.15
+  carLeaveLotScaleDuration: 0.25
+  rammedEffectPrefab: {fileID: 1709254077376921, guid: 8c132798d8664ca3a623d931900d3bb1, type: 3}
+  rammedEffectPrewarmCount: 10
+  rammedEffectForwardOffset: 0.3
+  carFullPunch: 0.25
+  carFullPunchDuration: 0.35
+  carFullEffectPrefabs:
+  - {fileID: 6073891735194678028, guid: a1eff1e3ee444302867cb3e751c2b08f, type: 3}
+  - {fileID: 2020661361868494885, guid: 3ef069f81798413a9316293e1fd3ff5c, type: 3}
+  - {fileID: 1449242181322416601, guid: 6296009d167d44228da553bab91d0af3, type: 3}
+  - {fileID: 8176850701479282271, guid: 58a0e82eb22742bfaa69de4804853518, type: 3}
+  carFullEffectPrewarmCount: 2
+  carFullEffectHeight: 2
+  carFullEffectTowardCamera: 1
+  carFullEffectScale: 1.5
+  winRaysTurnDuration: 8
+  winConfettiScale: 60
+  touchEffectScale: 60
+  touchEffectPoolSize: 6
+  buttonPressScale: 0.92
+  buttonPressDuration: 0.08

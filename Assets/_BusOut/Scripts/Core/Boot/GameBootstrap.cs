@@ -53,6 +53,10 @@ namespace BusOut.Core
             DOTween.Init();
             // Nạp save ngay (DataManager tự dựng object + đọc file lần đầu gọi), không để tới lúc Menu cần.
             _ = DataManager.Instance.GameData;
+            // ⚠️ Sau save: AudioService đọc công tắc Music / Sound từ save lúc dựng. Nhạc nền bắt đầu ngay từ màn Loading.
+            _ = AudioService.Instance;
+            // Cũng đọc công tắc rung từ save: dựng sau save, cùng chỗ với các dịch vụ sống suốt game.
+            _ = HapticService.Instance;
         }
 
         private void Start()
