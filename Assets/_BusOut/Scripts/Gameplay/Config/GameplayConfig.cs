@@ -11,8 +11,23 @@ namespace BusOut.Gameplay
         // targetFrameRate: chuyển sang Core/Config/BootConfig (1/11, đặt ở GameBootstrap lúc mở game).
 
         [Header("Xe")]
-        [Tooltip("Scale xe khi spawn.")]
-        public float carScale = 0.85f;
+        [Tooltip("Cỡ xe TRONG BÃI so với bố cục level (prefab × số này × độ co bố cục — ParkingLotView tự căn bố cục vào khung " +
+                 "bãi, xe co cùng tỉ lệ). Ra khỏi bãi (làn trên, bến, rời bến) xe về nguyên cỡ prefab. Gốc 0.85. ⚠️ Bố cục gốc xếp sát: > 0.85 là xe chồng lên nhau (đo 4/11/2026 trên 120 level: " +
+                 "0.85 → 4 chỗ chạm nhẹ, 0.9 → 48, 1.0 → 677). Nhỏ hơn = khe giữa xe rộng ra.")]
+        public float carScale = 0.9f;
+
+        // ⚠️ KHÔNG phải khung bãi: thu bãi thì kéo Lot Min / Lot Max trên ParkingLotView (Gizmo trắng). Đặt hai khung bằng
+        // nhau là bố cục co 1 lần = không co (bạn nhầm 4/11).
+        [Header("Dữ liệu level (KHÔNG chỉnh — thu bãi: ParkingLotView › Lot Min / Max)")]
+        [Tooltip("Khung chứa xe của DỮ LIỆU level (toạ độ x, z trong file curve) — góc dưới-trái. Khung này được căn vừa vào " +
+                 "khung bãi của ParkingLotView (Gizmo trắng): bãi nhỏ hơn thì cả bố cục + xe co lại cùng tỉ lệ. Gốc: khung bãi " +
+                 "gốc (-10.5, -12.5)…(10.5, 9) — mọi xe của 120 level nằm trong đó. Chỉ đổi khi đổi file level.")]
+        public Vector2 levelDataMin = new Vector2(-10.5f, -12.5f);
+
+        [Tooltip("... góc trên-phải.")]
+        public Vector2 levelDataMax = new Vector2(10.5f, 9f);
+
+        [Header("Xe (tiếp)")]
 
         [Tooltip("Bảng màu xe theo mã màu trong level.")]
         public List<Color> carColors;
@@ -131,7 +146,7 @@ namespace BusOut.Gameplay
         [Tooltip("Cỡ khách khi ngồi trên xe so với khách gốc (mesh 1.48), tính trên màn hình. Gốc: 0.55 (nhìn bé). " +
                  "2 ghế cạnh nhau cách 0.425, khách rộng 0.66 × số này → trên ~0.64 thì vai 2 khách chạm nhau. " +
                  "Không phụ thuộc scale prefab khách hay scale xe.")]
-        public float seatedPassengerScale = 0.65f;
+        public float seatedPassengerScale = 0.7f;
 
         [Header("Lên xe")]
         [Tooltip("Thời gian giữa 2 khách liên tiếp rời hàng lên xe (giây). Gốc: 0.1.")]
@@ -185,13 +200,17 @@ namespace BusOut.Gameplay
         public List<BoosterDefinition> boosters = new List<BoosterDefinition>
         {
             new BoosterDefinition { type = BoosterType.Shuffle, displayName = "SHUFFLE", unlockLevel = 2,
-                coinPrice = 120, buyAmount = 1, description = "Shuffle the queue to open up new moves." },
+                coinPrice = 120, buyAmount = 1, description = "Shuffle the queue to open up new moves.",
+                loadingDescription = "No car matches the line? Shuffle mixes up the waiting passengers to open new moves." },
             new BoosterDefinition { type = BoosterType.Sort, displayName = "SORT", unlockLevel = 3,
-                coinPrice = 150, buyAmount = 1, description = "Line up passengers so every car at the stop fills up and leaves." },
+                coinPrice = 150, buyAmount = 1, description = "Line up passengers so every car at the stop fills up and leaves.",
+                loadingDescription = "Stop getting crowded? Sort lines up the passengers so every car there fills up and drives away." },
             new BoosterDefinition { type = BoosterType.Undo, displayName = "UNDO", unlockLevel = 4,
-                coinPrice = 100, buyAmount = 1, description = "Send the last car you moved back to its parking spot." },
+                coinPrice = 100, buyAmount = 1, description = "Send the last car you moved back to its parking spot.",
+                loadingDescription = "Tapped the wrong car? Undo sends it back to its parking spot before anyone boards." },
             new BoosterDefinition { type = BoosterType.Crane, displayName = "CRANE", unlockLevel = 5,
-                coinPrice = 200, buyAmount = 1, description = "Lift any car, even a blocked one, straight to the stop." },
+                coinPrice = 200, buyAmount = 1, description = "Lift any car, even a blocked one, straight to the stop.",
+                loadingDescription = "Need a car that's boxed in? The Crane lifts it over the others, straight to the stop." },
         };
 
         [Tooltip("Icon ổ khoá trên nút booster chưa mở. Để trống thì giữ icon đang có.")]
@@ -261,5 +280,14 @@ namespace BusOut.Gameplay
         [Min(1)] public int buyAmount = 1;
         [Tooltip("Mô tả ngắn trong popup mua (tiếng Anh, như UI).")]
         [TextArea] public string description;
+
+        [Header("Màn Loading chuyển cảnh")]
+        [Tooltip("Tranh màn Loading khi chuyển Menu ↔ màn chơi (mỗi lần chọn ngẫu nhiên một booster). Trống = booster này " +
+                 "không lên màn Loading (báo lỗi).")]
+        public Sprite loadingSprite;
+
+        [Tooltip("Mẹo hiện dưới tên booster ở màn Loading (tiếng Anh, như UI): khi nào nên dùng. Khác Description (popup mua: " +
+                 "booster làm gì).")]
+        [TextArea] public string loadingDescription;
     }
 }

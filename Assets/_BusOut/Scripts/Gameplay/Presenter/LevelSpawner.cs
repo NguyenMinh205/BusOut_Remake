@@ -193,7 +193,8 @@ namespace BusOut.Gameplay
             // ⚠️ Pool thay Instantiate: dựng ~84 xe mỗi lần vào level / chơi lại là khung giật. Xe lấy lại giữ scale lần
             // trước (có thể đang 0 nếu bị trả về giữa hoạt ảnh vào level) → luôn đặt lại scale ở đây, trước PlayIntro.
             CarView view = PoolingManager.Spawn(prefab, position, rotation, parkingLot.CarsRoot);
-            view.transform.localScale = prefab.transform.localScale * config.carScale;
+            // Co cùng tỉ lệ với bố cục (ParkingLotView.LayoutScale): bố cục gốc xếp sát, chỉ co vị trí là xe chồng lên nhau.
+            view.transform.localScale = prefab.transform.localScale * (config.carScale * parkingLot.LayoutScale);
 #if UNITY_EDITOR
             // Tên theo CarId chỉ để dò trong Hierarchy; bản build bỏ (mỗi xe một chuỗi mới mỗi level).
             view.name = $"{prefab.name}_{id:00}";
@@ -201,7 +202,9 @@ namespace BusOut.Gameplay
 
             cars.Add(new CarModel(id, data.Type, data.color));
             carViews.Add(view);
-            if (!view.Init(id, config.GetCarColor(data.color), CarModel.SeatsOf(data.Type))) view.gameObject.SetActive(false);
+            // Ra khỏi bãi xe về nguyên cỡ prefab (carScale + độ co bố cục chỉ để bãi vừa camera).
+            if (!view.Init(id, config.GetCarColor(data.color), CarModel.SeatsOf(data.Type), prefab.transform.localScale))
+                view.gameObject.SetActive(false);
         }
 
         private CarView GetPrefab(VehicleType type)

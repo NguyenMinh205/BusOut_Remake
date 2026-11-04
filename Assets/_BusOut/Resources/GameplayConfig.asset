@@ -12,7 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 839ca57d89f1411092489a0b19dca398, type: 3}
   m_Name: GameplayConfig
   m_EditorClassIdentifier: BusOut.Gameplay::BusOut.Gameplay.GameplayConfig
-  carScale: 0.85
+  carScale: 0.9
+  levelDataMin: {x: -10.5, y: -12.5}
+  levelDataMax: {x: 10.5, y: 9}
   carColors:
   - {r: 1, g: 0.2, b: 0.2431373, a: 1}
   - {r: 1, g: 0.8705882, b: 0.2941176, a: 1}
@@ -55,7 +57,7 @@ MonoBehaviour:
   passengerGroupMax: 4
   hardPointBaseBlockers: 2
   hardPointSlotReserve: 2
-  seatedPassengerScale: 0.65
+  seatedPassengerScale: 0.7
   boardingInterval: 0.1
   carLeaveDelay: 0.5
   tapRayDistance: 200
@@ -77,6 +79,9 @@ MonoBehaviour:
     coinPrice: 120
     buyAmount: 1
     description: Shuffle the queue to open up new moves.
+    loadingSprite: {fileID: 21300000, guid: 11be60155e95d694cac65f1c4fb22b1d, type: 3}
+    loadingDescription: No car matches the line? Shuffle mixes up the waiting passengers
+      to open new moves.
   - type: 0
     displayName: SORT
     icon: {fileID: 21300000, guid: c3c88591bc346ba47ab73097bad7989d, type: 2}
@@ -84,6 +89,9 @@ MonoBehaviour:
     coinPrice: 150
     buyAmount: 1
     description: Line up passengers so every car at the stop fills up and leaves.
+    loadingSprite: {fileID: 21300000, guid: c9207df06f0e91648a47a4373579ead9, type: 3}
+    loadingDescription: Stop getting crowded? Sort lines up the passengers so every
+      car there fills up and drives away.
   - type: 1
     displayName: UNDO
     icon: {fileID: 21300000, guid: c5bcf12081dbac749a5a80ae4b7c6af3, type: 2}
@@ -91,6 +99,9 @@ MonoBehaviour:
     coinPrice: 100
     buyAmount: 1
     description: Send the last car you moved back to its parking spot.
+    loadingSprite: {fileID: 21300000, guid: 051c89b9605e9db42ba01c318193ebc2, type: 3}
+    loadingDescription: Tapped the wrong car? Undo sends it back to its parking spot
+      before anyone boards.
   - type: 3
     displayName: CRANE
     icon: {fileID: 21300000, guid: 1bd1d2afdf2a6094aafbb0317b1dbe0a, type: 2}
@@ -98,6 +109,9 @@ MonoBehaviour:
     coinPrice: 200
     buyAmount: 1
     description: Lift any car, even a blocked one, straight to the stop.
+    loadingSprite: {fileID: 21300000, guid: 3b35bd68a09832849b176773865ce3ed, type: 3}
+    loadingDescription: Need a car that's boxed in? The Crane lifts it over the others,
+      straight to the stop.
   boosterLockIcon: {fileID: 21300000, guid: 61568a6e5fe042d4495e3cb36886e5d8, type: 2}
   boosterUnlockedBackground: {fileID: 21300000, guid: 83f00ce8cd2529945b33401d3d40db64, type: 2}
   boosterLockedBackground: {fileID: 21300000, guid: 56f28ca8052b832499d4690c6a8aa2c1, type: 2}

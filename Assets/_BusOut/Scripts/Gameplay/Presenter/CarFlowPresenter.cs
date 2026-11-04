@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using BusOut.Core;
+using BusOut.DesignPattern;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -29,6 +31,8 @@ namespace BusOut.Gameplay
         private Quaternion lastSentRotation;
         private int rewindingCarId = -1;
         private readonly Action<CarView> onRewound;
+        private readonly FxConfig fx;
+        private readonly bool hasRammedEffect;
 
         /// Có xe đang tua ngược về bãi (Undo). ⚠️ Lúc này collider xe đó tắt: chạm xe khác là xe kia tưởng đường trống,
         /// chạy xuyên qua xe đang lùi về → GameplayPresenter khoá chạm xe và booster tới khi xong.
@@ -44,6 +48,11 @@ namespace BusOut.Gameplay
             onLeft = HandleLeft;
             onReachedTopLane = HandleReachedTopLane;
             onRewound = HandleRewound;
+            fx = FxConfig.Instance;
+            hasRammedEffect = fx.rammedEffectPrefab != null;
+            if (!hasRammedEffect)
+                Debug.LogError("[BusOut] FxConfig thiếu Rammed Effect Prefab: xe đâm xe chặn không có hiệu ứng va chạm. " +
+                               "Kéo prefab hiệu ứng va chạm vào Resources/FxConfig › Rammed Effect Prefab.", fx);
         }
 
         /// Vào level mới: quên xe đã gửi (Undo không được trả xe của ván trước).
@@ -74,8 +83,12 @@ namespace BusOut.Gameplay
             Vector3 park = busStop.GetParkPoint(slotIndex);
             Vector3 parkDirection = park - entry;
             parkDirection.y = 0f;
+            // Nhấc lên là ra khỏi bãi: to dần về cỡ ngoài bãi trong lúc bay.
+            view.SetOutsideLot(true);
+            view.SetMoveScale(false, fx.carMoveScale, fx.carLeaveLotScaleDuration);
             view.PlayCraneLift(park, Quaternion.LookRotation(parkDirection), config.craneLiftHeight,
                 config.craneRiseDuration, config.craneFlyDuration, config.craneDropDuration, onArrivedSlot);
+            AudioService.Play(SoundId.Helicopter);
             return true;
         }
 
@@ -96,12 +109,18 @@ namespace BusOut.Gameplay
             rewindingCarId = car.Id;
             lastSentCarId = -1;
             view.Rewind(lastSentPosition, lastSentRotation, config.undoRewindSpeed, onRewound);
+            // Về bãi: thu về cỡ trong bãi ngay (đang chạy dở thì còn 1.1, đã ra khỏi bãi thì còn cỡ ngoài bãi); khói theo
+            // suốt đường lùi.
+            view.SetOutsideLot(false);
+            view.SetMoveScale(false, fx.carMoveScale, fx.carMoveScaleDuration);
+            view.SetSmoke(true);
             return true;
         }
 
         private void HandleRewound(CarView view)
         {
             rewindingCarId = -1;
+            view.SetSmoke(false);
             // Về chỗ: chặn xe khác và chạm được lại như trước khi gửi đi.
             view.SetCollidersEnabled(true, true);
             view.SetMarkVisible(true);
@@ -124,7 +143,14 @@ namespace BusOut.Gameplay
             {
                 float travel = Mathf.Max(0f, hitDistance - view.HalfLength - config.rammedGap);
                 Vector3 hitDirection = carTransform.forward;
-                view.PlayRam(travel, config, () => blocker.PlayRammed(hitDirection, config));
+                view.PlayRam(travel, config, () =>
+                {
+                    // Tiếng / rung / hiệu ứng lúc chạm vào xe chặn, không phải lúc bấm.
+                    AudioService.Play(SoundId.HitCar);
+                    HapticService.Play(HapticType.Impact);
+                    SpawnRammedEffect(view, hitDirection);
+                    blocker.PlayRammed(hitDirection, config);
+                });
                 return;
             }
 
@@ -150,10 +176,29 @@ namespace BusOut.Gameplay
             parkDirection.y = 0f;
             view.Drive(routeBuffer, config.carMoveSpeed, config.carTurnSharpness,
                 Quaternion.LookRotation(parkDirection), onArrivedSlot, 0, topLaneIndex, onReachedTopLane);
+            view.SetMoveScale(true, fx.carMoveScale, fx.carMoveScaleDuration);
+            view.SetSmoke(true);
+            AudioService.Play(SoundId.CarMoveToBusStop);
         }
 
-        // Ra tới làn trên là xe đã thoát khỏi bãi: mũi tên chỉ hướng hết ý nghĩa nên ẩn đi.
-        private static void HandleReachedTopLane(CarView view) => view.SetMarkVisible(false);
+        /// Hiệu ứng va chạm ở đầu xe đâm (lúc chạm), lấy từ pool; prefab tự trả về pool (AutoDespawn).
+        private void SpawnRammedEffect(CarView rammer, Vector3 hitDirection)
+        {
+            if (!hasRammedEffect) return;
+            hitDirection.y = 0f;
+            Vector3 point = rammer.FrontPoint + hitDirection.normalized * fx.rammedEffectForwardOffset;
+            GameObject prefab = fx.rammedEffectPrefab;
+            PoolingManager.Spawn(prefab, point, prefab.transform.rotation);
+        }
+
+        // Ra tới làn trên là xe đã thoát khỏi bãi: mũi tên chỉ hướng hết ý nghĩa nên ẩn đi; to lên cỡ ngoài bãi (vẫn giữ
+        // phóng 1.1 vì đang chạy). ⚠️ Không to lúc vừa chạm: xe đang giữa đám xe xếp sát, phình ra là đè lên xe bên cạnh.
+        private void HandleReachedTopLane(CarView view)
+        {
+            view.SetMarkVisible(false);
+            view.SetOutsideLot(true);
+            view.SetMoveScale(true, fx.carMoveScale, fx.carLeaveLotScaleDuration);
+        }
 
         private void HandleArrivedSlot(CarView view)
         {
@@ -162,6 +207,8 @@ namespace BusOut.Gameplay
             busStop.NotifyCarArrived(car.SlotIndex);
             // Mở nóc lộ ghế để khách lên.
             view.SetRoofOpen(true);
+            view.SetMoveScale(false, fx.carMoveScale, fx.carMoveScaleDuration);
+            view.SetSmoke(false);
         }
 
         /// Xe đủ khách rời bến: lùi ra theo trục ô rồi chạy sang trái/phải, tới nơi thì biến mất.
@@ -181,6 +228,8 @@ namespace BusOut.Gameplay
             int reverseCount = ParkingRoute.BuildLeave(view.transform.position, busStop.GetEntryPoint(slotIndex),
                 leavingPoint, routeBuffer);
             view.Drive(routeBuffer, config.carMoveSpeed, config.carTurnSharpness, null, onLeft, reverseCount);
+            view.SetSmoke(true);
+            AudioService.Play(SoundId.CarLeaveBusStop);
         }
 
         private void HandleLeft(CarView view) => spawner.Despawn(view);

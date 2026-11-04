@@ -78,9 +78,13 @@ namespace BusOut.Gameplay
             timer -= deltaTime;
             if (timer > 0f) return;
             if (pending == Pending.Win) view.ShowWin(config.winCoinReward, config.winCoinReward * config.winAdCoinMultiplier,
-                config.popupCoinCountDuration);
+                config.popupCoinCountDuration,
+                FxConfig.Instance.winRaysTurnDuration, FxConfig.Instance.winConfettiScale);
             else if (canRevive) view.ShowContinue(config.reviveCoinCost, gameData.coinCount >= config.reviveCoinCost);
             else view.ShowLose(config.levelLabelFormat, level);
+            // Tiếng thua phát một lần lúc popup đầu tiên hiện (Continue hoặc Lose), không phát lại khi từ chối Continue.
+            AudioService.Play(pending == Pending.Win ? SoundId.WinGame : SoundId.LoseGame);
+            HapticService.Play(pending == Pending.Win ? HapticType.Success : HapticType.Failure);
             pending = Pending.None;
         }
 
@@ -92,6 +96,7 @@ namespace BusOut.Gameplay
             int reward = config.winCoinReward * (withAd ? config.winAdCoinMultiplier : 1);
             gameData.AddCoins(reward);
             gameData.Save();
+            AudioService.Play(withAd ? SoundId.BonusCoin : SoundId.Coin);
             goHome();
         }
 

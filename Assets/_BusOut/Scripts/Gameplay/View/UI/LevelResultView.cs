@@ -1,5 +1,6 @@
 using System;
 using BusOut.Core;
+using Coffee.UIExtensions;
 using DG.Tweening;
 using TMPro;
 using UnityEngine;
@@ -22,6 +23,12 @@ namespace BusOut.Gameplay
         [SerializeField] private Button winClaimButton;
         [Tooltip("TapToCollectBtn/CoinContent/CoinAmountTxt: số coin thưởng thường.")]
         [SerializeField] private TMP_Text winRewardText;
+        [Tooltip("Tia sáng sau phần thưởng (Image sprite UI_Fx_Light_white): xoay đều khi popup thắng hiện — thứ lặp DUY NHẤT " +
+                 "lúc đó (quy tắc hiệu ứng). Trống = không có (báo lỗi).")]
+        [SerializeField] private RectTransform winRays;
+        [Tooltip("Pháo giấy: object có UI Particle (con: prefab WinConfetti). Bắn một lần khi popup thắng hiện. Trống = không có " +
+                 "(báo lỗi).")]
+        [SerializeField] private UIParticle winConfetti;
 
         [Header("Tiếp tục (hồi sinh)")]
         [SerializeField] private AnimatedPanel continuePanel;
@@ -51,6 +58,8 @@ namespace BusOut.Gameplay
         public event Action LoseClosed;
 
         private PanelAnimationSettings panelAnimation;
+        private Tween raysTween;
+        private Quaternion raysRestRotation;
 
         public bool Init(PanelAnimationSettings animationSettings)
         {
@@ -82,6 +91,20 @@ namespace BusOut.Gameplay
                 return false;
             }
 
+            // Hiệu ứng thắng là phần thêm: thiếu thì báo nhưng popup vẫn chạy.
+            if (winRays == null || winConfetti == null)
+                Debug.LogError("[BusOut] LevelResultView thiếu Win Rays / Win Confetti: popup thắng không có tia sáng / pháo giấy. " +
+                               "Kéo Image tia sáng và object UI Particle pháo giấy trong WinPanel vào.", this);
+            if (winRays != null) raysRestRotation = winRays.localRotation;
+            if (winConfetti != null)
+            {
+                // Gom mọi Particle System con (2 prefab pháo giấy lồng trong scene): không dựa vào danh sách lưu sẵn của UI
+                // Particle — sửa prefab con (thêm / bớt hệ) là danh sách lưu cũ đi.
+                winConfetti.RefreshParticles();
+                winConfetti.Stop();
+                winConfetti.Clear();
+            }
+
             winPanel.Init();
             continuePanel.Init();
             losePanel.Init();
@@ -109,19 +132,48 @@ namespace BusOut.Gameplay
 
         public void Hide()
         {
+            StopWinEffects();
             winPanel.Hide();
             continuePanel.Hide();
             losePanel.Hide();
         }
 
-        /// Số coin đếm từ 0 lên, bắt đầu đúng lúc nút chứa số đó hiện.
-        public void ShowWin(int reward, int adReward, float coinCountDuration)
+        /// Số coin đếm từ 0 lên, bắt đầu đúng lúc nút chứa số đó hiện. Tia sáng xoay một vòng mỗi
+        /// <paramref name="raysTurnDuration"/> giây tới khi popup ẩn; pháo giấy bắn một lần.
+        public void ShowWin(int reward, int adReward, float coinCountDuration, float raysTurnDuration, float confettiScale)
         {
+            if (winConfetti != null) winConfetti.scale3D = Vector3.one * confettiScale;
             continuePanel.Hide();
             losePanel.Hide();
             Sequence sequence = winPanel.Show(panelAnimation);
             AddCoinCount(sequence, winAdRewardText, adReward, (RectTransform)winAdClaimButton.transform, coinCountDuration);
             AddCoinCount(sequence, winRewardText, reward, (RectTransform)winClaimButton.transform, coinCountDuration);
+            PlayWinEffects(raysTurnDuration);
+        }
+
+        private void PlayWinEffects(float raysTurnDuration)
+        {
+            StopWinEffects();
+            if (winRays != null && raysTurnDuration > 0f)
+                raysTween = winRays.DOLocalRotate(new Vector3(0f, 0f, -360f), raysTurnDuration, RotateMode.LocalAxisAdd)
+                    .SetEase(Ease.Linear)
+                    .SetLoops(-1, LoopType.Restart)
+                    // Nhận thưởng → về Menu: cả GameContext tắt mà không gọi Hide — tạm dừng thay vì quay vô ích tới ván sau
+                    // (ván sau LoadLevel → Hide → StopWinEffects huỷ hẳn).
+                    .SetLink(winRays.gameObject, LinkBehaviour.PauseOnDisablePlayOnEnable)
+                    .SetTarget(winRays);
+            if (winConfetti != null) winConfetti.Play();
+        }
+
+        /// Dừng xoay (về góc dựng trong scene) + xoá pháo giấy. Gọi mỗi khi popup thắng ẩn / đổi sang popup khác.
+        private void StopWinEffects()
+        {
+            if (raysTween != null && raysTween.IsActive()) raysTween.Kill();
+            raysTween = null;
+            if (winRays != null) winRays.localRotation = raysRestRotation;
+            if (winConfetti == null) return;
+            winConfetti.Stop();
+            winConfetti.Clear();
         }
 
         private void AddCoinCount(Sequence sequence, TMP_Text text, int target, RectTransform owner, float duration)
@@ -145,6 +197,7 @@ namespace BusOut.Gameplay
         /// <paramref name="canAfford"/> false → nút trả coin bấm không được (vẫn hiện giá để người chơi biết cần bao nhiêu).
         public void ShowContinue(int coinCost, bool canAfford)
         {
+            StopWinEffects();
             winPanel.Hide();
             losePanel.Hide();
             continueCostText.SetText("{0}", coinCost);
@@ -154,6 +207,7 @@ namespace BusOut.Gameplay
 
         public void ShowLose(string levelFormat, int level)
         {
+            StopWinEffects();
             winPanel.Hide();
             continuePanel.Hide();
             loseLevelText.SetText(levelFormat, level);

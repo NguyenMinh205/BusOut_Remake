@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using BusOut.Core;
 using BusOut.DesignPattern;
 using UnityEngine;
@@ -75,6 +76,8 @@ namespace BusOut.Gameplay
         private int currentLevel;
         // Còn bao lâu nữa mới cho chạm (xe đang "bung" ra lúc vào level). Chạm xe khi xe còn cỡ 0 là chạm vào thứ chưa thấy.
         private float interactionLockRemaining;
+        // Level đã nạp dưới màn chuyển cảnh, chờ ScreenRevealedEvent mới cho xe "bung".
+        private bool isIntroPending;
 
         /// Không qua màn Loading: khởi tạo + tạo sẵn ngay lúc GameContext bật lần đầu (lần bấm Play đầu), rồi nạp level.
         /// Qua màn Loading thì Preload đã làm hết: lần bấm Play đầu đi qua GameplayShownEvent như các lần sau.
@@ -117,7 +120,7 @@ namespace BusOut.Gameplay
                 uiConfig = UIConfig.CreateDefault();
             }
             if (!ValidateReferences()) return false;
-            if (!parkingLot.Init()) return false;
+            if (!parkingLot.Init(config.levelDataMin, config.levelDataMax)) return false;
             if (!busStopView.Init()) return false;
             if (!gameplayInput.Init(config.tapRayDistance)) return false;
             // Thiếu chỉ mất phần chỉnh camera theo màn hình, game vẫn chơi được.
@@ -131,7 +134,8 @@ namespace BusOut.Gameplay
             busStop = new BusStopPresenter(busStopView, config);
             carFlow = new CarFlowPresenter(config, parkingLot, spawner, busStop);
             passengers = CreatePassengerPresenter();
-            if (passengers != null) boarding = new BoardingPresenter(config, spawner, busStop, passengers, carFlow);
+            if (passengers != null) boarding = new BoardingPresenter(config, spawner, busStop, passengers, carFlow,
+                cameraFit != null ? cameraFit.transform : null);
             // Thiếu biển đếm chỉ mất con số trên biển, game vẫn chơi được.
             if (passengerCount == null)
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Passenger Count: biển đếm khách không cập nhật. " +
@@ -144,16 +148,28 @@ namespace BusOut.Gameplay
             if (booster != null) booster.ArmedChanged += hud.SetBoosterArmed;
             result = CreateResultPresenter();
             hasSharedPopups = InitSharedPopups();
+            SendLoadingTips();
             shop = CreateShopPresenter();
             CreateNoSlotMessage();
             // Mỗi lần GameFlowController bật xong GameContext (bấm Play). Lần bấm Play đầu mà KHÔNG qua màn Loading thì sự
             // kiện đã phát trước Start (lúc chưa nghe) — Start tự nạp level.
             EventBus.Subscribe<GameplayShownEvent>(HandleGameplayShown);
+            EventBus.Subscribe<ScreenRevealedEvent>(HandleScreenRevealed);
             return true;
         }
 
         /// Pool xe theo level đông nhất của file curve (LevelSpawner.Prewarm).
-        private void PrewarmCars() => spawner.Prewarm(curveData);
+        private void PrewarmCars()
+        {
+            spawner.Prewarm(curveData);
+            // Hiệu ứng va chạm: tạo sẵn cùng xe — Instantiate lúc cú đâm đầu tiên là giật đúng lúc người chơi đang nhìn.
+            FxConfig fx = FxConfig.Instance;
+            PoolingManager.Prewarm(fx.rammedEffectPrefab, fx.rammedEffectPrewarmCount);
+            // Hiệu ứng xe đủ khách: mỗi prefab vài bản (chọn ngẫu nhiên lúc chơi).
+            if (fx.carFullEffectPrefabs != null)
+                foreach (GameObject prefab in fx.carFullEffectPrefabs)
+                    PoolingManager.Prewarm(prefab, fx.carFullEffectPrewarmCount);
+        }
 
         /// Khách: cả hàng + mọi ô đỗ đều là bus đầy khách (trường hợp đông nhất có thể).
         private void PrewarmPassengers() =>
@@ -163,15 +179,26 @@ namespace BusOut.Gameplay
         {
             hud?.Dispose();
             EventBus.Unsubscribe<GameplayShownEvent>(HandleGameplayShown);
+            EventBus.Unsubscribe<ScreenRevealedEvent>(HandleScreenRevealed);
         }
 
-        /// Menu bấm Play = vào ván mới với level đang lưu.
+        /// Menu bấm Play = vào ván mới với level đang lưu. Nạp dưới màn chuyển cảnh; xe "bung" khi màn che mờ đi
+        /// (HandleScreenRevealed) — bung ngay thì xong trước khi người chơi thấy.
         /// ⚠️ Không nạp trong OnEnable: lúc đó GameContext còn đang bật dở, Unity cấm SetParent (trả xe / khách cũ về pool,
         /// lấy xe mới) — lệnh bị bỏ qua, ván mới lẫn xe cũ.
         private void HandleGameplayShown(GameplayShownEvent _)
         {
-            if (isReady) LoadLevel(gameData.currentLevel);
+            if (isReady) LoadLevel(gameData.currentLevel, true);
         }
+
+        private void HandleScreenRevealed(ScreenRevealedEvent _)
+        {
+            if (!isIntroPending) return;
+            isIntroPending = false;
+            PlayIntro();
+        }
+
+        private void PlayIntro() => interactionLockRemaining = spawner.PlayIntro(config.introCarDuration, config.introSpread);
 
         private void OnEnable()
         {
@@ -220,8 +247,12 @@ namespace BusOut.Gameplay
 
         /// ⚠️ Thứ tự có nghĩa: xoá xe cũ (kèm tween/đường chạy) TRƯỚC khi đặt lại ô, không thì xe cũ tới nơi
         /// sau khi reset sẽ đánh dấu ô của level mới là có xe.
-        public void LoadLevel(int number)
+        public void LoadLevel(int number) => LoadLevel(number, false);
+
+        /// <paramref name="deferIntro"/>: true = chưa cho xe "bung", chờ ScreenRevealedEvent (đang dưới màn chuyển cảnh).
+        private void LoadLevel(int number, bool deferIntro)
         {
+            isIntroPending = false;
             result?.Hide();
             shop?.Hide();
             if (hasSharedPopups) sharedPopups.HideAll();
@@ -266,7 +297,13 @@ namespace BusOut.Gameplay
             }
             boarding?.ResetForLevel();
             // ⚠️ Sau khi dựng đồ thị chặn (trong planner ở trên): hoạt ảnh đặt xe về cỡ 0, dựng đồ thị lúc đó là sai.
-            interactionLockRemaining = spawner.PlayIntro(config.introCarDuration, config.introSpread);
+            if (deferIntro)
+            {
+                // Khoá chạm xe / booster tới khi xe bung xong (PlayIntro đặt lại thời gian khoá thật).
+                isIntroPending = true;
+                interactionLockRemaining = float.PositiveInfinity;
+            }
+            else PlayIntro();
             EventBus.Publish(new LevelStartedEvent { LevelIndex = number, LevelName = level.index.ToString() });
         }
 
@@ -389,6 +426,27 @@ namespace BusOut.Gameplay
                 return false;
             }
             return true;
+        }
+
+        /// Màn Loading chuyển cảnh (Core) hiện tranh + tên + mẹo của từng booster; Core không đọc được GameplayConfig nên
+        /// gửi qua LoadingTipsChangedEvent, một lần lúc khởi tạo (trong màn Loading đầu game, trước lần chuyển cảnh đầu tiên).
+        private void SendLoadingTips()
+        {
+            var tips = new List<LoadingTip>(config.boosters.Count);
+            foreach (BoosterDefinition booster in config.boosters)
+            {
+                if (booster.loadingSprite == null)
+                {
+                    Debug.LogError($"[BusOut] Booster {booster.type} chưa có Loading Sprite: không lên màn Loading. Kéo tranh " +
+                                   "Loading_Screen_* vào GameplayConfig › Boosters.", config);
+                    continue;
+                }
+                tips.Add(new LoadingTip(booster.loadingSprite, booster.displayName, booster.loadingDescription));
+            }
+            if (!EventBus<LoadingTipsChangedEvent>.HasListeners)
+                Debug.LogError("[BusOut] Không ai nhận trang Loading (thiếu GameFlowController trong scene): màn chuyển cảnh không " +
+                               "có tranh / mẹo booster.", this);
+            EventBus.Publish(new LoadingTipsChangedEvent { Tips = tips });
         }
 
         private PanelAnimationSettings PanelAnimation() => uiConfig.PanelAnimation;

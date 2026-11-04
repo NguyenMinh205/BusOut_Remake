@@ -17,6 +17,12 @@ namespace BusOut.Gameplay
         // Dùng chung cho mọi xe: kiểm tra chặn chỉ chạy khi chạm, không chạy song song.
         private static readonly RaycastHit[] HitBuffer = new RaycastHit[32];
 
+        private static bool missingSmokeReported;
+
+        // Tắt Domain Reload (Enter Play Mode Options): biến static giữ giá trị của lần Play trước → reset.
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => missingSmokeReported = false;
+
         [Tooltip("Collider thân xe (trên root). Dùng để xe khác kiểm tra bị chặn — KHÔNG phải SelectionBox.")]
         [SerializeField] private BoxCollider bodyCollider;
 
@@ -34,6 +40,19 @@ namespace BusOut.Gameplay
 
         [Tooltip("Các ghế theo thứ tự khách lên (Seat1, Seat2, …). Số phần tử phải bằng số chỗ của loại xe (4 / 6 / 10).")]
         [SerializeField] private Transform[] seats;
+
+        [Tooltip("Khói sau xe khi chạy (Particle System con, mô phỏng World, phát theo quãng đường, Play On Awake TẮT). " +
+                 "Trống = xe không có khói (báo lỗi).")]
+        [SerializeField] private ParticleSystem moveSmoke;
+
+        // Cỡ trong bãi (prefab × carScale × độ co bố cục, LevelSpawner đặt trước Init) và cỡ ngoài bãi (= cỡ prefab: làn
+        // trên, bến, rời bến — bạn chốt 4/11: thu nhỏ chỉ để bãi vừa camera, ra khỏi bãi xe về nguyên cỡ).
+        private Vector3 parkedScale = Vector3.one;
+        private Vector3 outsideScale = Vector3.one;
+        // Cỡ "đứng yên" hiện tại (parkedScale hoặc outsideScale): phóng to khi chạy, nảy, cỡ khách ngồi đều tính theo nó.
+        private Vector3 baseScale = Vector3.one;
+        private Tween moveScaleTween;
+        private bool hasMoveSmoke;
 
         private readonly List<Vector3> drivePath = new List<Vector3>(12);
         private int drivePathIndex;
@@ -70,7 +89,8 @@ namespace BusOut.Gameplay
         /// Nửa chiều dài thân xe theo hướng đầu xe (thế giới), tính từ tâm collider thân.
         public float HalfLength => bodyCollider.size.z * 0.5f * transform.lossyScale.z;
 
-        public bool Init(int carId, Color color, int seatCount)
+        /// <paramref name="outsideLotScale"/>: cỡ khi ra khỏi bãi (localScale của prefab).
+        public bool Init(int carId, Color color, int seatCount, Vector3 outsideLotScale)
         {
             CarId = carId;
             if (bodyCollider == null || selectionCollider == null || bodyRenderer == null || markObject == null || seatRoot == null)
@@ -99,10 +119,70 @@ namespace BusOut.Gameplay
             markObject.SetActive(true);
 
             restRotation = transform.rotation;
+            parkedScale = transform.localScale;
+            outsideScale = outsideLotScale;
+            baseScale = parkedScale;
+            hasMoveSmoke = moveSmoke != null;
+            // Báo một lần: Init chạy cho từng xe mỗi level (~50 xe) — báo mỗi lần là ngập Console.
+            if (!hasMoveSmoke && !missingSmokeReported)
+            {
+                missingSmokeReported = true;
+                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu Move Smoke: xe chạy không có khói. Kéo Particle System khói " +
+                               "(con của prefab) vào.", this);
+            }
+            // ⚠️ Khói mô phỏng World + phát theo quãng đường: xe lấy từ pool "nhảy" từ chỗ cũ tới chỗ đỗ mới là một quãng dài
+            // → phun một vệt khói dọc đường nhảy. Luôn tắt + xoá khi vào level; chỉ bật lúc xe chạy thật.
+            if (hasMoveSmoke) moveSmoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             return true;
         }
 
         public void OnSpawned() { }
+
+        /// Đầu xe (tâm mặt trước thân xe, thế giới): chỗ chạm khi lao vào xe chặn.
+        public Vector3 FrontPoint
+        {
+            get
+            {
+                Vector3 forward = transform.forward;
+                forward.y = 0f;
+                return bodyCollider.transform.TransformPoint(bodyCollider.center) + forward.normalized * HalfLength;
+            }
+        }
+
+        /// Khói sau xe: bật lúc xe chạy (lên bến, rời bến, tua ngược), tắt lúc dừng. Tắt thì khói đã phun tự tan hết.
+        public void SetSmoke(bool on)
+        {
+            if (!hasMoveSmoke) return;
+            if (on) moveSmoke.Play(true);
+            else moveSmoke.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
+
+        /// Xe đủ khách: nảy một cái quanh cỡ đỗ (dùng chung tween với phóng to — không chạy cùng lúc vì xe đang đỗ).
+        public void PlayFullBounce(float punch, float duration)
+        {
+            if (moveScaleTween != null && moveScaleTween.IsActive()) moveScaleTween.Kill();
+            transform.localScale = baseScale;
+            moveScaleTween = transform.DOPunchScale(baseScale * punch, duration, 1, 0.5f)
+                .SetLink(gameObject)
+                .SetTarget(transform)
+                .OnKill(RestoreBaseScale);
+        }
+
+        private void RestoreBaseScale() => transform.localScale = baseScale;
+
+        /// Đổi cỡ "đứng yên" sang cỡ ngoài bãi (ra khỏi bãi: lên làn trên / cần cẩu nhấc) hoặc về cỡ trong bãi (tua ngược).
+        /// Chỉ đổi mốc — gọi SetMoveScale ngay sau để tween tới cỡ mới.
+        public void SetOutsideLot(bool outside) => baseScale = outside ? outsideScale : parkedScale;
+
+        /// Phóng to lúc chạy lên bến (như gốc), về cỡ đỗ khi tới nơi / tua ngược.
+        public void SetMoveScale(bool enlarged, float scale, float duration)
+        {
+            if (moveScaleTween != null && moveScaleTween.IsActive()) moveScaleTween.Kill();
+            moveScaleTween = transform.DOScale(enlarged ? baseScale * scale : baseScale, duration)
+                .SetEase(Ease.OutQuad)
+                .SetLink(gameObject)
+                .SetTarget(transform);
+        }
 
         /// Trả về pool: dừng chạy / tween, bỏ callback (không thì xe của level trước báo tới nơi vào level sau),
         /// trả khách đang ngồi về pool của khách.
@@ -113,8 +193,10 @@ namespace BusOut.Gameplay
             tiltTween = null;
             shakeTween = null;
             craneSequence = null;
+            moveScaleTween = null;
             drivePath.Clear();
             DespawnSeatedPassengers();
+            if (hasMoveSmoke) moveSmoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
 
         /// Mở nóc (xe đang đỗ ở bến, lộ ghế) hoặc đóng nóc (trong bãi, đang chạy). Ghế và khách ngồi ẩn khi đóng nóc:
@@ -135,7 +217,9 @@ namespace BusOut.Gameplay
             passenger.SetParent(seat, false);
             passenger.localPosition = Vector3.zero;
             passenger.localRotation = Quaternion.identity;
-            float parentScale = seat.lossyScale.x;
+            // ⚠️ Tính theo cỡ ĐỖ của xe, không theo cỡ lúc này: xe vừa tới còn đang thu từ 1.1 về (SetMoveScale) mà khách đã
+            // ngồi thì lấy lossyScale lúc đó là khách nhỏ đi vĩnh viễn khi xe về cỡ cũ.
+            float parentScale = seat.lossyScale.x * (transform.localScale.x > 1e-4f ? baseScale.x / transform.localScale.x : 1f);
             passenger.localScale = Vector3.one * (parentScale > 1e-4f ? worldScale / parentScale : worldScale);
             seatedPassengers.Add(passenger.gameObject);
         }

@@ -1,5 +1,7 @@
 using System.Collections.Generic;
+using BusOut.Core;
 using BusOut.DesignPattern;
+using UnityEngine;
 
 namespace BusOut.Gameplay
 {
@@ -24,15 +26,68 @@ namespace BusOut.Gameplay
         private readonly List<PendingLeave> pendingLeaves = new List<PendingLeave>();
         private float cooldown;
 
+        /// <paramref name="viewTransform"/>: camera gameplay (hiệu ứng xe đủ khách quay mặt về nó). null = giữ hướng prefab.
         public BoardingPresenter(GameplayConfig config, LevelSpawner spawner, BusStopPresenter busStop,
-            PassengerPresenter passengers, CarFlowPresenter carFlow)
+            PassengerPresenter passengers, CarFlowPresenter carFlow, Transform viewTransform)
         {
             this.config = config;
             this.spawner = spawner;
             this.busStop = busStop;
             this.passengers = passengers;
             this.carFlow = carFlow;
+            this.viewTransform = viewTransform;
+            hasViewTransform = viewTransform != null;
             passengers.PassengerReachedCar += HandlePassengerReachedCar;
+            fx = FxConfig.Instance;
+            fullEffectCount = CountFullEffects(fx);
+            if (fullEffectCount == 0)
+                Debug.LogError("[BusOut] FxConfig thiếu Car Full Effect Prefabs: xe đủ khách không có hiệu ứng. " +
+                                           "Kéo các prefab trong Prefab/VFX/CarFull/ vào Resources/FxConfig.", fx);
+        }
+
+        private readonly FxConfig fx;
+        private readonly Transform viewTransform;
+        private readonly bool hasViewTransform;
+        private readonly int fullEffectCount;
+
+        private static int CountFullEffects(FxConfig fxConfig)
+        {
+            int count = 0;
+            if (fxConfig.carFullEffectPrefabs == null) return 0;
+            foreach (GameObject prefab in fxConfig.carFullEffectPrefabs)
+                if (prefab != null) count++;
+            return count;
+        }
+
+        /// Xe vừa đủ khách: nảy + hiệu ứng ngẫu nhiên trên nóc (0.5s trước khi rời bến — carLeaveDelay).
+        private void PlayCarFull(CarView carView)
+        {
+            // Đóng nóc TRƯỚC rồi mới nảy + hiệu ứng (bạn yêu cầu 4/11): khách ngồi ẩn theo ghế, xe "đóng cửa" xong mới ăn mừng.
+            // LeaveBusStop còn gọi đóng nóc lần nữa — vô hại.
+            carView.SetRoofOpen(false);
+            carView.PlayFullBounce(fx.carFullPunch, fx.carFullPunchDuration);
+            if (fullEffectCount == 0) return;
+            GameObject[] prefabs = fx.carFullEffectPrefabs;
+            // Chọn ngẫu nhiên trong các ô KHÁC trống (ô trống bị bỏ qua, không làm lệch xác suất về một cái).
+            int pick = Random.Range(0, fullEffectCount);
+            for (int i = 0; i < prefabs.Length; i++)
+            {
+                if (prefabs[i] == null) continue;
+                if (pick-- > 0) continue;
+                Vector3 position = carView.transform.position + Vector3.up * fx.carFullEffectHeight;
+                Quaternion rotation = prefabs[i].transform.rotation;
+                if (hasViewTransform)
+                {
+                    // Prefab Lana dựng trên mặt phẳng X–Y cho camera nhìn thẳng: xoay theo camera để mặt đó trùng màn hình
+                    // (đọc mỗi lần — camera đổi góc vẫn đúng), rồi kéo về phía camera cho khỏi chui vào thân xe.
+                    rotation = viewTransform.rotation * rotation;
+                    position -= viewTransform.forward * fx.carFullEffectTowardCamera;
+                }
+                GameObject effect = PoolingManager.Spawn(prefabs[i], position, rotation);
+                // Đặt cỡ mỗi lần lấy ra (bản trong pool giữ cỡ lần trước; đổi config lúc đang chơi cũng ăn ngay).
+                if (effect != null) effect.transform.localScale = prefabs[i].transform.localScale * fx.carFullEffectScale;
+                return;
+            }
         }
 
         public void ResetForLevel()
@@ -121,8 +176,13 @@ namespace BusOut.Gameplay
             // Ghế theo thứ tự khách tới: khách thứ n ngồi ghế n. Xe xoá thì CarView trả khách về pool.
             carView.SeatPassenger(view.transform, car.BoardedSeats - 1, config.seatedPassengerScale);
             view.FreezeSeatedPose();
+            AudioService.Play(SoundId.PassengerGetInCar);
             // Đủ khách: chờ một chút cho người cuối "ngồi xuống" rồi mới chạy (gốc: 0.5s).
-            if (car.IsFull) pendingLeaves.Add(new PendingLeave { CarId = carId, Remaining = config.carLeaveDelay });
+            if (car.IsFull)
+            {
+                pendingLeaves.Add(new PendingLeave { CarId = carId, Remaining = config.carLeaveDelay });
+                PlayCarFull(carView);
+            }
         }
 
         private void TickPendingLeaves(float deltaTime)

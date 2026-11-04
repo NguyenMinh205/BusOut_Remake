@@ -1,3 +1,4 @@
+using BusOut.Core;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -30,6 +31,13 @@ namespace BusOut.Gameplay
         [Tooltip("Cha của các xe spawn ra. Bỏ trống = chính GameObject này.")]
         [SerializeField] private Transform carsRoot;
 
+        // Căn bố cục level vào khung bãi (Init): toạ độ dữ liệu → toạ độ local của bãi.
+        private float layoutScale = 1f;
+        private Vector2 dataCenter;
+        private Vector2 lotCenter;
+
+        /// Bố cục level co bấy nhiêu lần để vừa khung bãi (1 = khung bãi bằng khung dữ liệu). Xe phải co theo đúng số này.
+        public float LayoutScale => layoutScale;
         public Transform CarsRoot => carsRoot != null ? carsRoot : transform;
         public Vector3 LeftLeavingPoint => leftLeavingPoint.position;
         public Vector3 RightLeavingPoint => rightLeavingPoint.position;
@@ -49,7 +57,8 @@ namespace BusOut.Gameplay
             }
         }
 
-        public bool Init()
+        /// <paramref name="dataMin"/> / <paramref name="dataMax"/>: khung chứa xe của dữ liệu level (GameplayConfig).
+        public bool Init(Vector2 dataMin, Vector2 dataMax)
         {
             if (leftLeavingPoint == null || rightLeavingPoint == null)
             {
@@ -60,10 +69,31 @@ namespace BusOut.Gameplay
             // Làn đường chỉ cộng vị trí, không tính xoay/scale: xoay GameObject này là xe chạy lệch khỏi đường.
             if (transform.rotation != Quaternion.identity || transform.lossyScale != Vector3.one)
                 Debug.LogError("[BusOut] ParkingLotView phải để rotation (0,0,0) và scale (1,1,1), không thì xe chạy lệch khỏi đường.", this);
+            Vector2 dataSize = dataMax - dataMin;
+            Vector2 lotSize = lotMax - lotMin;
+            if (dataSize.x <= 0f || dataSize.y <= 0f || lotSize.x <= 0f || lotSize.y <= 0f)
+            {
+                Debug.LogError($"[BusOut] Khung bãi ({lotMin}…{lotMax}) hoặc khung dữ liệu level ({dataMin}…{dataMax}) không hợp lệ " +
+                               "(góc trên-phải phải lớn hơn góc dưới-trái): xe đặt 1:1 như dữ liệu. Sửa Lot Min / Lot Max của " +
+                               "ParkingLotView hoặc GameplayConfig › Level Data Min / Max.", this);
+                layoutScale = 1f;
+                dataCenter = lotCenter = Vector2.zero;
+                return true;
+            }
+            // Co ĐỀU hai chiều (lấy chiều chật hơn): co lệch là méo bố cục — xe vốn xếp sát sẽ chồng lên nhau theo một chiều.
+            layoutScale = Mathf.Min(lotSize.x / dataSize.x, lotSize.y / dataSize.y);
+            dataCenter = (dataMin + dataMax) * 0.5f;
+            lotCenter = (lotMin + lotMax) * 0.5f;
+            GameLog.Info($"[BusOut] Bố cục level co {layoutScale:0.###} lần cho vừa khung bãi.");
             return true;
         }
 
-        public Vector3 LevelToWorld(float x, float z) => transform.position + new Vector3(x, 0f, z);
+        /// Toạ độ trong file level → vị trí thế giới: căn khung dữ liệu vào giữa khung bãi, co theo LayoutScale.
+        public Vector3 LevelToWorld(float x, float z)
+        {
+            Vector2 local = lotCenter + (new Vector2(x, z) - dataCenter) * layoutScale;
+            return transform.position + new Vector3(local.x, 0f, local.y);
+        }
 
         private void OnDrawGizmos()
         {
