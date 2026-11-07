@@ -12,6 +12,7 @@ namespace BusOut.Gameplay
     {
         private readonly GameplayConfig config;
         private readonly SecureGameData gameData;
+        private bool isCountingCoins;
         private readonly TopBarView topBar;         // null khi thiếu: phần còn lại vẫn chạy
         private readonly BoosterBarView boosterBar; // null khi thiếu
         private readonly Action replayRequested;
@@ -78,7 +79,24 @@ namespace BusOut.Gameplay
 
         private void HandleCurrencyUpdated(CurrencyUpdatedEvent e)
         {
-            if (e.Type == CurrencyType.SoftCurrency) topBar?.SetCoins(e.NewTotalAmount);
+            // Coin thưởng đang bay: số đếm theo coin tới nơi, không nhảy thẳng lên tổng mới.
+            if (e.Type == CurrencyType.SoftCurrency && !isCountingCoins) topBar?.SetCoins(e.NewTotalAmount);
+        }
+
+        /// Coin thưởng bắt đầu bay: số trên thanh giữ ở <paramref name="shownCoins"/> (coin trong save đã cộng rồi).
+        public void BeginCoinCountUp(int shownCoins)
+        {
+            isCountingCoins = true;
+            topBar?.SetCoins(shownCoins);
+        }
+
+        public void ShowCountingCoins(int coins) => topBar?.SetCoins(coins);
+
+        /// Bay xong: hiện đúng số trong save.
+        public void EndCoinCountUp()
+        {
+            isCountingCoins = false;
+            topBar?.SetCoins(gameData.coinCount);
         }
 
         private void HandleBoosterCountChanged(BoosterCountChangedEvent e)

@@ -176,6 +176,8 @@ namespace BusOut.Gameplay
             // Ghế theo thứ tự khách tới: khách thứ n ngồi ghế n. Xe xoá thì CarView trả khách về pool.
             carView.SeatPassenger(view.transform, car.BoardedSeats - 1, config.seatedPassengerScale);
             view.FreezeSeatedPose();
+            // Khách cuối thì PlayCarFull ngay sau nảy to hơn (đè cú nhún này).
+            carView.PlaySeatBounce(fx.seatBouncePunch, fx.seatBounceDuration);
             AudioService.Play(SoundId.PassengerGetInCar);
             // Đủ khách: chờ một chút cho người cuối "ngồi xuống" rồi mới chạy (gốc: 0.5s).
             if (car.IsFull)

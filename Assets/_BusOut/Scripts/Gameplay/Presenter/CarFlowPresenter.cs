@@ -32,6 +32,7 @@ namespace BusOut.Gameplay
         private int rewindingCarId = -1;
         private readonly Action<CarView> onRewound;
         private readonly FxConfig fx;
+        private readonly CraneEffects craneEffects;
         private readonly bool hasRammedEffect;
 
         /// Có xe đang tua ngược về bãi (Undo). ⚠️ Lúc này collider xe đó tắt: chạm xe khác là xe kia tưởng đường trống,
@@ -50,6 +51,18 @@ namespace BusOut.Gameplay
             onRewound = HandleRewound;
             fx = FxConfig.Instance;
             hasRammedEffect = fx.rammedEffectPrefab != null;
+            craneEffects = new CraneEffects
+            {
+                ShadowPrefab = fx.craneShadowPrefab,
+                ShadowGroundOffset = fx.craneShadowGroundOffset,
+                ShadowMinScale = fx.craneShadowMinScale,
+                ShadowMinAlpha = fx.craneShadowMinAlpha,
+                DustPrefab = fx.craneDustPrefab,
+                DustScale = fx.craneDustScale,
+            };
+            if (fx.craneShadowPrefab == null)
+                Debug.LogError("[BusOut] FxConfig thiếu Crane Shadow Prefab: xe bay bằng cần cẩu không có bóng đổ. Kéo " +
+                               "Prefab/VFX/CraneShadow vào Resources/FxConfig.", fx);
             if (!hasRammedEffect)
                 Debug.LogError("[BusOut] FxConfig thiếu Rammed Effect Prefab: xe đâm xe chặn không có hiệu ứng va chạm. " +
                                "Kéo prefab hiệu ứng va chạm vào Resources/FxConfig › Rammed Effect Prefab.", fx);
@@ -87,7 +100,7 @@ namespace BusOut.Gameplay
             view.SetOutsideLot(true);
             view.SetMoveScale(false, fx.carMoveScale, fx.carLeaveLotScaleDuration);
             view.PlayCraneLift(park, Quaternion.LookRotation(parkDirection), config.craneLiftHeight,
-                config.craneRiseDuration, config.craneFlyDuration, config.craneDropDuration, onArrivedSlot);
+                config.craneRiseDuration, config.craneFlyDuration, config.craneDropDuration, craneEffects, onArrivedSlot);
             AudioService.Play(SoundId.Helicopter);
             return true;
         }
@@ -121,6 +134,8 @@ namespace BusOut.Gameplay
         {
             rewindingCarId = -1;
             view.SetSmoke(false);
+            // Về đúng chỗ cũ: nảy một cái cho thấy "đã về" (không thì xe lùi về rồi đứng khựng).
+            view.SettleWithBounce(fx.carMoveScaleDuration, fx.undoArrivePunch, fx.undoArrivePunchDuration);
             // Về chỗ: chặn xe khác và chạm được lại như trước khi gửi đi.
             view.SetCollidersEnabled(true, true);
             view.SetMarkVisible(true);
@@ -149,6 +164,9 @@ namespace BusOut.Gameplay
                     AudioService.Play(SoundId.HitCar);
                     HapticService.Play(HapticType.Impact);
                     SpawnRammedEffect(view, hitDirection);
+                    // Ai nghe thì rung (CameraShakeView trên camera gameplay); cường độ 0 = không rung.
+                    if (fx.ramShakeStrength > 0f && fx.ramShakeDuration > 0f)
+                        EventBus.Publish(new CameraShakeEvent { Duration = fx.ramShakeDuration, Intensity = fx.ramShakeStrength });
                     blocker.PlayRammed(hitDirection, config);
                 });
                 return;
@@ -205,9 +223,11 @@ namespace BusOut.Gameplay
             if (!spawner.TryGetCar(view, out CarModel car)) return;
             car.ArriveSlot();
             busStop.NotifyCarArrived(car.SlotIndex);
+            busStop.PlaySlotRing(car.SlotIndex);
             // Mở nóc lộ ghế để khách lên.
             view.SetRoofOpen(true);
-            view.SetMoveScale(false, fx.carMoveScale, fx.carMoveScaleDuration);
+            // Thu về cỡ đỗ rồi nảy nhẹ: điểm nhấn lúc xe vào ô (cả xe chạy tới lẫn cần cẩu hạ xuống).
+            view.SettleWithBounce(fx.carMoveScaleDuration, fx.slotArrivePunch, fx.slotArrivePunchDuration);
             view.SetSmoke(false);
         }
 

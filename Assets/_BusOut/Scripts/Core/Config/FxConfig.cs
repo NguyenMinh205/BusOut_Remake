@@ -81,6 +81,43 @@ namespace BusOut.Core
                  "ngoài bãi trong bấy nhiêu giây (giây). Bố cục không co thì không thấy gì.")]
         public float carLeaveLotScaleDuration = 0.25f;
 
+        [Header("Trong ván: xe vào ô đỗ / khách ngồi / Undo")]
+        [Tooltip("Xe tới ô đỗ (chạy tới hay cần cẩu hạ): thu về cỡ đỗ rồi nảy (đẩy scale) bấy nhiêu lần cỡ. 0 = không nảy.")]
+        public float slotArrivePunch = 0.12f;
+
+        [Tooltip("Thời gian nảy khi vào ô (giây).")]
+        public float slotArrivePunchDuration = 0.25f;
+
+        [Tooltip("Vòng sáng phẳng tỏa trên mặt ô khi xe vào ô và khi ô vừa mở (Prefab/VFX/SlotRing, tự trả về pool — " +
+                 "AutoDespawn). Xoay của prefab giữ nguyên (nằm phẳng). Trống = không có (báo lỗi).")]
+        public GameObject slotRingPrefab;
+
+        [Tooltip("Số vòng tạo sẵn trong màn Loading (nhiều xe vào ô gần nhau).")]
+        [Min(0)] public int slotRingPrewarmCount = 4;
+
+        [Tooltip("Hiệu ứng ô đỗ đặt cao hơn điểm đỗ bấy nhiêu (đơn vị): nằm sát mặt đường mà không chớp (z-fighting).")]
+        public float slotEffectHeight = 0.05f;
+
+        [Tooltip("Mở ô (mua / hồi sinh): pháo sáng phát thêm ở ô vừa mở, cùng vòng sáng (dùng lại Prefab/VFX/LevelPassEffect " +
+                 "của Menu). Trống = chỉ có vòng (báo lỗi).")]
+        public GameObject slotUnlockEffectPrefab;
+
+        [Tooltip("Cỡ pháo sáng mở ô = cỡ trong prefab × số này (prefab dựng cho bệ ở Menu).")]
+        public float slotUnlockEffectScale = 0.8f;
+
+        [Tooltip("Mỗi khách ngồi xuống: xe nhún (dẹt xuống) bấy nhiêu phần chiều cao. 0 = không. Khách lên dồn dập thì cú nhún " +
+                 "đang chạy dở không bị làm lại.")]
+        public float seatBouncePunch = 0.06f;
+
+        [Tooltip("Thời gian một cú nhún khi khách ngồi (giây).")]
+        public float seatBounceDuration = 0.15f;
+
+        [Tooltip("Undo: xe về đúng chỗ cũ trong bãi thì nảy bấy nhiêu lần cỡ. 0 = không.")]
+        public float undoArrivePunch = 0.1f;
+
+        [Tooltip("Thời gian nảy khi về chỗ (giây).")]
+        public float undoArrivePunchDuration = 0.25f;
+
         [Header("Trong ván: va chạm (xe đâm xe chặn)")]
         [Tooltip("Hiệu ứng va chạm (prefab particle, phát một lần, có AutoDespawn) sinh ở chỗ đâm. Xoay của prefab giữ nguyên " +
                  "khi sinh ra. Trống = không có (báo lỗi).")]
@@ -92,6 +129,47 @@ namespace BusOut.Core
         [Tooltip("Hiệu ứng va chạm đặt trước đầu xe đâm bấy nhiêu (đơn vị, theo hướng đâm). Gốc: 0.3 " +
                  "(CAR_RAMMED_EFFECT_POINT_OFFSET — gốc dùng thế nào không rõ, đoán là lùi / tiến theo hướng đâm).")]
         public float rammedEffectForwardOffset = 0.3f;
+
+        [Tooltip("Rung camera khi xe đâm xe chặn: lệch tối đa bấy nhiêu đơn vị (camera cách mặt đất ~45). 0 = không rung.")]
+        public float ramShakeStrength = 0.15f;
+
+        [Tooltip("Thời gian rung camera khi đâm (giây).")]
+        public float ramShakeDuration = 0.15f;
+
+        [Tooltip("Số lần lắc trong một lần rung (DOShakePosition vibrato).")]
+        [Min(1)] public int cameraShakeVibrato = 12;
+
+        [Header("Trong ván: cần cẩu (Crane)")]
+        [Tooltip("Bóng tròn mờ bám dưới xe khi cần cẩu nhấc bay (Prefab/VFX/CraneShadow: SpriteRenderer nằm phẳng, KHÔNG gắn " +
+                 "AutoDespawn — code trả về pool lúc đáp). Cỡ = cỡ prefab × cỡ xe lúc đó. Trống = không có bóng (báo lỗi).")]
+        public GameObject craneShadowPrefab;
+
+        [Tooltip("Bóng nằm cao hơn mặt đất bấy nhiêu (đơn vị): sát đất mà không chớp (z-fighting).")]
+        public float craneShadowGroundOffset = 0.03f;
+
+        [Tooltip("Xe ở độ cao nhất: bóng còn bấy nhiêu lần cỡ lúc chạm đất (nhỏ = cảm giác cao hơn).")]
+        [Range(0f, 1f)] public float craneShadowMinScale = 0.55f;
+
+        [Tooltip("Xe ở độ cao nhất: bóng còn bấy nhiêu lần độ đậm lúc chạm đất.")]
+        [Range(0f, 1f)] public float craneShadowMinAlpha = 0.35f;
+
+        [Tooltip("Bụi lúc xe đáp xuống ô (prefab particle tự trả về pool — mặc định dùng lại VehicleRammedEffect). " +
+                 "Trống = không có bụi.")]
+        public GameObject craneDustPrefab;
+
+        [Tooltip("Cỡ bụi = cỡ trong prefab × số này.")]
+        public float craneDustScale = 1.3f;
+
+        [Header("Trong ván: Sort / Shuffle — cột sáng quét hàng")]
+        [Tooltip("Cột sáng chạy dọc hàng khách từ đầu tới cuối khi dùng Sort / Shuffle (Prefab/VFX/QueueSweep, Vertical " +
+                 "Billboard, mô phỏng Local, AutoDespawn ≥ thời gian quét). Trống = không có cột (báo lỗi); khách vẫn đổi màu lần lượt.")]
+        public GameObject queueSweepPrefab;
+
+        [Tooltip("Cột quét hết hàng trong bấy nhiêu giây; khách đổi màu + nảy đúng lúc cột đi qua (0 = cả hàng đổi cùng lúc).")]
+        public float queueSweepDuration = 0.8f;
+
+        [Tooltip("Tâm cột cao hơn mặt đường bấy nhiêu (đơn vị) — đặt = nửa chiều cao cột (3D Start Size Y) để đáy chạm đất.")]
+        public float queueSweepHeight = 2f;
 
         [Header("Trong ván: xe đủ khách (trước khi rời bến)")]
         [Tooltip("Xe nảy (đẩy scale) bấy nhiêu lần cỡ đỗ lúc khách cuối ngồi xuống.")]
@@ -134,6 +212,32 @@ namespace BusOut.Core
 
         [Tooltip("Số hiệu ứng chạm tạo sẵn (chạm dồn dập nhanh hơn thời gian một hiệu ứng ~0.4s thì dùng vòng lại cái cũ nhất).")]
         [Min(1)] public int touchEffectPoolSize = 6;
+
+        [Header("UI: coin thưởng bay về thanh trên (CoinFlyView)")]
+        [Tooltip("Icon coin bay (Prefab/VFX/UI/CoinFly: Image, Raycast Target tắt, KHÔNG AutoDespawn — code trả về pool). " +
+                 "Trống = nhận thưởng về Menu ngay, không bay.")]
+        public GameObject coinFlyPrefab;
+
+        [Tooltip("Số coin bay mỗi lần nhận thưởng (số trên thanh đếm lên theo từng coin tới).")]
+        [Min(1)] public int coinFlyCount = 8;
+
+        [Tooltip("Coin sau bay trễ hơn coin trước bấy nhiêu giây.")]
+        public float coinFlyInterval = 0.05f;
+
+        [Tooltip("Mỗi coin bay hết đường trong bấy nhiêu giây.")]
+        public float coinFlyDuration = 0.55f;
+
+        [Tooltip("Coin xuất phát rải ngẫu nhiên trong bán kính bấy nhiêu quanh số thưởng (đơn vị UI, màn 1170×2532).")]
+        public float coinFlySpread = 80f;
+
+        [Tooltip("Đường bay cong lệch ngang tối đa bấy nhiêu (đơn vị UI) — mỗi coin một phía ngẫu nhiên.")]
+        public float coinFlyCurve = 200f;
+
+        [Tooltip("Tới nơi coin còn bấy nhiêu lần cỡ (thu dần trên đường bay).")]
+        public float coinFlyEndScale = 0.7f;
+
+        [Tooltip("Coin cuối tới nơi rồi chờ bấy nhiêu giây (nhìn số coin mới) mới chuyển về Menu.")]
+        public float coinFlyEndDelay = 0.25f;
 
         [Header("UI: nút nhún khi bấm (ButtonPressFeedback, mọi Button)")]
         [Tooltip("Nhấn giữ: nút thu còn bấy nhiêu lần cỡ đang có (gốc AnimatedButton). 1 = không nhún.")]

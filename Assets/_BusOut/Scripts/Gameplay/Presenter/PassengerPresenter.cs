@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using BusOut.Core;
 using BusOut.DesignPattern;
+using DG.Tweening;
 using UnityEngine;
 
 namespace BusOut.Gameplay
@@ -25,6 +26,12 @@ namespace BusOut.Gameplay
 
         private readonly List<int> planBuffer = new List<int>(16);
         private readonly List<int> changedBuffer = new List<int>(32);
+        // Cột sáng quét dọc hàng khi Sort / Shuffle (FxConfig.queueSweepPrefab).
+        private readonly FxConfig fx;
+        private readonly bool hasSweep;
+        private readonly TweenCallback<float> moveSweep;
+        private Transform sweepTransform;
+        private Tween sweepTween;
         private PassengerColorPlanner planner;
         private float spacing;
         private float joinCooldown;
@@ -48,10 +55,20 @@ namespace BusOut.Gameplay
             this.prefab = prefab;
             path = new QueuePath(lineView.QueuePositions);
             onLeftQueueArrived = HandleLeftQueueArrived;
+            fx = FxConfig.Instance;
+            hasSweep = fx.queueSweepPrefab != null;
+            moveSweep = MoveSweep;
+            if (!hasSweep)
+                Debug.LogError("[BusOut] FxConfig thiếu Queue Sweep Prefab: Sort / Shuffle không có cột sáng quét hàng (khách vẫn " +
+                               "đổi màu lần lượt). Kéo Prefab/VFX/QueueSweep vào Resources/FxConfig.", fx);
         }
 
-        /// Tạo sẵn <paramref name="count"/> khách trong pool. Gọi một lần lúc load (cùng chỗ với LevelSpawner.Prewarm).
-        public void Prewarm(int count) => PoolingManager.Prewarm(prefab.gameObject, count);
+        /// Tạo sẵn <paramref name="count"/> khách trong pool (+ cột sáng Sort / Shuffle). Gọi một lần lúc load.
+        public void Prewarm(int count)
+        {
+            PoolingManager.Prewarm(prefab.gameObject, count);
+            if (hasSweep) PoolingManager.Prewarm(fx.queueSweepPrefab, 1);
+        }
 
         public void ResetForLevel(PassengerColorPlanner colorPlanner)
         {
@@ -100,12 +117,17 @@ namespace BusOut.Gameplay
         public bool ApplyQueueColors(IReadOnlyList<int> colors)
         {
             if (!queue.ApplyColors(colors, changedBuffer)) return false;
+            // Cột sáng chạy đều từ đầu tới cuối hàng: khách ở chỗ i đổi màu đúng lúc cột tới chỗ i (Model đã đổi ngay).
+            int lastSpot = lineViews.Count - 1;
+            float sweepDuration = Mathf.Max(0f, fx.queueSweepDuration);
             for (int i = 0; i < changedBuffer.Count; i++)
             {
                 int index = changedBuffer[i];
+                float delay = lastSpot > 0 ? sweepDuration * index / lastSpot : 0f;
                 lineViews[index].Recolor(config.GetCarColor(queue.Line[index].ColorIndex), config.boosterRecolorPunch,
-                    config.boosterRecolorDuration);
+                    config.boosterRecolorDuration, delay);
             }
+            PlaySweep(lastSpot, sweepDuration);
             return true;
         }
 
@@ -115,10 +137,32 @@ namespace BusOut.Gameplay
             passenger = queue.RemoveHead();
             if (passenger == null) return null;
             PassengerView head = lineViews[0];
+            head.FlushPendingRecolor();
             lineViews.RemoveAt(0);
             for (int i = 0; i < lineViews.Count; i++) WalkToSpot(lineViews[i], i, config.passengerForwardSpeed);
             return head;
         }
+
+        private void PlaySweep(int lastSpot, float duration)
+        {
+            if (!hasSweep || lastSpot < 0) return;
+            if (sweepTween != null && sweepTween.IsActive()) sweepTween.Kill();
+            GameObject sweep = PoolingManager.Spawn(fx.queueSweepPrefab, SweepPosition(0f), fx.queueSweepPrefab.transform.rotation);
+            if (sweep == null) return;
+            sweepTransform = sweep.transform;
+            // Prefab tự trả về pool (AutoDespawn) — Lifetime của nó phải ≥ queueSweepDuration, không thì cột biến giữa đường.
+            sweepTween = DOVirtual.Float(0f, lastSpot * spacing, duration, moveSweep)
+                .SetEase(Ease.Linear)
+                .SetLink(sweep);
+        }
+
+        private void MoveSweep(float distance)
+        {
+            if (sweepTransform != null) sweepTransform.position = SweepPosition(distance);
+        }
+
+        // Tâm cột cao hơn mặt đường nửa chiều cao cột (đáy sáng chạm đất).
+        private Vector3 SweepPosition(float distance) => path.PositionAt(distance) + Vector3.up * fx.queueSweepHeight;
 
         /// Đưa khách đã rời hàng đi tới xe: qua MoveToBusPoint rồi tới <paramref name="carPosition"/>.
         public void SendToCar(PassengerView view, Vector3 carPosition)

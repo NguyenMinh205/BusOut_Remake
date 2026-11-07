@@ -31,6 +31,12 @@ namespace BusOut.Gameplay
 
         private Vector3 defaultLocalScale;
         private bool hasDefaultScale;
+        // Đổi màu chờ cột sáng quét tới (Sort / Shuffle): màu + độ nảy giữ tới lúc áp.
+        private Tween recolorDelay;
+        private Color pendingColor;
+        private float pendingPunch;
+        private float pendingDuration;
+        private TweenCallback applyPendingRecolor;
 
         public int PassengerId { get; private set; } = -1;
         public bool IsWalking => isWalking;
@@ -49,6 +55,44 @@ namespace BusOut.Gameplay
             propertyBlock.SetFloat(VipPropertyId, isVip ? 1f : 0f);
             bodyRenderer.SetPropertyBlock(propertyBlock);
             return true;
+        }
+
+        /// Booster (Sort / Shuffle): đổi màu sau <paramref name="delay"/> giây — đúng lúc cột sáng quét qua chỗ khách đứng.
+        /// Gọi lại khi đang chờ thì bỏ lần chờ cũ (màu mới nhất mới đúng với Model).
+        public void Recolor(Color color, float punch, float duration, float delay)
+        {
+            KillRecolorDelay();
+            if (delay <= 0f)
+            {
+                Recolor(color, punch, duration);
+                return;
+            }
+            pendingColor = color;
+            pendingPunch = punch;
+            pendingDuration = duration;
+            if (applyPendingRecolor == null) applyPendingRecolor = ApplyPendingRecolor;
+            // SetTarget(transform): OnDespawned (DOKill) huỷ luôn — không thì khách đã về pool, lấy ra lượt sau bị tô màu cũ.
+            recolorDelay = DOVirtual.DelayedCall(delay, applyPendingRecolor).SetLink(gameObject).SetTarget(transform);
+        }
+
+        /// Rời hàng (lên xe) khi màu còn đang chờ: áp ngay — không thì khách màu cũ đi vào xe màu mới.
+        public void FlushPendingRecolor()
+        {
+            if (recolorDelay == null || !recolorDelay.IsActive()) return;
+            KillRecolorDelay();
+            ApplyPendingRecolor();
+        }
+
+        private void ApplyPendingRecolor()
+        {
+            recolorDelay = null;
+            Recolor(pendingColor, pendingPunch, pendingDuration);
+        }
+
+        private void KillRecolorDelay()
+        {
+            if (recolorDelay != null && recolorDelay.IsActive()) recolorDelay.Kill();
+            recolorDelay = null;
         }
 
         /// Booster (Sort / Shuffle) đổi màu khách đang đứng: tô màu mới + nảy nhẹ cho người chơi thấy chỗ đổi.
@@ -175,8 +219,10 @@ namespace BusOut.Gameplay
             walkPath.Clear();
             PassengerId = -1;
             SetMovingAnimation(false);
-            // ⚠️ Cú nảy đổi màu đang chạy dở mà trả về pool → lần lấy ra sau cỡ bị lệch. Dừng và trả cỡ gốc.
+            // ⚠️ Cú nảy đổi màu đang chạy dở mà trả về pool → lần lấy ra sau cỡ bị lệch. Dừng và trả cỡ gốc (huỷ luôn
+            // lần đổi màu đang chờ cột sáng).
             transform.DOKill();
+            recolorDelay = null;
             if (hasDefaultScale) transform.localScale = defaultLocalScale;
         }
     }

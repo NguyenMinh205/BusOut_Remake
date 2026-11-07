@@ -130,6 +130,9 @@ namespace BusOut.Gameplay
             if (loseCloseButton != null) loseCloseButton.onClick.RemoveListener(HandleLoseClosed);
         }
 
+        /// Chỗ coin thưởng bay ra (số coin trên nút vừa bấm) — vị trí thế giới.
+        public Vector3 GetRewardPosition(bool withAd) => (withAd ? winAdRewardText : winRewardText).transform.position;
+
         public void Hide()
         {
             StopWinEffects();

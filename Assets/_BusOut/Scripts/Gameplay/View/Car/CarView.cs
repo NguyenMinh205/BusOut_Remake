@@ -47,6 +47,17 @@ namespace BusOut.Gameplay
 
         // Cỡ trong bãi (prefab × carScale × độ co bố cục, LevelSpawner đặt trước Init) và cỡ ngoài bãi (= cỡ prefab: làn
         // trên, bến, rời bến — bạn chốt 4/11: thu nhỏ chỉ để bãi vừa camera, ra khỏi bãi xe về nguyên cỡ).
+        // Cần cẩu: bóng đổ đang bám theo xe (null khi không bay) + số của lần nhấc hiện tại.
+        private CraneEffects craneEffects;
+        private Transform craneShadow;
+        private SpriteRenderer craneShadowRenderer;
+        private Vector3 craneShadowBaseScale;
+        private float craneShadowBaseAlpha;
+        private float craneGroundY;
+        private float craneLiftHeight;
+        private Vector3 craneLanding;
+        private TweenCallback updateCraneShadow;
+
         private Vector3 parkedScale = Vector3.one;
         private Vector3 outsideScale = Vector3.one;
         // Cỡ "đứng yên" hiện tại (parkedScale hoặc outsideScale): phóng to khi chạy, nảy, cỡ khách ngồi đều tính theo nó.
@@ -170,6 +181,34 @@ namespace BusOut.Gameplay
 
         private void RestoreBaseScale() => transform.localScale = baseScale;
 
+        /// Tới chỗ (ô đỗ, hay về bãi khi Undo): thu về cỡ đứng yên rồi nảy một cái. Dùng chung tween cỡ với phóng to / nảy
+        /// đủ khách (không chạy cùng lúc). <paramref name="punch"/> ≤ 0 = chỉ thu về, không nảy.
+        public void SettleWithBounce(float settleDuration, float punch, float punchDuration)
+        {
+            if (moveScaleTween != null && moveScaleTween.IsActive()) moveScaleTween.Kill();
+            Sequence sequence = DOTween.Sequence()
+                .Append(transform.DOScale(baseScale, settleDuration).SetEase(Ease.OutQuad));
+            if (punch > 0f && punchDuration > 0f)
+                sequence.Append(transform.DOPunchScale(baseScale * punch, punchDuration, 1, 0.5f));
+            moveScaleTween = sequence
+                .SetLink(gameObject)
+                .SetTarget(transform)
+                .OnKill(RestoreBaseScale);
+        }
+
+        /// Khách ngồi xuống: xe nhún xuống nhẹ (dẹt theo chiều cao, phình nhẹ hai bên). Đang nhún / nảy dở thì BỎ QUA chứ không
+        /// chạy lại: khách lên dồn dập (0.1s / người) mà lần nào cũng làm lại là xe rung liên tục, không còn là "nhún".
+        public void PlaySeatBounce(float punch, float duration)
+        {
+            if (punch <= 0f || duration <= 0f) return;
+            if (moveScaleTween != null && moveScaleTween.IsActive()) return;
+            var squash = new Vector3(baseScale.x * punch * 0.5f, -baseScale.y * punch, baseScale.z * punch * 0.5f);
+            moveScaleTween = transform.DOPunchScale(squash, duration, 1, 0.5f)
+                .SetLink(gameObject)
+                .SetTarget(transform)
+                .OnKill(RestoreBaseScale);
+        }
+
         /// Đổi cỡ "đứng yên" sang cỡ ngoài bãi (ra khỏi bãi: lên làn trên / cần cẩu nhấc) hoặc về cỡ trong bãi (tua ngược).
         /// Chỉ đổi mốc — gọi SetMoveScale ngay sau để tween tới cỡ mới.
         public void SetOutsideLot(bool outside) => baseScale = outside ? outsideScale : parkedScale;
@@ -189,6 +228,8 @@ namespace BusOut.Gameplay
         public void OnDespawned()
         {
             StopAll();
+            // Vào level mới giữa lúc cần cẩu đang bay: OnComplete không chạy → tự trả bóng, không thì bóng nằm lại giữa cảnh.
+            ReleaseCraneShadow();
             ramSequence = null;
             tiltTween = null;
             shakeTween = null;
@@ -467,9 +508,28 @@ namespace BusOut.Gameplay
 
         /// Booster Crane: nhấc thẳng lên <paramref name="liftHeight"/>, bay (vừa bay vừa xoay thẳng ô) tới trên
         /// <paramref name="parkPosition"/>, hạ xuống đúng chỗ. Không chạy theo đường nên không vướng xe nào.
+        /// <paramref name="effects"/>: bóng đổ bám theo xe khi bay + bụi lúc đáp (prefab trống = bỏ phần đó).
         public void PlayCraneLift(Vector3 parkPosition, Quaternion parkRotation, float liftHeight, float riseDuration,
-            float flyDuration, float dropDuration, Action<CarView> onArrived)
+            float flyDuration, float dropDuration, CraneEffects effects, Action<CarView> onArrived)
         {
+            ReleaseCraneShadow();
+            if (updateCraneShadow == null) updateCraneShadow = UpdateCraneShadow;
+            craneEffects = effects;
+            craneGroundY = transform.position.y;
+            craneLiftHeight = liftHeight;
+            craneLanding = parkPosition;
+            if (effects.ShadowPrefab != null)
+            {
+                GameObject shadow = PoolingManager.Spawn(effects.ShadowPrefab, transform.position, effects.ShadowPrefab.transform.rotation);
+                if (shadow != null)
+                {
+                    craneShadow = shadow.transform;
+                    craneShadowRenderer = shadow.GetComponent<SpriteRenderer>();
+                    craneShadowBaseScale = effects.ShadowPrefab.transform.localScale;
+                    craneShadowBaseAlpha = craneShadowRenderer != null ? effects.ShadowPrefab.GetComponent<SpriteRenderer>().color.a : 1f;
+                    UpdateCraneShadow();
+                }
+            }
             KillRam();
             KillTilt();
             isDriving = false;
@@ -482,11 +542,55 @@ namespace BusOut.Gameplay
                 .Append(transform.DOMove(parkPosition, dropDuration).SetEase(Ease.InQuad))
                 .SetLink(gameObject)
                 .SetTarget(transform)
+                .OnUpdate(updateCraneShadow)
                 .OnComplete(() =>
                 {
                     restRotation = transform.rotation;
+                    ReleaseCraneShadow();
+                    SpawnCraneDust();
                     onArrived?.Invoke(this);
                 });
+        }
+
+        // Bóng nằm trên mặt đất ngay dưới xe: xe càng cao bóng càng nhỏ + nhạt (cảm giác độ cao). Cỡ theo cỡ xe lúc này
+        // (xe to dần khi ra khỏi bãi). Gọi mỗi khung lúc cần cẩu chạy (delegate dựng sẵn, không cấp phát).
+        private void UpdateCraneShadow()
+        {
+            if (craneShadow == null) return;
+            Vector3 position = transform.position;
+            position.y = craneGroundY + craneEffects.ShadowGroundOffset;
+            craneShadow.position = position;
+            float height01 = craneLiftHeight > 1e-4f ? Mathf.Clamp01((transform.position.y - craneGroundY) / craneLiftHeight) : 0f;
+            craneShadow.localScale = craneShadowBaseScale * (transform.localScale.x * Mathf.Lerp(1f, craneEffects.ShadowMinScale, height01));
+            if (craneShadowRenderer != null)
+            {
+                Color color = craneShadowRenderer.color;
+                color.a = craneShadowBaseAlpha * Mathf.Lerp(1f, craneEffects.ShadowMinAlpha, height01);
+                craneShadowRenderer.color = color;
+            }
+        }
+
+        private void ReleaseCraneShadow()
+        {
+            if (craneShadow == null) return;
+            // ⚠️ Trả lại alpha gốc: bản trong pool giữ màu lần trước, lần nhấc sau bóng bắt đầu đã nhạt.
+            if (craneShadowRenderer != null)
+            {
+                Color color = craneShadowRenderer.color;
+                color.a = craneShadowBaseAlpha;
+                craneShadowRenderer.color = color;
+            }
+            PoolingManager.Despawn(craneShadow.gameObject);
+            craneShadow = null;
+            craneShadowRenderer = null;
+        }
+
+        private void SpawnCraneDust()
+        {
+            GameObject prefab = craneEffects.DustPrefab;
+            if (prefab == null) return;
+            GameObject dust = PoolingManager.Spawn(prefab, craneLanding, prefab.transform.rotation);
+            if (dust != null) dust.transform.localScale = prefab.transform.localScale * craneEffects.DustScale;
         }
 
         public void StopAll()
@@ -518,5 +622,19 @@ namespace BusOut.Gameplay
         {
             transform.DOKill();
         }
+    }
+
+    /// Hiệu ứng đi kèm cần cẩu (số trong FxConfig, CarFlowPresenter dựng một lần).
+    public struct CraneEffects
+    {
+        /// Bóng tròn mờ dưới xe khi bay (SpriteRenderer nằm phẳng). null = không có bóng.
+        public GameObject ShadowPrefab;
+        public float ShadowGroundOffset;
+        /// Ở đỉnh (cao nhất) bóng còn bấy nhiêu lần cỡ / độ đậm lúc chạm đất.
+        public float ShadowMinScale;
+        public float ShadowMinAlpha;
+        /// Bụi lúc đáp xuống ô (tự trả về pool). null = không có.
+        public GameObject DustPrefab;
+        public float DustScale;
     }
 }

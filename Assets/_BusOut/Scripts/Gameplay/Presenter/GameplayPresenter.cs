@@ -51,6 +51,8 @@ namespace BusOut.Gameplay
         [SerializeField] private BoosterBarView boosterBar;
         [Tooltip("LevelResultView trên bảng kết quả (cha của panel Thắng / Thua).")]
         [SerializeField] private LevelResultView levelResult;
+        [Tooltip("TouchFxCanvas/CoinFlyLayer (CoinFlyView): coin thưởng bay về thanh trên. Trống = nhận thưởng về Menu ngay (báo lỗi).")]
+        [SerializeField] private CoinFlyView coinFly;
         [Tooltip("NoSlotMessageView trên chữ \"Hết chỗ!\".")]
         [SerializeField] private NoSlotMessageView noSlotMessage;
         [Tooltip("SharedPopupsPresenter trên SharedUI: popup dùng chung (Cài đặt, Leave game) — nút bánh răng ở thanh trên mở.")]
@@ -127,8 +129,19 @@ namespace BusOut.Gameplay
             if (cameraFit == null)
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Camera Fit: màn dài sẽ bị cắt hai mép bãi. " +
                                "Thêm CameraFitView vào GameContext/Main Camera rồi kéo vào.", this);
-            else cameraFit.Init(config.cameraReferenceAspect);
+            else
+            {
+                cameraFit.Init(config.cameraReferenceAspect);
+                // Rung camera nghe sự kiện, không ai kéo vào đâu → thiếu thì im lặng mất rung: báo ở đây.
+                if (cameraFit.GetComponent<CameraShakeView>() == null)
+                    Debug.LogError("[BusOut] GameContext/Main Camera thiếu CameraShakeView: xe đâm xe không rung camera. " +
+                                   "Add Component → CameraShakeView lên Main Camera (cùng CameraFitView).", cameraFit);
+            }
 
+            // Thiếu chỉ mất coin bay: nhận thưởng thắng về Menu ngay.
+            if (coinFly == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Coin Fly: nhận thưởng thắng không có coin bay về thanh trên. " +
+                               "Add Component CoinFlyView lên TouchFxCanvas/CoinFlyLayer rồi kéo vào.", this);
             curveData = LevelCurveData.Parse(levelCurve.text);
             spawner = new LevelSpawner(config, parkingLot, fourSeatPrefab, sixSeatPrefab, tenSeatPrefab);
             busStop = new BusStopPresenter(busStopView, config);
@@ -165,6 +178,10 @@ namespace BusOut.Gameplay
             // Hiệu ứng va chạm: tạo sẵn cùng xe — Instantiate lúc cú đâm đầu tiên là giật đúng lúc người chơi đang nhìn.
             FxConfig fx = FxConfig.Instance;
             PoolingManager.Prewarm(fx.rammedEffectPrefab, fx.rammedEffectPrewarmCount);
+            busStop.PrewarmEffects();
+            // Cần cẩu: một bóng (thường chỉ một xe bay một lúc); bụi dùng chung pool hiệu ứng va chạm nếu cùng prefab.
+            if (fx.craneShadowPrefab != null) PoolingManager.Prewarm(fx.craneShadowPrefab, 1);
+            if (fx.coinFlyPrefab != null) PoolingManager.Prewarm(fx.coinFlyPrefab, fx.coinFlyCount);
             // Hiệu ứng xe đủ khách: mỗi prefab vài bản (chọn ngẫu nhiên lúc chơi).
             if (fx.carFullEffectPrefabs != null)
                 foreach (GameObject prefab in fx.carFullEffectPrefabs)
@@ -390,7 +407,7 @@ namespace BusOut.Gameplay
             }
             // Nhận thưởng thắng → về Menu (save đã sang level sau, Menu cho xe chạy sang bệ mới); Replay → nạp lại level.
             return levelResult.Init(PanelAnimation())
-                ? new LevelResultPresenter(config, levelResult, gameData, TryRevive, ReloadLevel, GoHome)
+                ? new LevelResultPresenter(config, levelResult, gameData, TryRevive, ReloadLevel, GoHome, PlayCoinReward)
                 : null;
         }
 
@@ -408,6 +425,28 @@ namespace BusOut.Gameplay
         }
 
         /// Về Menu (GameFlowController tắt GameContext, bật HomeContext). Ván đang dở để nguyên: lần Play sau LoadLevel dọn hết.
+        /// Coin thưởng bay từ popup về số coin trên thanh trên, số đếm lên theo coin tới nơi, xong mới gọi
+        /// <paramref name="onDone"/> (về Menu). Thiếu view / thanh trên → gọi luôn.
+        private void PlayCoinReward(int coinsBefore, int coinsAfter, Vector3 from, Action onDone)
+        {
+            if (coinFly == null || topBar == null || hud == null)
+            {
+                onDone();
+                return;
+            }
+            hud.BeginCoinCountUp(coinsBefore);
+            bool started = coinFly.Play(from, topBar.CoinTargetPosition,
+                (arrived, total) => hud.ShowCountingCoins(coinsBefore + (coinsAfter - coinsBefore) * arrived / total),
+                () =>
+                {
+                    hud.EndCoinCountUp();
+                    onDone();
+                });
+            if (started) return;
+            hud.EndCoinCountUp();
+            onDone();
+        }
+
         private void GoHome()
         {
             if (!EventBus<GoHomeRequestedEvent>.HasListeners)

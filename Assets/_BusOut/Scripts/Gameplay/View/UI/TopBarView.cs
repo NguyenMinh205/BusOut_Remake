@@ -10,6 +10,8 @@ namespace BusOut.Gameplay
     {
         [Tooltip("Chữ số coin (cạnh icon coin).")]
         [SerializeField] private TMP_Text coinText;
+        [Tooltip("Icon coin (TopUI/Coin): đích coin bay về khi nhận thưởng thắng. Trống = bay về chữ số coin (báo lỗi).")]
+        [SerializeField] private RectTransform coinIcon;
         [Tooltip("Chữ \"LEVEL n\" giữa thanh.")]
         [SerializeField] private TMP_Text levelText;
         [SerializeField] private Button settingsButton;
@@ -30,6 +32,8 @@ namespace BusOut.Gameplay
                 Debug.LogError($"[BusOut] TopBarView thiếu tham chiếu:{missing}. Kéo các object con của TopUI vào.", this);
                 return false;
             }
+            if (coinIcon == null)
+                Debug.LogError("[BusOut] TopBarView thiếu Coin Icon: coin thưởng bay về chữ số thay vì icon. Kéo TopUI/Coin vào.", this);
             settingsButton.onClick.AddListener(HandleSettingsClicked);
             replayButton.onClick.AddListener(HandleReplayClicked);
             return true;
@@ -42,6 +46,9 @@ namespace BusOut.Gameplay
         }
 
         public void SetCoins(int coins) => coinText.SetText("{0}", coins);
+
+        /// Chỗ coin thưởng bay về (vị trí thế giới — Canvas Overlay: toạ độ màn hình).
+        public Vector3 CoinTargetPosition => coinIcon != null ? coinIcon.position : coinText.transform.position;
 
         public void SetLevel(string format, int level) => levelText.SetText(format, level);
 

@@ -19,6 +19,10 @@ namespace BusOut.Gameplay
         private readonly Func<bool> tryRevive;
         private readonly Action reloadLevel;
         private readonly Action goHome;
+        private readonly CoinRewardPlayer playCoinReward;
+
+        /// Hiệu ứng nhận coin: số coin trước / sau khi cộng, chỗ coin bay ra; xong (hoặc không bay được) thì gọi onDone.
+        public delegate void CoinRewardPlayer(int coinsBefore, int coinsAfter, Vector3 from, Action onDone);
 
         private Pending pending;
         private float timer;
@@ -29,9 +33,11 @@ namespace BusOut.Gameplay
         /// <paramref name="tryRevive"/>: mở thêm 1 ô và chơi tiếp; false khi không mở được.
         /// <paramref name="reloadLevel"/>: nạp lại level đang lưu (Replay ở popup thua).
         /// <paramref name="goHome"/>: về Menu (nhận thưởng thắng — save đã sang level sau; đóng popup thua).
+        /// <paramref name="playCoinReward"/>: coin bay về thanh trên trước khi về Menu (null = về luôn).
         public LevelResultPresenter(GameplayConfig config, LevelResultView view, SecureGameData gameData,
-            Func<bool> tryRevive, Action reloadLevel, Action goHome)
+            Func<bool> tryRevive, Action reloadLevel, Action goHome, CoinRewardPlayer playCoinReward)
         {
+            this.playCoinReward = playCoinReward;
             this.config = config;
             this.view = view;
             this.gameData = gameData;
@@ -94,10 +100,13 @@ namespace BusOut.Gameplay
             if (winClaimed) return;
             winClaimed = true;
             int reward = config.winCoinReward * (withAd ? config.winAdCoinMultiplier : 1);
+            int coinsBefore = gameData.coinCount;
+            // Cộng + lưu NGAY, coin bay chỉ là hình: tắt app giữa lúc bay không mất thưởng.
             gameData.AddCoins(reward);
             gameData.Save();
             AudioService.Play(withAd ? SoundId.BonusCoin : SoundId.Coin);
-            goHome();
+            if (playCoinReward != null) playCoinReward(coinsBefore, gameData.coinCount, view.GetRewardPosition(withAd), goHome);
+            else goHome();
         }
 
         private void HandleReviveWithCoins()
