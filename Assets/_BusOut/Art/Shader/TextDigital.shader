@@ -13,9 +13,13 @@ Shader "BusOut/TextDigitag" {
 			#pragma vertex vert
 			#pragma fragment frag
 
-			float4x4 unity_ObjectToWorld;
-			float4x4 unity_MatrixVP;
-			float4 _MainTex_ST;
+			// ⚠️ Không tự khai báo unity_ObjectToWorld / unity_MatrixVP: nằm ngoài UnityPerDraw của Core.hlsl là
+			// shader rớt khỏi SRP Batcher, mỗi vật lại tốn một lần đổi trạng thái đầy đủ.
+			#include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+			CBUFFER_START(UnityPerMaterial)
+				float4 _MainTex_ST;
+			CBUFFER_END
 
 			struct Vertex_Stage_Input
 			{
@@ -33,7 +37,7 @@ Shader "BusOut/TextDigitag" {
 			{
 				Vertex_Stage_Output output;
 				output.uv = (input.uv.xy * _MainTex_ST.xy) + _MainTex_ST.zw;
-				output.pos = mul(unity_MatrixVP, mul(unity_ObjectToWorld, input.pos));
+				output.pos = TransformObjectToHClip(input.pos.xyz);
 				return output;
 			}
 

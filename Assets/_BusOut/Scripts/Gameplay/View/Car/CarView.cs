@@ -100,6 +100,8 @@ namespace BusOut.Gameplay
         /// Nửa chiều dài thân xe theo hướng đầu xe (thế giới), tính từ tâm collider thân.
         public float HalfLength => bodyCollider.size.z * 0.5f * transform.lossyScale.z;
 
+        #region Khởi tạo
+
         /// <paramref name="outsideLotScale"/>: cỡ khi ra khỏi bãi (localScale của prefab).
         public bool Init(int carId, Color color, int seatCount, Vector3 outsideLotScale)
         {
@@ -159,6 +161,10 @@ namespace BusOut.Gameplay
                 return bodyCollider.transform.TransformPoint(bodyCollider.center) + forward.normalized * HalfLength;
             }
         }
+
+        #endregion
+
+        #region Dáng xe: khói, nảy, phóng to
 
         /// Khói sau xe: bật lúc xe chạy (lên bến, rời bến, tua ngược), tắt lúc dừng. Tắt thì khói đã phun tự tan hết.
         public void SetSmoke(bool on)
@@ -223,6 +229,10 @@ namespace BusOut.Gameplay
                 .SetTarget(transform);
         }
 
+        #endregion
+
+        #region Trả về pool
+
         /// Trả về pool: dừng chạy / tween, bỏ callback (không thì xe của level trước báo tới nơi vào level sau),
         /// trả khách đang ngồi về pool của khách.
         public void OnDespawned()
@@ -239,6 +249,10 @@ namespace BusOut.Gameplay
             DespawnSeatedPassengers();
             if (hasMoveSmoke) moveSmoke.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
+
+        #endregion
+
+        #region Nóc, ghế, collider
 
         /// Mở nóc (xe đang đỗ ở bến, lộ ghế) hoặc đóng nóc (trong bãi, đang chạy). Ghế và khách ngồi ẩn khi đóng nóc:
         /// khách đứng trên ghế cao hơn nóc, không ẩn là đầu thò ra ngoài.
@@ -283,6 +297,10 @@ namespace BusOut.Gameplay
 
         /// Collider này có phải thân của xe này không (để phân biệt với SelectionBox khi tia trúng).
         public bool IsBody(Collider other) => other == bodyCollider;
+
+        #endregion
+
+        #region Dò xe chặn
 
         /// Bắn 3 tia (trái / giữa / phải thân xe) theo hướng đầu xe, như game gốc.
         /// Tia xuất phát từ TÂM thân: Physics bỏ qua collider chứa điểm gốc tia, nên tia không trúng chính xe này,
@@ -347,6 +365,10 @@ namespace BusOut.Gameplay
             }
         }
 
+        #endregion
+
+        #region Va chạm, intro
+
         /// Bị chặn: lao tới sát xe chặn, gọi <paramref name="onImpact"/> lúc chạm, rồi lùi về chỗ cũ.
         public void PlayRam(float travel, GameplayConfig config, Action onImpact)
         {
@@ -410,6 +432,10 @@ namespace BusOut.Gameplay
                 .SetLink(gameObject)
                 .SetTarget(transform);
         }
+
+        #endregion
+
+        #region Chạy theo đường
 
         /// Chạy qua lần lượt các điểm với tốc độ đều, đầu xe xoay mượt theo hướng chạy.
         /// <paramref name="endRotation"/> (nếu có) được đặt đúng lúc tới nơi để xe đỗ thẳng ô.
@@ -506,6 +532,10 @@ namespace BusOut.Gameplay
             Drive(points, speed, driveTurnSharpness, startRotation, onFinished, points.Count);
         }
 
+        #endregion
+
+        #region Cần cẩu
+
         /// Booster Crane: nhấc thẳng lên <paramref name="liftHeight"/>, bay (vừa bay vừa xoay thẳng ô) tới trên
         /// <paramref name="parkPosition"/>, hạ xuống đúng chỗ. Không chạy theo đường nên không vướng xe nào.
         /// <paramref name="effects"/>: bóng đổ bám theo xe khi bay + bụi lúc đáp (prefab trống = bỏ phần đó).
@@ -593,6 +623,10 @@ namespace BusOut.Gameplay
             if (dust != null) dust.transform.localScale = prefab.transform.localScale * craneEffects.DustScale;
         }
 
+        #endregion
+
+        #region Dừng và dọn
+
         public void StopAll()
         {
             isDriving = false;
@@ -622,6 +656,8 @@ namespace BusOut.Gameplay
         {
             transform.DOKill();
         }
+
+        #endregion
     }
 
     /// Hiệu ứng đi kèm cần cẩu (số trong FxConfig, CarFlowPresenter dựng một lần).
