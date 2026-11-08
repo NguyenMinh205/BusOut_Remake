@@ -126,3 +126,7 @@ MonoBehaviour:
   mapCarBackUpLevels: 0.03
   mapCarBackUpDuration: 0.12
   playButtonLevelFormat: LEVEL {0}
+  removeAdsTitle: REMOVE ADS
+  removeAdsIcon: {fileID: 21300000, guid: 316d95e3e2bd2094d85f3b42344f8579, type: 2}
+  removeAdsDescription: No more banner and interstitial ads!
+  removeAdsPriceText: $3.99

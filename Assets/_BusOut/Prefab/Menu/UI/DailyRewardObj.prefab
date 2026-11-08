@@ -262,6 +262,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2517215718217018474}
   - component: {fileID: 185062561571327349}
+  - component: {fileID: 6675819697912620872}
   m_Layer: 5
   m_Name: DailyRewardObj
   m_TagString: Untagged
@@ -886,3 +887,26 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
+--- !u!114 &6675819697912620872
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4322645691384057445}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d8714e2dbea7804684a475ca2258b6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: BusOut.Menu::BusOut.Menu.DailyRewardItemView
+  button: {fileID: 185062561571327349}
+  background: {fileID: 188610639322725540}
+  normalSprite: {fileID: 21300000, guid: 1cb0499f8a327a84680b6144fa06e4be, type: 2}
+  todaySprite: {fileID: 21300000, guid: eaa1bb4d27922324a91a48fe5e0252b6, type: 2}
+  highlight: {fileID: 8648799254908360192}
+  claimedPanel: {fileID: 5756796636691822547}
+  dayText: {fileID: 2149199653619653752}
+  rewardSlots:
+  - icon: {fileID: 8999195248084607189}
+    amount: {fileID: 681659386515265579}
+  plusSign: {fileID: 0}

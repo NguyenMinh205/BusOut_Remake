@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 231484332facc044ebdef4138c939081, type: 3}
+  m_Name: DailyRewardConfig
+  m_EditorClassIdentifier: BusOut.Menu::BusOut.Menu.DailyRewardConfig
+  days:
+  - rewards:
+    - kind: 0
+      booster: 0
+      amount: 50
+      icon: {fileID: 21300000, guid: ad36069e6808ffa48a93538a55aded8e, type: 2}
+  - rewards:
+    - kind: 1
+      booster: 2
+      amount: 1
+      icon: {fileID: 21300000, guid: b0400dfba26e25a4b940d3f76401036c, type: 2}
+  - rewards:
+    - kind: 0
+      booster: 0
+      amount: 100
+      icon: {fileID: 21300000, guid: a0902ce6bae02c441b435704456105e1, type: 2}
+  - rewards:
+    - kind: 1
+      booster: 0
+      amount: 1
+      icon: {fileID: 21300000, guid: c3c88591bc346ba47ab73097bad7989d, type: 2}
+  - rewards:
+    - kind: 0
+      booster: 0
+      amount: 150
+      icon: {fileID: 21300000, guid: 7a6b66fe67e070347b738afe0043e9ea, type: 2}
+  - rewards:
+    - kind: 1
+      booster: 3
+      amount: 2
+      icon: {fileID: 21300000, guid: 1bd1d2afdf2a6094aafbb0317b1dbe0a, type: 2}
+  - rewards:
+    - kind: 1
+      booster: 2
+      amount: 3
+      icon: {fileID: 21300000, guid: b0400dfba26e25a4b940d3f76401036c, type: 2}
+    - kind: 1
+      booster: 0
+      amount: 2
+      icon: {fileID: 21300000, guid: c3c88591bc346ba47ab73097bad7989d, type: 2}
+  adRewardMultiplier: 2
+  autoOpenFromLevel: 2
+  dayLabelFormat: Day {0}
+  coinAmountFormat: '{0}'
+  boosterAmountFormat: x{0}

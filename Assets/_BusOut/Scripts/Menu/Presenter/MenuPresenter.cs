@@ -3,11 +3,12 @@ using System.Collections;
 using BusOut.Core;
 using BusOut.DesignPattern;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BusOut.Menu
 {
     /// Màn Menu (HomeContext). MonoBehaviour duy nhất của tầng Presenter phía Menu; giữ tham chiếu scene và tạo các
-    /// presenter con: MenuNavigationPresenter (trang + thanh tab), MenuMapPresenter (bản đồ level + trời, vuốt dọc để xem).
+    /// presenter con: MenuNavigationPresenter (trang + thanh tab), MenuMapPresenter (bản đồ level + trời, vuốt dọc để xem), DailyRewardPresenter (quà hằng ngày), RemoveAdsPresenter.
     /// Nút bánh răng → popup Cài đặt dùng chung (SharedPopupsPresenter, ngữ cảnh Menu).
     /// Nút Play → PlayLevelRequestedEvent (GameFlowController chuyển sang màn chơi). Về từ màn chơi (HomeShownEvent)
     /// → dựng lại bản đồ; vừa thắng thì xe chạy sang bệ mới.
@@ -37,6 +38,16 @@ namespace BusOut.Menu
         [Tooltip("SharedPopupsPresenter trên SharedUI: popup Cài đặt dùng chung với màn chơi.")]
         [SerializeField] private SharedPopupsPresenter sharedPopups;
 
+        [Header("Remove Ads")]
+        [Tooltip("HomePanel/CenterUI/LeftExtensionBtn/RemoveAdsBtn.")]
+        [SerializeField] private Button removeAdsButton;
+
+        [Header("Quà hằng ngày")]
+        [Tooltip("DailyRewardView trên UI/Popup/DailyRewardPanel.")]
+        [SerializeField] private DailyRewardView dailyRewardView;
+
+        private DailyRewardPresenter dailyReward;
+        private RemoveAdsPresenter removeAds;
         private MenuNavigationPresenter navigation;
         private MenuMapPresenter map;
         private SecureGameData gameData;
@@ -55,16 +66,20 @@ namespace BusOut.Menu
             navigation = CreateNavigation();
             hasPlayButton = InitPlayButton();
             InitTopBar();
+            dailyReward = CreateDailyReward();
+            removeAds = CreateRemoveAds();
             map = CreateMap();
             // Lần mở Menu đầu tiên dựng ngay dưới đây; các lần về từ màn chơi thì nghe sự kiện này.
             EventBus.Subscribe<HomeShownEvent>(HandleHomeShown);
             EventBus.Subscribe<ScreenRevealedEvent>(HandleScreenRevealed);
+            EventBus.Subscribe<LoadingFinishedEvent>(HandleLoadingFinished);
             // Coin đổi ở đâu (nhận thưởng, mua…) thì số trên Menu cũng đúng.
             EventBus.Subscribe<CurrencyUpdatedEvent>(HandleCurrencyUpdated);
             RefreshPlayButton();
             RefreshCoins();
             if (map == null) return;
             map.ShowCurrentLevel();
+            map.AdvanceFinished += HandleMapAdvanceFinished;
             // Vuốt dọc đi qua ViewPort (cùng chỗ nhận vuốt ngang đổi trang); thiếu trang thì bản đồ đứng yên.
             if (navigation == null) return;
             pageView.VerticalDragBegan += HandleMapDragBegan;
@@ -76,7 +91,10 @@ namespace BusOut.Menu
         {
             EventBus.Unsubscribe<HomeShownEvent>(HandleHomeShown);
             EventBus.Unsubscribe<ScreenRevealedEvent>(HandleScreenRevealed);
+            EventBus.Unsubscribe<LoadingFinishedEvent>(HandleLoadingFinished);
             EventBus.Unsubscribe<CurrencyUpdatedEvent>(HandleCurrencyUpdated);
+            dailyReward?.Dispose();
+            removeAds?.Dispose();
         }
 
         /// Màn Loading (GameFlowController): tạo sẵn module bản đồ. Start đã chạy trước đó (HomeContext bật sẵn, màn Loading
@@ -98,12 +116,28 @@ namespace BusOut.Menu
         {
             RefreshPlayButton();
             RefreshCoins();
+            removeAds?.Refresh();
             map?.Refresh();
         }
 
         /// Màn chuyển cảnh mờ đi: vừa thắng thì giờ mới cho xe chạy sang bệ mới (người chơi thấy). Vào màn chơi thì không có
         /// gì chờ (Refresh chỉ đặt chờ khi về Menu).
-        private void HandleScreenRevealed(ScreenRevealedEvent _) => map?.PlayPendingAdvance();
+        private void HandleScreenRevealed(ScreenRevealedEvent _)
+        {
+            // Sự kiện này phát cả khi vào màn chơi: lúc đó HomeContext đã tắt.
+            if (!gameObject.activeInHierarchy) return;
+            // ⚠️ Vừa thắng thì đợi xe chạy tới bệ mới (HandleMapAdvanceFinished): mở popup ngay là che mất hoạt ảnh đó.
+            bool isCarAdvancing = map != null && map.PlayPendingAdvance();
+            if (!isCarAdvancing) dailyReward?.TryAutoOpen();
+        }
+
+        private void HandleMapAdvanceFinished() => dailyReward?.TryAutoOpen();
+
+        /// Mở game vào Menu. Người chơi mới vào thẳng ván thì HomeContext đã tắt.
+        private void HandleLoadingFinished(LoadingFinishedEvent _)
+        {
+            if (gameObject.activeInHierarchy) dailyReward?.TryAutoOpen();
+        }
 
         /// Chỉ quay bản đồ khi đang đứng ở trang có bản đồ (Home): trang Shop / Achievement che bản đồ.
         private void HandleMapDragBegan()
@@ -149,6 +183,53 @@ namespace BusOut.Menu
             }
             hasTopBar = topBar.Init();
             if (hasTopBar) topBar.SettingsClicked += HandleSettingsClicked;
+        }
+
+        /// Thiếu nút hoặc popup mua thì chỉ mất Remove Ads, Menu vẫn chạy.
+        private RemoveAdsPresenter CreateRemoveAds()
+        {
+            PurchasePopupView popup = sharedPopups != null ? sharedPopups.PurchasePopup : null;
+            if (removeAdsButton == null || popup == null)
+            {
+                Debug.LogError("[BusOut] MenuPresenter thiếu Remove Ads Button hoặc popup mua: nút Remove Ads không làm gì. " +
+                               "Kéo HomePanel/CenterUI/LeftExtensionBtn/RemoveAdsBtn và SharedUI (có PurchasePanel) vào.", this);
+                return null;
+            }
+            if (config.removeAdsIcon == null)
+                Debug.LogError("[BusOut] MenuConfig thiếu Remove Ads Icon: popup sẽ hiện icon của món mở trước đó. " +
+                               "Kéo Art/UI/Sprites/RemoveAds vào MenuConfig.", config);
+            return new RemoveAdsPresenter(config, removeAdsButton, popup, gameData);
+        }
+
+        /// Thiếu popup hoặc config sai thì chỉ mất quà hằng ngày, Menu vẫn chạy.
+        private DailyRewardPresenter CreateDailyReward()
+        {
+            if (dailyRewardView == null)
+            {
+                Debug.LogError("[BusOut] MenuPresenter thiếu Daily Reward View: không có quà hằng ngày. " +
+                               "Kéo UI/Popup/DailyRewardPanel (có DailyRewardView) vào.", this);
+                return null;
+            }
+            DailyRewardConfig rewardConfig = Resources.Load<DailyRewardConfig>(DailyRewardConfig.ResourcePath);
+            if (rewardConfig == null)
+            {
+                Debug.LogError($"[BusOut] Không thấy Resources/{DailyRewardConfig.ResourcePath}.asset: quà hằng ngày chạy số mặc định " +
+                               "(không có icon). Tạo bằng Create → BusOut → Daily Reward Config, đặt trong Assets/_BusOut/Resources.", this);
+                rewardConfig = DailyRewardConfig.CreateDefault();
+            }
+            if (!rewardConfig.IsValid(out string problem))
+            {
+                Debug.LogError($"[BusOut] DailyRewardConfig sai: {problem}. Không có quà hằng ngày.", rewardConfig);
+                return null;
+            }
+            UIConfig uiConfig = Resources.Load<UIConfig>(UIConfig.ResourcePath);
+            if (uiConfig == null)
+            {
+                Debug.LogError($"[BusOut] Không thấy Resources/{UIConfig.ResourcePath}.asset: popup quà ngày chạy số mặc định.", this);
+                uiConfig = UIConfig.CreateDefault();
+            }
+            if (!dailyRewardView.Init(uiConfig.PanelAnimation, DailyRewardConfig.DayCount)) return null;
+            return new DailyRewardPresenter(rewardConfig, dailyRewardView, gameData);
         }
 
         /// Thiếu nút Play thì không vào được ván — báo to, Menu vẫn chạy.

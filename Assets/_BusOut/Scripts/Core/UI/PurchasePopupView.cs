@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace BusOut.Core
 {
-    /// Popup mua CHUNG: một món hàng (tiêu đề, icon, mô tả, giá coin), mua bằng coin / quảng cáo / đóng. Chỉ hiển thị và
+    /// Popup mua CHUNG: một món hàng (tiêu đề, icon, mô tả, giá), mua bằng coin / quảng cáo / tiền thật / đóng. Chỉ hiển thị và
     /// báo nút bấm — bán gì, trao gì do presenter của nơi dùng quyết (trong ván: PurchasePresenter — lượt booster, ô đỗ;
     /// sau này shop ở Menu dùng lại chính View này). Đặt ở Core để mọi phần dùng được.
     /// Gắn trên SharedUI/PurchasePanel; SharedPopupsPresenter khởi tạo, nơi dùng lấy qua SharedPopupsPresenter.PurchasePopup. Panel có thể là chính object này (view không cần Update, tắt vẫn gọi được).
@@ -22,13 +22,20 @@ namespace BusOut.Core
         [SerializeField] private Button buyButton;
         [Tooltip("BuyBtn/Cost/CostTxt: giá coin.")]
         [SerializeField] private TMP_Text costText;
+        [Tooltip("BuyBtn/Cost/IconCoin: ẩn khi bán bằng tiền thật.")]
+        [SerializeField] private GameObject coinIcon;
         [Tooltip("Buttons/WatchAdsBtn: xem quảng cáo để nhận.")]
         [SerializeField] private Button adButton;
         [SerializeField] private Button closeButton;
 
         public event Action BuyWithCoinsClicked;
         public event Action BuyWithAdClicked;
+        /// Bấm mua ở món bán bằng tiền thật (ShowMoneyOffer). Tách khỏi BuyWithCoinsClicked: PurchasePresenter trong ván nghe
+        /// sự kiện coin, không được trừ coin / trao đồ của nó khi đang bán món khác.
+        public event Action BuyWithMoneyClicked;
         public event Action CloseClicked;
+
+        private bool isMoneyOffer;
 
         private PanelAnimationSettings panelAnimation;
 
@@ -50,6 +57,12 @@ namespace BusOut.Core
                 Debug.LogError($"[BusOut] PurchasePopupView thiếu tham chiếu:{missing}. Kéo object trong PurchasePanel vào.", this);
                 return false;
             }
+            // Thiếu icon coin chỉ làm món tiền thật hiện thừa icon: báo nhưng popup vẫn chạy (đừng làm hỏng mua booster).
+            if (coinIcon == null)
+                Debug.LogError("[BusOut] PurchasePopupView thiếu Coin Icon: món bán bằng tiền thật vẫn hiện icon coin. " +
+                               "Kéo PurchasePopup/Buttons/BuyBtn/Cost/IconCoin vào.", this);
+            // Ô giá hẹp hơn chữ tiền ("$3.99"): không xuống dòng, chữ tràn đều hai bên vẫn nằm trong nút.
+            costText.textWrappingMode = TextWrappingModes.NoWrap;
             panel.Init();
             buyButton.onClick.AddListener(HandleBuyWithCoins);
             adButton.onClick.AddListener(HandleBuyWithAd);
@@ -69,6 +82,7 @@ namespace BusOut.Core
         /// Icon null → giữ icon đang có.
         public void Show(string title, Sprite icon, string description, int coinPrice, bool canAfford)
         {
+            SetMode(false);
             nameText.SetText(title);
             if (icon != null) iconImage.sprite = icon;
             descriptionText.SetText(description);
@@ -77,10 +91,40 @@ namespace BusOut.Core
             panel.Show(panelAnimation);
         }
 
+        /// Món bán bằng tiền thật: nút mua hiện giá (<paramref name="priceText"/>, vd. "$3.99"), không icon coin, không nút quảng cáo.
+        public void ShowMoneyOffer(string title, Sprite icon, string description, string priceText)
+        {
+            SetMode(true);
+            nameText.SetText(title);
+            if (icon != null) iconImage.sprite = icon;
+            descriptionText.SetText(description);
+            costText.SetText(priceText);
+            buyButton.interactable = true;
+            panel.Show(panelAnimation);
+        }
+
+        // Popup dùng chung: món coin mở sau món tiền thật phải có lại icon coin và nút quảng cáo.
+        private void SetMode(bool moneyOffer)
+        {
+            isMoneyOffer = moneyOffer;
+            if (coinIcon != null) coinIcon.SetActive(!moneyOffer);
+            adButton.gameObject.SetActive(!moneyOffer);
+        }
+
         public void Hide() => panel.Hide();
 
-        private void HandleBuyWithCoins() => BuyWithCoinsClicked?.Invoke();
+        private void HandleBuyWithCoins()
+        {
+            if (isMoneyOffer) BuyWithMoneyClicked?.Invoke();
+            else BuyWithCoinsClicked?.Invoke();
+        }
+
         private void HandleBuyWithAd() => BuyWithAdClicked?.Invoke();
-        private void HandleClose() => CloseClicked?.Invoke();
+        private void HandleClose()
+        {
+            // Món tiền thật mở từ Menu: tự đóng, không trông vào presenter trong ván (người nghe CloseClicked hiện có).
+            if (isMoneyOffer) Hide();
+            CloseClicked?.Invoke();
+        }
     }
 }
