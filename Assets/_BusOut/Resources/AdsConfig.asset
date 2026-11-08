@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cdd9655b5ed8204bb5ff1fe7f4eb845, type: 3}
+  m_Name: AdsConfig
+  m_EditorClassIdentifier: BusOut.Core::BusOut.Core.AdsConfig
+  androidRewardedUnitId: ca-app-pub-3940256099942544/5224354917
+  iosRewardedUnitId: ca-app-pub-3940256099942544/1712485313
+  retryMinSeconds: 2
+  retryMaxSeconds: 60
+  rewardGraceSeconds: 0.3
+  notReadyMessage: Ad not ready. Please try again later.
+  noInternetMessage: No internet connection.
+  debugConsentAsEea: 0

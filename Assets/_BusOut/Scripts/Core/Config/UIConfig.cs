@@ -8,6 +8,9 @@ namespace BusOut.Core
     [CreateAssetMenu(menuName = "BusOut/UI Config", fileName = "UIConfig")]
     public class UIConfig : ScriptableObject
     {
+        /// Asset nằm ở Resources/UIConfig.asset: chỗ nào không có ô kéo (ToastView) thì nạp theo đường này.
+        public const string ResourcePath = "UIConfig";
+
         [Header("Hoạt ảnh popup (mọi popup: cài đặt, rời ván, kết quả, mua)")]
         [Tooltip("Mở popup: nền tối mờ dần vào trong bao lâu (giây).")]
         public float popupDimFadeDuration = 0.2f;
@@ -33,6 +36,16 @@ namespace BusOut.Core
         public float transitionMinHoldDuration = 1f;
 
         // Hiệu ứng chạm + nút nhún khi bấm: chuyển sang FxConfig (4/11/2026).
+
+        [Header("Chữ báo (toast) — vd. \"Ad not ready\"")]
+        [Tooltip("Chữ hiện dần trong bao lâu (giây).")]
+        public float toastFadeInDuration = 0.15f;
+
+        [Tooltip("Chữ đứng yên bao lâu (giây) trước khi mờ đi: đủ đọc một câu ngắn.")]
+        public float toastHoldDuration = 1.5f;
+
+        [Tooltip("Chữ mờ đi trong bao lâu (giây).")]
+        public float toastFadeOutDuration = 0.3f;
 
         [Header("Cài đặt")]
         [Tooltip("Ngôn ngữ chọn được (code lưu vào save, displayName hiện ở SettingsView.languageText nếu có). Mã trên từng nút " +

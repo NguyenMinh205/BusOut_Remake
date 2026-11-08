@@ -39,6 +39,10 @@ namespace BusOut.Core
             if (service != null) service.PlaySound(id);
         }
 
+        /// Quảng cáo toàn màn đang mở: dừng MỌI tiếng của game (AudioListener.pause — cả nhạc lẫn tiếng hiệu ứng, kể cả tiếng
+        /// đang phát dở), đóng thì chạy tiếp. Không đụng công tắc Music / Sound của người chơi. AdService gọi.
+        public static void SetPausedByAd(bool paused) => AudioListener.pause = paused;
+
         protected override void OnSingletonAwake()
         {
             config = Resources.Load<AudioConfig>(AudioConfig.ResourcePath);

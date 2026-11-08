@@ -57,6 +57,11 @@ namespace BusOut.Core
             _ = AudioService.Instance;
             // Cũng đọc công tắc rung từ save: dựng sau save, cùng chỗ với các dịch vụ sống suốt game.
             _ = HapticService.Instance;
+            // Sau save (đọc mốc giờ lần cuối để chặn lùi giờ). Dựng sớm: hỏi giờ máy chủ chạy song song lúc nạp scene.
+            _ = TimeService.Instance;
+            // Sớm nhất có thể: xin đồng ý GDPR (form hiện trên màn Loading ở lần mở đầu) + khởi tạo SDK + tải sẵn rewarded,
+            // để tới lúc người chơi bấm nút quảng cáo đầu tiên thì đã có sẵn.
+            _ = AdService.Instance;
         }
 
         private void Start()
@@ -104,6 +109,12 @@ namespace BusOut.Core
             if (flow == null)
                 Debug.LogError($"[BusOut] {config.gameSceneName} không có GameFlowController: bỏ qua các bước tạo sẵn.", this);
             else yield return flow.Preload(stepProgress => ReportProgress(sceneShare + stepProgress * (1f - sceneShare)));
+
+            // Chờ giờ máy chủ có hạn: Menu (quà ngày…) cần biết đúng hôm nay ngay lúc hiện. Thường đã xong từ lúc nạp scene;
+            // mất mạng / mạng chậm thì quá hạn vào bằng giờ máy, giờ máy chủ tới sau sẽ tự chỉnh.
+            TimeService time = TimeService.Instance;
+            while (time != null && !time.IsFirstSyncDone && Time.unscaledTime - startTime < time.BootMaxWaitSeconds)
+                yield return null;
 
             ReportProgress(1f);
             // Thanh chạy đủ và màn hiện đủ lâu rồi mới mờ: nạp nhanh quá thì màn chớp qua, người chơi không kịp thấy.
