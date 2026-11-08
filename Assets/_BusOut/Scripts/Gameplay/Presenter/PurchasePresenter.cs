@@ -7,7 +7,7 @@ namespace BusOut.Gameplay
     /// Bán hàng trong ván qua popup mua chung (PurchasePopupView trên Popup/PurchasePanel), 2 món:
     /// - Thêm lượt booster: mở khi bấm booster đã mở khoá mà hết lượt. Mua xong chỉ cộng lượt — không tự dùng.
     /// - Mở thêm ô đỗ (A3): mở khi chạm ô khoá ở bến. Mua xong mở ô khoá gần nhất, chỉ cho level đang chơi.
-    /// Mua bằng coin (trừ coin, lưu) hoặc quảng cáo (TẠM: nhận ngay).
+    /// Mua bằng coin (trừ coin, lưu) hoặc quảng cáo (rewarded qua AdService: chỉ trao khi xem đủ).
     /// GameplayPresenter tạo; HudPresenter gọi Open, GameplayPresenter gọi OpenSlotUnlock; vào level / kết thúc ván thì Hide.
     public sealed class PurchasePresenter
     {
@@ -21,6 +21,7 @@ namespace BusOut.Gameplay
 
         private Offer offer;               // món đang mở popup; None = popup đang tắt
         private BoosterDefinition booster; // khi offer = Booster
+        private readonly Action grantAfterAd; // dựng sẵn một lần
 
         /// <paramref name="canOpen"/>: lúc này có được mở popup không (đang chơi, không trong hoạt ảnh vào level).
         /// <paramref name="unlockSlot"/>: mở ô khoá gần nhất; false khi không còn ô khoá.
@@ -32,6 +33,7 @@ namespace BusOut.Gameplay
             this.view = view;
             this.canOpen = canOpen;
             this.unlockSlot = unlockSlot;
+            grantAfterAd = GrantAfterAd;
             view.BuyWithCoinsClicked += HandleBuyWithCoins;
             view.BuyWithAdClicked += HandleBuyWithAd;
             view.CloseClicked += Hide;
@@ -87,9 +89,16 @@ namespace BusOut.Gameplay
             Grant();
         }
 
-        /// ⚠️ TẠM: nhận ngay (chưa có quảng cáo). Khi có: chỉ trao khi AdCompletedEvent có thưởng.
+        /// Mở rewarded; popup giữ nguyên trong lúc xem, xem đủ mới trao (đóng sớm: popup vẫn đó, chọn lại được).
         private void HandleBuyWithAd()
         {
+            if (offer == Offer.None) return;
+            AdService.ShowRewarded(offer == Offer.Slot ? AdPlacement.UnlockSlot : AdPlacement.BoosterRefill, grantAfterAd);
+        }
+
+        private void GrantAfterAd()
+        {
+            // Kiểm lại: popup có thể đã đóng (bấm mua bằng coin ngay trước khi quảng cáo kịp che màn).
             if (offer == Offer.None) return;
             if (offer == Offer.Slot && !unlockSlot())
             {

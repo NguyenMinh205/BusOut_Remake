@@ -29,6 +29,11 @@ namespace BusOut.Gameplay
         private bool canRevive;
         private int level;
         private bool winClaimed; // chặn bấm 2 lần (2 nút / bấm đúp) → cộng coin 2 lần
+        // Callback trao thưởng sau quảng cáo: dựng sẵn một lần.
+        private readonly Action claimWinWithAd;
+        private readonly Action reviveAfterAd;
+        // Rời popup kết quả (về Menu / chơi lại) đi qua interstitial: AdService tự quyết hiện hay bỏ qua, xong mới đi tiếp.
+        private readonly Action goHomeAfterInterstitial;
 
         /// <paramref name="tryRevive"/>: mở thêm 1 ô và chơi tiếp; false khi không mở được.
         /// <paramref name="reloadLevel"/>: nạp lại level đang lưu (Replay ở popup thua).
@@ -44,6 +49,9 @@ namespace BusOut.Gameplay
             this.tryRevive = tryRevive;
             this.reloadLevel = reloadLevel;
             this.goHome = goHome;
+            claimWinWithAd = () => ClaimWin(true);
+            reviveAfterAd = ReviveAfterAd;
+            goHomeAfterInterstitial = () => AdService.ShowInterstitial(AdPlacement.LevelEnd, goHome);
             view.WinClaimed += HandleWinClaimed;
             view.ReviveWithCoinsClicked += HandleReviveWithCoins;
             view.ReviveWithAdClicked += HandleReviveWithAd;
@@ -94,9 +102,17 @@ namespace BusOut.Gameplay
             pending = Pending.None;
         }
 
-        /// ⚠️ TẠM: nhận bằng quảng cáo = nhận ngay (chưa có quảng cáo). Khi có: chỉ cộng khi AdCompletedEvent có thưởng.
+        /// Nhận thưởng thường → nhận ngay. Nhận x2 → mở rewarded, chỉ nhận khi xem đủ (đóng sớm: popup vẫn đó, chọn lại được).
         private void HandleWinClaimed(bool withAd)
         {
+            if (winClaimed) return;
+            if (withAd) AdService.ShowRewarded(AdPlacement.WinX2, claimWinWithAd);
+            else ClaimWin(false);
+        }
+
+        private void ClaimWin(bool withAd)
+        {
+            // Kiểm lại: bấm "Nhận" ngay trước khi quảng cáo kịp che màn thì thưởng thường đã nhận rồi.
             if (winClaimed) return;
             winClaimed = true;
             int reward = config.winCoinReward * (withAd ? config.winAdCoinMultiplier : 1);
@@ -105,8 +121,10 @@ namespace BusOut.Gameplay
             gameData.AddCoins(reward);
             gameData.Save();
             AudioService.Play(withAd ? SoundId.BonusCoin : SoundId.Coin);
-            if (playCoinReward != null) playCoinReward(coinsBefore, gameData.coinCount, view.GetRewardPosition(withAd), goHome);
-            else goHome();
+            // Interstitial SAU coin bay (người chơi thấy thưởng về túi trước), trước khi về Menu.
+            if (playCoinReward != null)
+                playCoinReward(coinsBefore, gameData.coinCount, view.GetRewardPosition(withAd), goHomeAfterInterstitial);
+            else goHomeAfterInterstitial();
         }
 
         private void HandleReviveWithCoins()
@@ -118,8 +136,10 @@ namespace BusOut.Gameplay
             gameData.Save();
         }
 
-        /// ⚠️ TẠM: hồi sinh ngay (chưa có quảng cáo). Khi có: chỉ hồi sinh khi AdCompletedEvent có thưởng.
-        private void HandleReviveWithAd()
+        /// Hồi sinh bằng quảng cáo: chỉ hồi sinh khi xem đủ; đóng sớm thì popup Continue vẫn đó.
+        private void HandleReviveWithAd() => AdService.ShowRewarded(AdPlacement.Revive, reviveAfterAd);
+
+        private void ReviveAfterAd()
         {
             if (!tryRevive())
                 Debug.LogWarning("[BusOut] Hồi sinh thất bại: không còn ô khoá để mở.");
@@ -127,8 +147,8 @@ namespace BusOut.Gameplay
 
         private void HandleContinueDeclined() => view.ShowLose(config.levelLabelFormat, level);
 
-        private void HandleReplay() => reloadLevel();
+        private void HandleReplay() => AdService.ShowInterstitial(AdPlacement.LevelEnd, reloadLevel);
 
-        private void HandleLoseClosed() => goHome();
+        private void HandleLoseClosed() => goHomeAfterInterstitial();
     }
 }
