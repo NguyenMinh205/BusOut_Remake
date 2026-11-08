@@ -138,13 +138,45 @@ namespace BusOut.Core
         Banner,
         Interstitial,
         Rewarded,
+        AppOpen,
     }
 
-    /// Quảng cáo xem xong (dùng để trao thưởng).
+    /// Quảng cáo xem xong (đã đóng). Thưởng KHÔNG trao qua sự kiện này mà qua callback của AdService.ShowRewarded
+    /// (nơi gọi biết mình đang thưởng gì); sự kiện để các phần khác biết (thống kê, giãn cách interstitial…).
     public struct AdCompletedEvent : IEvent
     {
         public AdType Type;
+        public AdPlacement Placement;
         public bool IsRewardEarned; // true nếu xem hết rewarded
+    }
+
+    /// Quảng cáo toàn màn bắt đầu / thôi che màn hình (tính cả màn Ads Break trước interstitial). Lớp chặn chạm
+    /// (AdBlockerView) nghe sự kiện này.
+    public struct AdShowingChangedEvent : IEvent
+    {
+        public bool IsShowing;
+    }
+
+    /// Màn "Ad break" trước interstitial hiện / ẩn (AdsBreakView nghe).
+    public struct AdsBreakChangedEvent : IEvent
+    {
+        public bool IsShowing;
+    }
+
+    /// Banner đáy màn đổi chiều cao (pixel màn hình; 0 = không có banner). BannerSpaceView nghe để đẩy UI lên.
+    public struct BannerChangedEvent : IEvent
+    {
+        public float HeightPixels;
+    }
+
+    #endregion
+
+    #region Thông báo
+
+    /// Hiện một dòng chữ báo ngắn giữa màn (ToastView trên SharedUI), vd. "Ad not ready".
+    public struct ToastRequestedEvent : IEvent
+    {
+        public string Message;
     }
 
     #endregion
@@ -170,6 +202,17 @@ namespace BusOut.Core
     {
         public float Duration;
         public float Intensity;
+    }
+
+    #endregion
+
+    #region Thời gian
+
+    /// Sang ngày mới (0h giờ địa phương) TRONG LÚC đang chạy: qua nửa đêm, quay lại từ nền, giờ máy chủ chỉnh tới.
+    /// ⚠️ Lúc mở game KHÔNG phát: tính năng theo ngày tự so TimeService.TodayIndex với ngày đã lưu khi khởi tạo.
+    public struct NewDayStartedEvent : IEvent
+    {
+        public int DayIndex; // = TimeService.TodayIndex
     }
 
     #endregion

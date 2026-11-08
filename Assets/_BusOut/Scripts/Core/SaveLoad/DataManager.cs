@@ -61,6 +61,14 @@ namespace BusOut.Core
         public bool vibrationOn = true;
         /// Mã ngôn ngữ đang chọn (vd. "en", "vi"). Chưa có hệ thống đa ngôn ngữ: chỉ lưu lựa chọn.
         public string language = "";
+
+        /// Giờ thật (UTC, ticks) lần cuối game thấy — TimeService ghi mỗi giây. Mở game mà giờ máy nhỏ hơn số này thì dùng
+        /// số này: chặn lùi giờ máy để nhận lại quà ngày. 0 = chưa có (save cũ / người chơi mới).
+        public long lastKnownUtcTicks;
+
+        /// Đã mua Remove Ads: tắt interstitial, banner, App Open (rewarded vẫn còn — người chơi tự chọn xem). Đổi qua
+        /// AdService.SetNoAds (còn ẩn banner ngay), không gán thẳng.
+        public bool noAds;
         #endregion
 
         /// Giá trị ban đầu (người chơi mới, booster thêm sau này). Không lưu: private không có SerializeField.
@@ -185,6 +193,8 @@ namespace BusOut.Core
             vibrationOn = other.vibrationOn;
             language = !string.IsNullOrEmpty(other.language) ? other.language
                 : defaults != null ? defaults.language : "en";
+            lastKnownUtcTicks = other.lastKnownUtcTicks;
+            noAds = other.noAds;
         }
 
         public void ClearAllData()
