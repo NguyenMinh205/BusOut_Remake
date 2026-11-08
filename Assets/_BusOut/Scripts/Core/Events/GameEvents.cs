@@ -8,23 +8,8 @@ namespace BusOut.Core
 
     #region Vòng đời game
 
-    public enum GameState
-    {
-        None,
-        Loading,
-        MainMenu,
-        Gameplay,
-        Paused,
-        GameOver,
-        Victory,
-    }
-
-    /// Trạng thái game đổi (vd. MainMenu → Gameplay).
-    public struct GameStateChangedEvent : IEvent
-    {
-        public GameState PreviousState;
-        public GameState NewState;
-    }
+    /// Màn Loading đầu game đã xong (người chơi thấy Menu). Không phát khi chạy thẳng GameScene (không có GameBootstrap).
+    public struct LoadingFinishedEvent : IEvent { }
 
     /// Bắt đầu một level.
     public struct LevelStartedEvent : IEvent
@@ -37,9 +22,6 @@ namespace BusOut.Core
     public struct LevelCompletedEvent : IEvent
     {
         public int LevelIndex;
-        public int Score;
-        public int Stars;
-        public bool IsNewBestScore;
     }
 
     /// Thua level.
@@ -120,13 +102,6 @@ namespace BusOut.Core
     {
         public BoosterType Type;
         public int Count;
-    }
-
-    /// Người chơi dùng một vật phẩm / booster.
-    public struct ItemConsumedEvent : IEvent
-    {
-        public string ItemId;
-        public int RemainingQuantity;
     }
 
     #endregion

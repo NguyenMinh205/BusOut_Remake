@@ -14,6 +14,7 @@ namespace BusOut.Menu
         // được xe / số level, không bật được lớp "đã qua" (có log lỗi).
         private const string PadPath = "ParkingBase";
         private const string DoneMarkName = "Base_Done";
+        private const string BaseName = "Base";
         // Số level: bản prefab lồng LevelLabel làm con ParkingBase trong MỌI module (4/11 — trước đó tạo lúc chạy rồi chuyển
         // cha qua lại). Quầng "đã qua" (DoneAura) lồng sẵn dưới Base_Done nên bật / tắt theo nó, không cần code.
         private const string LabelName = "LevelLabel";
@@ -41,6 +42,7 @@ namespace BusOut.Menu
         private GameObject[] slotModuleSources; // prefab của instance đó, để biết có cần đổi không
         private Transform[] slotPads;
         private GameObject[] slotDoneMarks;
+        private GameObject[] slotBases;       // mesh bệ thường, tắt khi bệ đã qua (xem SetPad)
         private TMP_Text[] slotLabels;        // số level của module đang gắn ở ô (null = module thiếu LevelLabel)
         private readonly System.Collections.Generic.HashSet<GameObject> missingLabelReported =
             new System.Collections.Generic.HashSet<GameObject>();
@@ -81,6 +83,7 @@ namespace BusOut.Menu
             slotModuleSources = new GameObject[slotCount];
             slotPads = new Transform[slotCount];
             slotDoneMarks = new GameObject[slotCount];
+            slotBases = new GameObject[slotCount];
             slotLabels = new TMP_Text[slotCount];
             for (int i = 0; i < slotCount; i++)
             {
@@ -191,6 +194,8 @@ namespace BusOut.Menu
             slotPads[slot] = pad;
             Transform doneMark = pad.Find(DoneMarkName);
             slotDoneMarks[slot] = doneMark != null ? doneMark.gameObject : null;
+            Transform padBase = pad.Find(BaseName);
+            slotBases[slot] = padBase != null ? padBase.gameObject : null;
             Transform label = pad.Find(LabelName);
             slotLabels[slot] = label != null ? label.GetComponent<TMP_Text>() : null;
             // Báo một lần mỗi prefab: module được gắn lại liên tục khi lướt bản đồ, báo mỗi lần là ngập Console.
@@ -205,7 +210,11 @@ namespace BusOut.Menu
             TMP_Text label = slotLabels[slot];
             if (label != null && level >= 1) label.SetText("{0}", level);
             // Quầng "đã qua" (DoneAura) là con của Base_Done → bật / tắt theo.
-            if (slotDoneMarks[slot] != null) slotDoneMarks[slot].SetActive(isDone);
+            if (slotDoneMarks[slot] == null) return;
+            slotDoneMarks[slot].SetActive(isDone);
+            // ⚠️ Base và Base_Done cùng hình học, cùng material, cùng vị trí: để cả hai bật thì cái nào hiện tuỳ thứ tự vẽ, có bệ
+            // trông như chưa qua. Bật cái này phải tắt cái kia.
+            if (slotBases[slot] != null) slotBases[slot].SetActive(!isDone);
         }
 
         /// Đặt xe lên bệ của ô, đúng tư thế dựng trong scene. Ô không có bệ → giấu xe.
@@ -342,12 +351,14 @@ namespace BusOut.Menu
                 }
                 // Instance nằm trong pool chờ dùng lại cho level khác: không để sót lớp "đã qua".
                 if (slotDoneMarks[slot] != null) slotDoneMarks[slot].SetActive(false);
+                if (slotBases[slot] != null) slotBases[slot].SetActive(true);
             }
             if (slotModules[slot] != null) PoolingManager.Despawn(slotModules[slot]);
             slotModules[slot] = null;
             slotModuleSources[slot] = null;
             slotPads[slot] = null;
             slotDoneMarks[slot] = null;
+            slotBases[slot] = null;
             slotLabels[slot] = null;
         }
 

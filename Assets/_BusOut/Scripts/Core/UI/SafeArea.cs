@@ -41,16 +41,6 @@ namespace BusOut.Core
         private Edges appliedEdges;
         private bool hasApplied;
 
-        public Edges ConformEdges
-        {
-            get => edges;
-            set
-            {
-                edges = value;
-                Refresh(true);
-            }
-        }
-
         private void Awake()
         {
             rectTransform = (RectTransform)transform;

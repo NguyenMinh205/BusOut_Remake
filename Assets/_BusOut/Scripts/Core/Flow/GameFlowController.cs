@@ -82,6 +82,15 @@ namespace BusOut.Core
             reportProgress?.Invoke(1f);
         }
 
+        /// Mở game vào thẳng ván (người chơi mới): đổi context dưới màn Loading đầu game, không qua màn che chuyển cảnh.
+        /// GameBootstrap gọi ngay trước khi màn Loading mờ, nên phát luôn ScreenRevealedEvent để xe "bung" lúc người chơi thấy.
+        public void EnterGameplayUnderLoading()
+        {
+            if (!isReady) return;
+            ShowGameplay();
+            EventBus.Publish(new ScreenRevealedEvent());
+        }
+
         private void OnEnable()
         {
             EventBus.Subscribe<PlayLevelRequestedEvent>(HandlePlayLevelRequested);

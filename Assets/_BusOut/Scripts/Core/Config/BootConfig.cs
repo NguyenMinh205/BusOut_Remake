@@ -11,6 +11,11 @@ namespace BusOut.Core
                  "xe chạy, khách đi trông giật dù máy còn dư sức. 60 = mượt, tốn pin hơn; ≤ 0 = để mặc định nền tảng.")]
         public int targetFrameRate = 60;
 
+        [Header("Người chơi mới")]
+        [Tooltip("Level đang lưu nhỏ hơn số này thì mở game vào thẳng ván, không qua Menu. 2 = chưa thắng level 1 thì chơi luôn level 1; " +
+                 "1 = luôn vào Menu.")]
+        [Min(1)] public int directPlayBelowLevel = 2;
+
         [Header("Màn Loading")]
         [Tooltip("Tên scene chơi (phải có trong Build Settings).")]
         public string gameSceneName = "GameScene";

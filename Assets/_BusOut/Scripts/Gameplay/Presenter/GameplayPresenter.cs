@@ -81,6 +81,8 @@ namespace BusOut.Gameplay
         // Level đã nạp dưới màn chuyển cảnh, chờ ScreenRevealedEvent mới cho xe "bung".
         private bool isIntroPending;
 
+        #region Khởi tạo, tạo sẵn
+
         /// Không qua màn Loading: khởi tạo + tạo sẵn ngay lúc GameContext bật lần đầu (lần bấm Play đầu), rồi nạp level.
         /// Qua màn Loading thì Preload đã làm hết: lần bấm Play đầu đi qua GameplayShownEvent như các lần sau.
         private void Start()
@@ -199,6 +201,10 @@ namespace BusOut.Gameplay
             EventBus.Unsubscribe<ScreenRevealedEvent>(HandleScreenRevealed);
         }
 
+        #endregion
+
+        #region Sự kiện màn hình và nút bấm
+
         /// Menu bấm Play = vào ván mới với level đang lưu. Nạp dưới màn chuyển cảnh; xe "bung" khi màn che mờ đi
         /// (HandleScreenRevealed) — bung ngay thì xong trước khi người chơi thấy.
         /// ⚠️ Không nạp trong OnEnable: lúc đó GameContext còn đang bật dở, Unity cấm SetParent (trả xe / khách cũ về pool,
@@ -262,6 +268,10 @@ namespace BusOut.Gameplay
             ReloadLevel();
         }
 
+        #endregion
+
+        #region Nạp level
+
         /// ⚠️ Thứ tự có nghĩa: xoá xe cũ (kèm tween/đường chạy) TRƯỚC khi đặt lại ô, không thì xe cũ tới nơi
         /// sau khi reset sẽ đánh dấu ô của level mới là có xe.
         public void LoadLevel(int number) => LoadLevel(number, false);
@@ -324,6 +334,10 @@ namespace BusOut.Gameplay
             EventBus.Publish(new LevelStartedEvent { LevelIndex = number, LevelName = level.index.ToString() });
         }
 
+        #endregion
+
+        #region Mỗi khung: thắng, thua, hồi sinh
+
         private void Update()
         {
             if (!isReady) return;
@@ -384,6 +398,10 @@ namespace BusOut.Gameplay
             GameLog.Info($"[BusOut] Hồi sinh level {currentLevel}: mở thêm 1 ô.", this);
             return true;
         }
+
+        #endregion
+
+        #region Dựng presenter con, tiện ích
 
         /// Thiếu thanh nào thì chỉ mất thanh đó, game vẫn chơi được.
         private HudPresenter CreateHudPresenter()
@@ -541,5 +559,7 @@ namespace BusOut.Gameplay
             Debug.LogError($"[BusOut] GameplayPresenter thiếu tham chiếu:{missing}. Kéo vào trong Inspector.", this);
             return false;
         }
+
+        #endregion
     }
 }

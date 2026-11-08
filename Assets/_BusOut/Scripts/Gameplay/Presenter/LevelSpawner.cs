@@ -73,7 +73,7 @@ namespace BusOut.Gameplay
         }
 
         /// Tạo sẵn xe trong pool, mỗi loại đủ cho level đông loại đó nhất của file curve: vào level / chơi lại không còn
-        /// Instantiate. Gọi một lần lúc load (TẠM: GameplayPresenter.Start; có màn Loading thì gọi trong lúc Loading).
+        /// Instantiate. Gọi một lần trong màn Loading.
         public void Prewarm(LevelCurveData curve)
         {
             int four = 0, six = 0, ten = 0;

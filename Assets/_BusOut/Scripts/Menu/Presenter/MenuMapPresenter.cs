@@ -36,6 +36,9 @@ namespace BusOut.Menu
         private bool isAdvancing;
         // Level xe sẽ chạy tới khi màn chuyển cảnh mờ đi (0 = không có).
         private int pendingAdvanceLevel;
+
+        /// Xe vừa chạy tới bệ mới xong (sau khi thắng về Menu).
+        public event System.Action AdvanceFinished;
         // Quãng xe đã chạy dọc mặt đường (level, 0..1) trong lúc sang bệ mới.
         private float carDriven;
         private readonly DG.Tweening.Core.DOGetter<float> getCarDriven;
@@ -123,12 +126,13 @@ namespace BusOut.Menu
 
         /// Màn chuyển cảnh bắt đầu mờ (ScreenRevealedEvent): chạy sang bệ mới nếu Refresh vừa thấy thắng. Chạy ngay lúc
         /// Refresh thì xe đi xong (hoặc đi dở) dưới màn che, người chơi không thấy.
-        public void PlayPendingAdvance()
+        public bool PlayPendingAdvance()
         {
-            if (pendingAdvanceLevel <= 0) return;
+            if (pendingAdvanceLevel <= 0) return false;
             int toLevel = pendingAdvanceLevel;
             pendingAdvanceLevel = 0;
             PlayAdvance(toLevel - 1, toLevel);
+            return true;
         }
 
         private void JumpTo(int level)
@@ -218,6 +222,7 @@ namespace BusOut.Menu
             view.PlaceCar(MenuMapLayout.SlotOf(currentLevel));
             view.PlayCarArrive(fx.mapCarArrivePunch, fx.mapCarArrivePunchDuration);
             UpdateReturnButton();
+            AdvanceFinished?.Invoke();
         }
 
         public void BeginDrag()

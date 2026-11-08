@@ -1,11 +1,12 @@
 using System.Collections;
+using BusOut.DesignPattern;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace BusOut.Core
 {
-    /// Điểm vào của game và chỗ giữ những thứ sống suốt phiên chơi (sau này: âm thanh, quảng cáo…).
+    /// Điểm vào của game và chỗ giữ những thứ sống suốt phiên chơi (âm thanh, rung, giờ, quảng cáo…).
     /// Gắn trên object GameBootstrap ở gốc LoadingScene (scene đầu tiên trong Build Settings); tự giữ qua lần đổi scene.
     /// Mở game: đặt fps, khởi tạo DOTween, nạp save → nạp GameScene (thay LoadingScene) → GameFlowController.Preload
     /// (các bước tạo sẵn) → màn Loading mờ dần rồi bị xoá, lộ Menu.
@@ -122,9 +123,15 @@ namespace BusOut.Core
                 yield return null;
             isLoading = false;
 
-            if (!hasLoadingView) yield break;
-            yield return loadingView.FadeOut(config.loadingFadeDuration).WaitForCompletion();
-            Destroy(loadingView.transform.root.gameObject);
+            // Người chơi mới: vào thẳng ván. Làm lúc màn Loading còn che kín nên không thấy Menu chớp qua.
+            if (flow != null && DataManager.Instance.GameData.currentLevel < config.directPlayBelowLevel) flow.EnterGameplayUnderLoading();
+
+            if (hasLoadingView)
+            {
+                yield return loadingView.FadeOut(config.loadingFadeDuration).WaitForCompletion();
+                Destroy(loadingView.transform.root.gameObject);
+            }
+            EventBus.Publish(new LoadingFinishedEvent());
         }
 
         private void ReportProgress(float progress) => targetProgress = Mathf.Max(targetProgress, Mathf.Clamp01(progress));

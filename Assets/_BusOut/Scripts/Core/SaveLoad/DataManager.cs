@@ -69,6 +69,14 @@ namespace BusOut.Core
         /// Đã mua Remove Ads: tắt interstitial, banner, App Open (rewarded vẫn còn — người chơi tự chọn xem). Đổi qua
         /// AdService.SetNoAds (còn ẩn banner ngay), không gán thẳng.
         public bool noAds;
+
+        /// Quà hằng ngày: số ngày (TimeService.TodayIndex) lần nhận gần nhất; 0 = chưa nhận lần nào. Đây là "khoá đã nhận hôm
+        /// nay": bằng hôm nay là đã nhận, sang ngày mới tự hết khoá mà không cần ai đặt lại.
+        public int dailyLastClaimDay;
+        /// Quà hằng ngày: số ô đã nhận trong chu kỳ này = ô sẽ nhận tiếp theo (0..7; 7 = đã nhận hết).
+        public int dailyNextIndex;
+        /// Quà hằng ngày: số ngày (TimeService.TodayIndex) chu kỳ 7 ngày hiện tại bắt đầu; 0 = chưa có chu kỳ.
+        public int dailyCycleStartDay;
         #endregion
 
         /// Giá trị ban đầu (người chơi mới, booster thêm sau này). Không lưu: private không có SerializeField.
@@ -195,6 +203,9 @@ namespace BusOut.Core
                 : defaults != null ? defaults.language : "en";
             lastKnownUtcTicks = other.lastKnownUtcTicks;
             noAds = other.noAds;
+            dailyLastClaimDay = other.dailyLastClaimDay;
+            dailyNextIndex = other.dailyNextIndex;
+            dailyCycleStartDay = other.dailyCycleStartDay;
         }
 
         public void ClearAllData()

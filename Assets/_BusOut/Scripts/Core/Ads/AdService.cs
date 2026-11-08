@@ -6,11 +6,12 @@ using UnityEngine;
 namespace BusOut.Core
 {
     /// Cổng DUY NHẤT code game gọi tới quảng cáo. SDK cụ thể (AdMob…) là một IAdProvider trong assembly riêng, tự đăng ký
-    /// lúc khởi động (RegisterProvider). Chính sách nằm hết ở đây (bảng "Bốn loại quảng cáo" — docs P4_PLAN, GDD §9.2):
-    /// - Rewarded: AdService.ShowRewarded(placement, onRewarded). Chưa sẵn sàng → toast (nút vẫn bấm được — chốt 8/11/2026).
+    /// lúc khởi động (RegisterProvider). Chính sách nằm hết ở đây (GDD §9.2):
+    /// - Rewarded: AdService.ShowRewarded(placement, onRewarded). Chưa sẵn sàng → toast (nút vẫn bấm được).
     /// - Interstitial: AdService.ShowInterstitial(placement, onDone) ở chỗ chuyển cảnh; tự quyết hiện hay bỏ qua theo quy tắc
     ///   (từ level N, giãn cách, không ngay sau rewarded, Remove Ads); có màn "Ad break" trước. onDone luôn được gọi.
-    /// - Banner: tự hiện ở màn chơi (GameplayShownEvent), ẩn ở Menu (HomeShownEvent); báo chiều cao qua BannerChangedEvent.
+    /// - Banner: tự hiện ở cả Menu lẫn màn chơi sau khi Loading xong (LoadingFinishedEvent — banner là UI native, hiện sớm là
+    ///   đè lên màn Loading); báo chiều cao qua BannerChangedEvent.
     /// - App Open: tự hiện khi quay lại app sau một lúc ở nền (OnApplicationPause), không hiện khi "quay lại" là do vừa đóng
     ///   quảng cáo của chính mình.
     /// Mọi loại: tải sẵn 1 cái, hỏng thì tải lại giãn dần; một quảng cáo toàn màn tại một lúc; lúc che màn thì tắt tiếng +
@@ -64,7 +65,7 @@ namespace BusOut.Core
         private bool isInBackground;
         private bool pausedByOwnAd;
         private DateTime backgroundStartUtc;
-        private bool isInGameplay;
+        private bool isLoadingFinished;
 
         /// Đang có quảng cáo toàn màn (hoặc màn Ads Break) che màn hình.
         public bool IsShowing => isShowing;
@@ -98,7 +99,7 @@ namespace BusOut.Core
             else service.TryShowInterstitial(placement, onDone);
         }
 
-        /// Bật / tắt Remove Ads: lưu save, ẩn / bỏ banner ngay. (Mua Remove Ads ở Shop P4.5 gọi hàm này.)
+        /// Bật / tắt Remove Ads: lưu save, ẩn / bỏ banner ngay. (RemoveAdsPresenter gọi khi mua.)
         public static void SetNoAds(bool noAds)
         {
             AdService service = Instance;
@@ -122,8 +123,7 @@ namespace BusOut.Core
             interstitialSlot = CreateSlot(AdType.Interstitial);
             appOpenSlot = CreateSlot(AdType.AppOpen);
             bannerSlot = CreateSlot(AdType.Banner);
-            EventBus.Subscribe<GameplayShownEvent>(HandleGameplayShown);
-            EventBus.Subscribe<HomeShownEvent>(HandleHomeShown);
+            EventBus.Subscribe<LoadingFinishedEvent>(HandleLoadingFinished);
             EventBus.Subscribe<LevelStartedEvent>(HandleLevelStarted);
             // GameBootstrap dựng lúc mở app → đây là lúc bắt đầu phiên (sessionGraceSeconds).
             sessionStartedAt = Time.realtimeSinceStartup;
@@ -141,8 +141,7 @@ namespace BusOut.Core
 
         protected override void OnDestroy()
         {
-            EventBus.Unsubscribe<GameplayShownEvent>(HandleGameplayShown);
-            EventBus.Unsubscribe<HomeShownEvent>(HandleHomeShown);
+            EventBus.Unsubscribe<LoadingFinishedEvent>(HandleLoadingFinished);
             EventBus.Unsubscribe<LevelStartedEvent>(HandleLevelStarted);
             base.OnDestroy();
         }
@@ -382,23 +381,18 @@ namespace BusOut.Core
 
         #region Banner
 
-        private void HandleGameplayShown(GameplayShownEvent e)
+        private void HandleLoadingFinished(LoadingFinishedEvent e)
         {
-            isInGameplay = true;
+            isLoadingFinished = true;
             ApplyBanner();
         }
 
-        private void HandleHomeShown(HomeShownEvent e)
-        {
-            isInGameplay = false;
-            ApplyBanner();
-        }
-
-        /// Hiện banner khi đang ở màn chơi và không Remove Ads; báo chiều cao cho UI dịch lên.
+        /// Hiện banner sau màn Loading (cả Menu lẫn màn chơi) khi không Remove Ads; báo chiều cao cho UI dịch lên.
+        /// Chạy thẳng GameScene (không có GameBootstrap) thì không có Loading để chờ.
         private void ApplyBanner()
         {
             bool canShow = provider != null && isInitialized && !gameData.noAds;
-            bool visible = canShow && isInGameplay;
+            bool visible = canShow && (isLoadingFinished || !GameBootstrap.IsActive);
             if (provider != null) provider.SetBannerVisible(visible);
             if (canShow && !provider.IsReady(AdType.Banner)) Load(bannerSlot);
             float height = visible && provider.IsReady(AdType.Banner) ? provider.BannerHeightPixels : 0f;

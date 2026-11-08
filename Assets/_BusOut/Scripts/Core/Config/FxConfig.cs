@@ -69,6 +69,10 @@ namespace BusOut.Core
 
         // ─────────────────────────── Trong ván ───────────────────────────
 
+        [Header("Menu: popup quà hằng ngày")]
+        [Tooltip("Họa tiết xe trên thẻ Day 7 trôi ngang bao nhiêu đơn vị UI / giây (0 = đứng yên).")]
+        [Min(0f)] public float dailyPatternScrollSpeed = 30f;
+
         [Header("Trong ván: xe chạy lên bến")]
         [Tooltip("Xe đang chạy từ bãi lên bến phóng to bấy nhiêu lần (tới nơi thì về cỡ cũ). Gốc: 1.1 " +
                  "(CAR_MOVE_TO_BUS_STOP_SCALE).")]

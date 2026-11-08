@@ -47,7 +47,7 @@ namespace BusOut.Ads
             config = adsConfig;
             initDone = onDone;
             // Gọi từ main thread (AdService.Awake): giữ lại để đưa MỌI callback của SDK về main thread (mặc định SDK gọi từ
-            // thread khác → đụng API Unity là lỗi). Không dùng MobileAds.RaiseAdEventsOnUnityMainThread: 11.6 đã bỏ.
+            // thread khác → đụng API Unity là lỗi). Không dùng MobileAds.RaiseAdEventsOnUnityMainThread: 11.6 đánh dấu obsolete.
             mainThread = SynchronizationContext.Current;
 
             var request = new ConsentRequestParameters();
@@ -250,8 +250,13 @@ namespace BusOut.Ads
         private void LoadBanner(string unitId, Action<bool> onDone)
         {
             DestroyBanner();
-            // Adaptive: cao theo bề ngang máy (khoảng 50–90dp), neo đáy vùng an toàn.
+#if UNITY_EDITOR
+            // Editor: cỡ chuẩn 320×50 để plugin vẽ hình banner mẫu của AdMob (prefab ADAPTIVE chỉ là dải trắng có chữ).
+            AdSize size = AdSize.Banner;
+#else
+            // Máy thật: adaptive rộng hết màn (cao khoảng 50–90dp), neo đáy.
             AdSize size = AdSize.GetCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(AdSize.FullWidth);
+#endif
             BannerView view = new BannerView(unitId, size, AdPosition.Bottom);
             banner = view;
             pendingBannerDone = onDone;

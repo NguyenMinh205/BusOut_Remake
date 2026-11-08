@@ -18,7 +18,6 @@ namespace BusOut.Gameplay
         private readonly SecureGameData gameData;
         private readonly Func<bool> tryRevive;
         private readonly Action reloadLevel;
-        private readonly Action goHome;
         private readonly CoinRewardPlayer playCoinReward;
 
         /// Hiệu ứng nhận coin: số coin trước / sau khi cộng, chỗ coin bay ra; xong (hoặc không bay được) thì gọi onDone.
@@ -48,7 +47,6 @@ namespace BusOut.Gameplay
             this.gameData = gameData;
             this.tryRevive = tryRevive;
             this.reloadLevel = reloadLevel;
-            this.goHome = goHome;
             claimWinWithAd = () => ClaimWin(true);
             reviveAfterAd = ReviveAfterAd;
             goHomeAfterInterstitial = () => AdService.ShowInterstitial(AdPlacement.LevelEnd, goHome);

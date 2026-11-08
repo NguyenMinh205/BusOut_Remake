@@ -8,9 +8,9 @@ using UnityEngine.Networking;
 namespace BusOut.Core
 {
     /// Giờ thật của game (UTC) cho những thứ tính theo ngày / giờ: quà hằng ngày, giới hạn quảng cáo mỗi ngày, cooldown.
-    /// Gọi: TimeService.UtcNow, TimeService.Instance.TodayIndex / TimeUntilNextDay; sang ngày mới → NewDayStartedEvent.
+    /// Gọi: TimeService.UtcNow, TimeService.Instance.TodayIndex / TimeUntilDay; sang ngày mới → NewDayStartedEvent.
     ///
-    /// Giờ lấy từ đâu (giờ lai — bạn chốt 8/11/2026):
+    /// Giờ lấy từ đâu (giờ lai):
     /// - Trong một phiên: mốc neo + thời gian chạy đơn điệu (realtimeSinceStartup) → chỉnh giờ máy giữa chừng không ảnh hưởng.
     /// - Mở game: mốc neo = giờ máy UTC, nhưng KHÔNG nhỏ hơn mốc lần cuối đã lưu (chặn lùi giờ máy để nhận quà lại).
     /// - Có mạng: hỏi giờ máy chủ (header "Date") lúc mở game và khi quay lại sau ≥ resyncAfterBackgroundSeconds ở nền →
@@ -66,15 +66,8 @@ namespace BusOut.Core
         /// So sánh / lưu số này để biết "đã nhận hôm nay chưa".
         public int TodayIndex => DayIndexOf(NowUtc);
 
-        /// Còn bao lâu tới 0h ngày mai (giờ địa phương) — cho đồng hồ đếm ngược.
-        public TimeSpan TimeUntilNextDay
-        {
-            get
-            {
-                DateTime local = LocalNow;
-                return local.Date.AddDays(1) - local;
-            }
-        }
+        /// Còn bao lâu tới 0h (giờ địa phương) của ngày có số thứ tự <paramref name="dayIndex"/> (cùng hệ với TodayIndex).
+        public TimeSpan TimeUntilDay(int dayIndex) => TimeSpan.FromTicks(dayIndex * TimeSpan.TicksPerDay - LocalNow.Ticks);
 
         public static int DayIndexOf(DateTime utc) => (int)(ToLocal(utc).Ticks / TimeSpan.TicksPerDay);
 
