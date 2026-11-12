@@ -24,6 +24,8 @@ namespace BusOut.Gameplay
         [Tooltip("Collider để chạm vào ô (DataPoint/TapCollider): chỉ bật khi ô khoá, chạm để mở.")]
         [SerializeField] private Collider tapCollider;
 
+        // Hình công trường: tạo một lần khi ô này lần đầu bị chắn, sau đó chỉ bật / tắt.
+        private ConstructionSlotView construction;
         private SlotVisual currentVisual;
         private bool hasVisual;
         private Tween blinkTween;
@@ -61,6 +63,24 @@ namespace BusOut.Gameplay
             tapCollider.enabled = locked;
             warningSprite.gameObject.SetActive(visual == SlotVisual.Warning);
             if (visual == SlotVisual.Warning) PlayWarningBlink(config);
+        }
+
+        /// Ô công trường: hiện biển chắn + số khách còn thiếu; 0 = ẩn. Prefab null thì bỏ qua (BusStopPresenter đã báo lỗi).
+        public void SetConstruction(int remaining, ConstructionSlotView prefab)
+        {
+            if (remaining <= 0)
+            {
+                if (construction != null) construction.gameObject.SetActive(false);
+                return;
+            }
+            if (construction == null)
+            {
+                if (prefab == null) return;
+                // Giữ vị trí / góc đặt trong prefab, tính theo ô (ô nằm trong SlotParking đã xoay): chỉnh hình trong prefab là đủ.
+                construction = Instantiate(prefab, transform, false);
+            }
+            construction.gameObject.SetActive(true);
+            construction.SetCount(remaining);
         }
 
         /// Cảnh báo nguy hiểm (sắp hết chỗ) — ngoại lệ duy nhất được nhấp nháy: nháy vài lần lúc vừa thành ô cuối,

@@ -28,13 +28,33 @@ namespace BusOut.Gameplay
         /// Mọi ghế đã có khách ngồi: xe rời bến được.
         public bool IsFull => BoardedSeats >= SeatCount;
 
-        public CarModel(int id, VehicleType type, int colorIndex)
+        /// Cơ chế xe ẩn màu: người chơi chưa thấy màu tới khi hết xe chắn đường ra. Màu thật (ColorIndex) vẫn dùng cho mọi
+        /// luật, chỉ phần hiển thị bị che.
+        public bool IsColorHidden { get; private set; }
+
+        /// Cơ chế khoá và chìa: xe có LockId > 0 chỉ chạy được khi xe mang chìa cùng số (KeyId) đã rời bãi. 0 = không có.
+        public readonly int LockId;
+        public readonly int KeyId;
+
+        /// Cơ chế bãi chờ: xe thuộc bãi chờ số GarageId (> 0), ra theo GarageOrder tăng dần. 0 = đỗ tự do.
+        public readonly int GarageId;
+        public readonly int GarageOrder;
+
+        public CarModel(int id, VehicleType type, int colorIndex, bool colorHidden = false, int lockId = 0, int keyId = 0,
+            int garageId = 0, int garageOrder = 0)
         {
+            GarageId = garageId;
+            GarageOrder = garageOrder;
             Id = id;
             Type = type;
             ColorIndex = colorIndex;
             SeatCount = SeatsOf(type);
+            IsColorHidden = colorHidden;
+            LockId = lockId;
+            KeyId = keyId;
         }
+
+        public void RevealColor() => IsColorHidden = false;
 
         public static int SeatsOf(VehicleType type)
         {

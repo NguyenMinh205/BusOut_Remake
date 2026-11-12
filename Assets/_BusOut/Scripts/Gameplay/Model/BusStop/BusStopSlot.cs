@@ -19,8 +19,12 @@ namespace BusOut.Gameplay
         public SlotOccupancy Occupancy { get; private set; } = SlotOccupancy.Empty;
         public int CarId { get; private set; } = NoCar;
 
-        /// Mở và chưa có xe nào giữ: xe mới giữ được.
-        public bool IsFree => !IsLocked && Occupancy == SlotOccupancy.Empty;
+        /// Cơ chế ô công trường: còn bấy nhiêu khách lên xe nữa thì ô mở. 0 = không phải ô công trường.
+        public int ConstructionRemaining { get; private set; }
+        public bool IsUnderConstruction => ConstructionRemaining > 0;
+
+        /// Mở, không bị công trường chắn, chưa có xe nào giữ: xe mới giữ được.
+        public bool IsFree => !IsLocked && !IsUnderConstruction && Occupancy == SlotOccupancy.Empty;
 
         public BusStopSlot(int index) => Index = index;
 
@@ -29,6 +33,17 @@ namespace BusOut.Gameplay
             IsLocked = locked;
             Occupancy = SlotOccupancy.Empty;
             CarId = NoCar;
+            ConstructionRemaining = 0;
+        }
+
+        internal void SetConstruction(int remaining) => ConstructionRemaining = remaining > 0 ? remaining : 0;
+
+        /// Một khách vừa lên xe. True khi ô vừa mở đúng lần này.
+        internal bool CountDownConstruction()
+        {
+            if (ConstructionRemaining <= 0) return false;
+            ConstructionRemaining--;
+            return ConstructionRemaining == 0;
         }
 
         internal void Unlock() => IsLocked = false;

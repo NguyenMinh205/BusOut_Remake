@@ -9,6 +9,9 @@ namespace BusOut.Gameplay
     [Serializable]
     public class LevelCurveData
     {
+        /// Thư mục trong Resources chứa level riêng, mỗi level một file level_001.json. Level riêng thay đúng level trùng số trong curve.
+        public const string OwnLevelsFolder = "Levels";
+
         public string curve;
         public LevelData[] levels;
 
@@ -33,14 +36,14 @@ namespace BusOut.Gameplay
             return start + (levelNumber - start) % cycle;
         }
 
-        /// Số level lớn nhất trong file (0 khi file rỗng).
+        /// Số level cuối của dãy liền từ 1 (0 khi không có level 1). Lấy dãy liền chứ không lấy số lớn nhất: một level thử số 1000
+        /// trong bộ riêng mà tính là level cuối thì 121 không quay vòng, báo thiếu level.
         public int LastLevelNumber
         {
             get
             {
                 int last = 0;
-                if (levels != null)
-                    for (int i = 0; i < levels.Length; i++) last = Math.Max(last, levels[i].index);
+                while (FindLevel(last + 1) != null) last++;
                 return last;
             }
         }
@@ -50,11 +53,20 @@ namespace BusOut.Gameplay
     public class LevelData
     {
         public int index;
+        /// Hạt giống và mức khó lúc sinh, để sinh lại đúng level. Level sửa tay có thể khác kết quả của hạt giống này.
+        public int seed;
+        public string difficulty;
         public VehicleData[] vehicles;
         /// Tỉ lệ trộn nhóm khách theo tiến độ (ProgressMixData của gốc).
         public MixData[] mix;
         /// Các điểm khó theo tiến độ (ProgressHardPointData của gốc).
         public HardPointData[] hardPoints;
+        /// Cơ chế khách ẩn: khách xa đầu hàng chưa lộ màu (GameplayConfig.passengerRevealCount).
+        public bool passengersHidden;
+        /// Cơ chế ô công trường: số ô mở cuối bến bị chắn lúc đầu (0 = không có).
+        public int constructionSlots;
+        /// Mỗi ô công trường cần thêm bấy nhiêu khách lên xe mới mở.
+        public int constructionPassengers;
     }
 
     /// Từ <see cref="at"/>% tiến độ: tỉ lệ trộn nội suy <see cref="from"/> → <see cref="to"/> (%) tới mốc sau (hoặc 100%).
@@ -88,9 +100,20 @@ namespace BusOut.Gameplay
         public float x;
         public float z;
         public float rotY;
+        // ⚠️ hidden / autoMove / tool là dữ liệu của file curve giải mã: cố ý không dùng. Cơ chế mới dùng trường riêng bên dưới.
         public bool hidden;
         public bool autoMove;
         public int tool;
+        /// Cơ chế xe ẩn màu (level dựng bằng Level Builder).
+        public bool colorHidden;
+        /// Cơ chế khoá và chìa: > 0 = xe bị khoá, mở khi xe có keyId cùng số rời bãi. 0 = không.
+        public int lockId;
+        /// > 0 = xe mang chìa số này.
+        public int keyId;
+        /// Cơ chế bãi chờ: > 0 = xe thuộc bãi chờ số này. Xe có garageOrder nhỏ nhất đứng trước cổng; mọi xe của bãi dùng vị trí
+        /// của xe đó (x / z / rotY của các xe còn lại bỏ qua).
+        public int garageId;
+        public int garageOrder;
 
         public VehicleType Type => (VehicleType)type;
 

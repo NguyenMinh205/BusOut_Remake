@@ -249,5 +249,39 @@ namespace BusOut.Core
 
         [Tooltip("Thời gian thu nhỏ khi nhấn / trở lại khi thả (giây).")]
         public float buttonPressDuration = 0.08f;
+
+        [Header("UI: bàn tay hướng dẫn (TutorialHandView)")]
+        [Tooltip("Lúc nhấn, bàn tay thu còn bấy nhiêu lần cỡ gốc.")]
+        public float tutorialHandPressScale = 0.82f;
+
+        [Tooltip("Thời gian một lần nhấn xuống (giây); nhả ra cũng bằng chừng đó.")]
+        public float tutorialHandPressDuration = 0.45f;
+
+        [Header("Trong ván: lộ màu (xe ẩn, khách ẩn)")]
+        [Tooltip("Lúc lộ màu, xe / khách nảy thêm bấy nhiêu lần cỡ.")]
+        public float hiddenRevealPunch = 0.15f;
+
+        [Tooltip("Thời gian nảy khi lộ màu (giây).")]
+        public float hiddenRevealDuration = 0.3f;
+
+        [Header("Trong ván: khoá và chìa")]
+        [Tooltip("Xe vừa được mở khoá nảy thêm bấy nhiêu lần cỡ.")]
+        public float lockOpenPunch = 0.15f;
+
+        [Tooltip("Thời gian nảy khi mở khoá (giây).")]
+        public float lockOpenDuration = 0.3f;
+
+        [Tooltip("Chạm xe đang bị khoá: ổ khoá nảy thêm bấy nhiêu lần cỡ.")]
+        public float lockRejectPunch = 0.35f;
+
+        [Header("Trong ván: bãi chờ")]
+        [Tooltip("Xe trước rời chỗ bấy nhiêu giây thì xe kế mới lăn ra khỏi cổng.")]
+        public float garageRollOutDelay = 0.3f;
+
+        [Tooltip("Thời gian xe lăn ra khỏi cổng (giây). Đang lăn thì chưa chạm được.")]
+        public float garageRollOutDuration = 0.35f;
+
+        [Tooltip("Xe lăn ra từ trong cổng, cách chỗ đỗ bấy nhiêu (đơn vị thế giới).")]
+        public float garageRollOutDistance = 2.5f;
     }
 }

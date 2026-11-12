@@ -94,7 +94,7 @@ namespace BusOut.Menu
 
         [Header("Remove Ads (mua giả — không có IAP thật)")]
         public string removeAdsTitle = "REMOVE ADS";
-        [Tooltip("Icon trong popup mua: Art/UI/Sprites/RemoveAds.")]
+        [Tooltip("Icon trong popup mua: Art/BusOut/UI/Shop/RemoveAds.")]
         public Sprite removeAdsIcon;
         public string removeAdsDescription = "No more banner and interstitial ads!";
         [Tooltip("Chữ giá trên nút mua (chỉ để hiển thị: mua giả, không trừ tiền).")]

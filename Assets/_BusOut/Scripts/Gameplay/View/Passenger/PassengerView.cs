@@ -38,8 +38,13 @@ namespace BusOut.Gameplay
         private float pendingDuration;
         private TweenCallback applyPendingRecolor;
 
+        // Khách ẩn: màu thật giữ ở đây, trên người đang tô hiddenColor. Booster đổi màu lúc khách còn ẩn thì chỉ đổi màu thật.
+        private Color trueColor;
+        private Color hiddenColor;
+
         public int PassengerId { get; private set; } = -1;
         public bool IsWalking => isWalking;
+        public bool IsColorHidden { get; private set; }
 
         public bool Init(int passengerId, Color color, bool isVip)
         {
@@ -50,11 +55,38 @@ namespace BusOut.Gameplay
                 return false;
             }
             if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
+            trueColor = color;
+            IsColorHidden = false;
             bodyRenderer.GetPropertyBlock(propertyBlock);
             propertyBlock.SetColor(ColorPropertyId, color);
             propertyBlock.SetFloat(VipPropertyId, isVip ? 1f : 0f);
             bodyRenderer.SetPropertyBlock(propertyBlock);
             return true;
+        }
+
+        /// Khách ẩn: tô màu che, không nảy (khách mới vào cuối hàng).
+        public void HideColor(Color color)
+        {
+            if (IsColorHidden) return;
+            IsColorHidden = true;
+            hiddenColor = color;
+            SetBodyColor(color);
+        }
+
+        /// Lộ màu thật + nảy nhẹ.
+        public void RevealColor(float punch, float duration)
+        {
+            if (!IsColorHidden) return;
+            IsColorHidden = false;
+            Recolor(trueColor, punch, duration);
+        }
+
+        private void SetBodyColor(Color color)
+        {
+            if (propertyBlock == null || bodyRenderer == null) return;
+            bodyRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(ColorPropertyId, color);
+            bodyRenderer.SetPropertyBlock(propertyBlock);
         }
 
         /// Booster (Sort / Shuffle): đổi màu sau <paramref name="delay"/> giây — đúng lúc cột sáng quét qua chỗ khách đứng.
@@ -99,9 +131,9 @@ namespace BusOut.Gameplay
         public void Recolor(Color color, float punch, float duration)
         {
             if (propertyBlock == null || bodyRenderer == null) return;
-            bodyRenderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetColor(ColorPropertyId, color);
-            bodyRenderer.SetPropertyBlock(propertyBlock);
+            trueColor = color;
+            // ⚠️ Khách còn ẩn: vẫn nảy (người chơi thấy hàng được sắp lại) nhưng không để lộ màu mới.
+            SetBodyColor(IsColorHidden ? hiddenColor : color);
             // Nảy theo cỡ gốc: Complete cú nảy cũ trước để không cộng dồn lệch cỡ.
             transform.DOComplete();
             Vector3 baseScale = hasDefaultScale ? defaultLocalScale : transform.localScale;

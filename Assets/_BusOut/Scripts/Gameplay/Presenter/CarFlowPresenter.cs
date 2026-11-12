@@ -87,6 +87,8 @@ namespace BusOut.Gameplay
                 NoSlotRejected?.Invoke();
                 return false;
             }
+            // Nhấc xe còn ẩn màu: lộ ngay, không nảy (tween cỡ của cú nhấc chạy ngay sau).
+            spawner.RevealColor(car, false);
             car.StartMoveToSlot(slotIndex);
             view.SetCollidersEnabled(false, false);
             view.SetMarkVisible(false);
@@ -114,6 +116,8 @@ namespace BusOut.Gameplay
             CarModel car = spawner.Cars[lastSentCarId];
             CarView view = spawner.GetView(lastSentCarId);
             if (view == null || car.ReservedSeats > 0) return false;
+            // ⚠️ Bãi chờ: xe kế sẽ lăn ra đúng chỗ đỗ cũ, tua về là hai xe chồng một chỗ. Không cho Undo, không mất lượt.
+            if (spawner.HasGarageSuccessor(car)) return false;
             if (car.State != CarState.MovingToSlot && car.State != CarState.InSlot) return false;
 
             busStop.Release(car.SlotIndex);
@@ -150,6 +154,12 @@ namespace BusOut.Gameplay
         private void TryMoveOut(CarModel car, CarView view)
         {
             if (view.IsBusy) return;
+            if (spawner.IsLockedNow(car))
+            {
+                view.PlayLockedReject(config);
+                HapticService.Play(HapticType.Impact);
+                return;
+            }
 
             Transform carTransform = view.transform;
             LaneRing ring = parkingLot.Ring;

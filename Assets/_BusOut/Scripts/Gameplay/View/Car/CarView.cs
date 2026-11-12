@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using BusOut.Core;
 using BusOut.DesignPattern;
 using DG.Tweening;
 using UnityEngine;
@@ -21,7 +22,15 @@ namespace BusOut.Gameplay
 
         // Tắt Domain Reload (Enter Play Mode Options): biến static giữ giá trị của lần Play trước → reset.
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics() => missingSmokeReported = false;
+        private static void ResetStatics()
+        {
+            missingSmokeReported = false;
+            missingHiddenMarkReported = false;
+            missingLockIconReported = false;
+        }
+
+        private static bool missingHiddenMarkReported;
+        private static bool missingLockIconReported;
 
         [Tooltip("Collider thân xe (trên root). Dùng để xe khác kiểm tra bị chặn — KHÔNG phải SelectionBox.")]
         [SerializeField] private BoxCollider bodyCollider;
@@ -44,6 +53,18 @@ namespace BusOut.Gameplay
         [Tooltip("Khói sau xe khi chạy (Particle System con, mô phỏng World, phát theo quãng đường, Play On Awake TẮT). " +
                  "Trống = xe không có khói (báo lỗi).")]
         [SerializeField] private ParticleSystem moveSmoke;
+
+        [Tooltip("Dấu \"?\" của xe ẩn màu (object Mark/Question, để tắt sẵn). Trống = xe ẩn chỉ hiện màu xám (báo lỗi).")]
+        [SerializeField] private GameObject hiddenMark;
+
+        [Tooltip("Mũi tên chỉ hướng (object Mark/ArrowDirection): tắt khi xe đang ẩn màu, vì nằm đúng chỗ dấu \"?\" và che mất nó.")]
+        [SerializeField] private GameObject directionArrow;
+
+        [Tooltip("Biểu tượng ổ khoá trên nóc (SpriteRenderer, để tắt sẵn). Code tô màu theo cặp khoá / chìa.")]
+        [SerializeField] private SpriteRenderer lockIcon;
+
+        [Tooltip("Biểu tượng chìa khoá trên nóc (SpriteRenderer, để tắt sẵn). Cùng màu với ổ khoá nó mở.")]
+        [SerializeField] private SpriteRenderer keyIcon;
 
         // Cỡ trong bãi (prefab × carScale × độ co bố cục, LevelSpawner đặt trước Init) và cỡ ngoài bãi (= cỡ prefab: làn
         // trên, bến, rời bến — bạn chốt 4/11: thu nhỏ chỉ để bãi vừa camera, ra khỏi bãi xe về nguyên cỡ).
@@ -81,8 +102,11 @@ namespace BusOut.Gameplay
         private Tween tiltTween;
         private Tween shakeTween;
         private Sequence craneSequence;
+        private Tween rollOutTween;
         private Quaternion restRotation;
         private MaterialPropertyBlock propertyBlock;
+        // Màu thật: xe ẩn màu tô xám lúc đầu, lộ màu thì tô lại màu này.
+        private Color trueColor;
         // Khách đang ngồi trên xe (con của ghế): trả về pool cùng lúc xe về pool, không thì khách vẫn ngồi trên xe
         // khi xe được lấy ra cho level sau.
         private readonly List<GameObject> seatedPassengers = new List<GameObject>(10);
@@ -95,7 +119,8 @@ namespace BusOut.Gameplay
         public bool IsBusy => isDriving || (ramSequence != null && ramSequence.IsActive()) ||
                               (tiltTween != null && tiltTween.IsActive()) ||
                               (shakeTween != null && shakeTween.IsActive()) ||
-                              (craneSequence != null && craneSequence.IsActive());
+                              (craneSequence != null && craneSequence.IsActive()) ||
+                              (rollOutTween != null && rollOutTween.IsActive());
 
         /// Nửa chiều dài thân xe theo hướng đầu xe (thế giới), tính từ tâm collider thân.
         public float HalfLength => bodyCollider.size.z * 0.5f * transform.lossyScale.z;
@@ -121,9 +146,12 @@ namespace BusOut.Gameplay
             }
 
             if (propertyBlock == null) propertyBlock = new MaterialPropertyBlock();
-            bodyRenderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetColor(ColorPropertyId, color);
-            bodyRenderer.SetPropertyBlock(propertyBlock);
+            trueColor = color;
+            SetBodyColor(color);
+            // ⚠️ Xe lấy từ pool có thể đang mang dấu "?" (và mũi tên đang tắt), ổ khoá, chìa của lần trước.
+            SetHiddenMarkVisible(false);
+            if (lockIcon != null) lockIcon.gameObject.SetActive(false);
+            if (keyIcon != null) keyIcon.gameObject.SetActive(false);
             // Đặt rõ nóc đóng: không dựa vào giá trị _Fill trong material (đổi tay trong material là cả loại xe mở nóc).
             SetRoofOpen(false);
             // ⚠️ Xe lấy lại từ pool mang trạng thái lần trước (đã chạy lên bến: tắt collider, ẩn mũi tên). Không bật lại
@@ -150,6 +178,91 @@ namespace BusOut.Gameplay
         }
 
         public void OnSpawned() { }
+
+        /// Xe ẩn màu: tô xám + dấu "?" thay mũi tên. Gọi sau Init.
+        public void ShowColorHidden(Color hiddenColor)
+        {
+            SetBodyColor(hiddenColor);
+            SetHiddenMarkVisible(true);
+            if ((hiddenMark == null || directionArrow == null) && !missingHiddenMarkReported)
+            {
+                missingHiddenMarkReported = true;
+                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu Hidden Mark hoặc Direction Arrow: xe ẩn màu không hiện đúng dấu \"?\". " +
+                               "Kéo Mark/Question vào ô Hidden Mark và Mark/ArrowDirection vào ô Direction Arrow.", this);
+            }
+        }
+
+        /// Lộ màu thật, hiện lại mũi tên. <paramref name="bounce"/>: nảy một cái cho người chơi thấy; tắt khi xe đang có tween
+        /// cỡ khác (Crane nhấc).
+        public void RevealColor(bool bounce)
+        {
+            SetBodyColor(trueColor);
+            SetHiddenMarkVisible(false);
+            if (!bounce) return;
+            FxConfig fx = FxConfig.Instance;
+            PlayFullBounce(fx.hiddenRevealPunch, fx.hiddenRevealDuration);
+        }
+
+        /// Hiện / ẩn ổ khoá. <paramref name="bounceOnOpen"/>: vừa mở khoá lúc xe còn đỗ thì nảy một cái cho người chơi thấy xe
+        /// này vừa chạy được. Tắt khi ổ khoá ẩn vì xe bị Crane nhấc (đang có tween cỡ khác).
+        public void SetLockVisible(bool visible, Color pairColor, bool bounceOnOpen)
+        {
+            if (!ReportMissingLockIcons(lockIcon)) return;
+            bool wasVisible = lockIcon.gameObject.activeSelf;
+            if (wasVisible == visible) return;
+            lockIcon.color = pairColor;
+            lockIcon.gameObject.SetActive(visible);
+            if (wasVisible && bounceOnOpen)
+            {
+                FxConfig fx = FxConfig.Instance;
+                PlayFullBounce(fx.lockOpenPunch, fx.lockOpenDuration);
+            }
+        }
+
+        public void SetKeyVisible(bool visible, Color pairColor)
+        {
+            if (!ReportMissingLockIcons(keyIcon) || keyIcon.gameObject.activeSelf == visible) return;
+            keyIcon.color = pairColor;
+            keyIcon.gameObject.SetActive(visible);
+        }
+
+        private bool ReportMissingLockIcons(SpriteRenderer icon)
+        {
+            if (icon != null) return true;
+            if (!missingLockIconReported)
+            {
+                missingLockIconReported = true;
+                Debug.LogError($"[BusOut] Prefab {name}: CarView thiếu Lock Icon hoặc Key Icon: xe khoá / mang chìa không có biểu tượng " +
+                               "(luật vẫn chạy). Thêm 2 SpriteRenderer trên nóc xe rồi kéo vào 2 ô đó.", this);
+            }
+            return false;
+        }
+
+        /// Chạm xe đang bị khoá: rung tại chỗ + ổ khoá nảy, không chạy.
+        public void PlayLockedReject(GameplayConfig config)
+        {
+            PlayRejectShake(config);
+            if (lockIcon == null) return;
+            Transform icon = lockIcon.transform;
+            icon.DOComplete();
+            icon.DOPunchScale(icon.localScale * FxConfig.Instance.lockRejectPunch, config.noSlotShakeDuration, 6, 0.5f)
+                .SetLink(gameObject)
+                .SetTarget(icon);
+        }
+
+        // Dấu "?" và mũi tên loại trừ nhau. Cả hai là con của Mark, nên ẩn Mark (xe ra tới làn trên) vẫn ẩn cả hai.
+        private void SetHiddenMarkVisible(bool hidden)
+        {
+            if (hiddenMark != null) hiddenMark.SetActive(hidden);
+            if (directionArrow != null) directionArrow.SetActive(!hidden);
+        }
+
+        private void SetBodyColor(Color color)
+        {
+            bodyRenderer.GetPropertyBlock(propertyBlock);
+            propertyBlock.SetColor(ColorPropertyId, color);
+            bodyRenderer.SetPropertyBlock(propertyBlock);
+        }
 
         /// Đầu xe (tâm mặt trước thân xe, thế giới): chỗ chạm khi lao vào xe chặn.
         public Vector3 FrontPoint
@@ -244,6 +357,7 @@ namespace BusOut.Gameplay
             tiltTween = null;
             shakeTween = null;
             craneSequence = null;
+            rollOutTween = null;
             moveScaleTween = null;
             drivePath.Clear();
             DespawnSeatedPassengers();
@@ -419,6 +533,20 @@ namespace BusOut.Gameplay
             transform.DOScale(targetScale, duration)
                 .SetDelay(delay)
                 .SetEase(Ease.OutBack)
+                .SetLink(gameObject)
+                .SetTarget(transform);
+        }
+
+        /// Bãi chờ: hiện xe (đang tắt, đã đặt sẵn đúng chỗ đỗ trước cổng) và cho lăn từ trong cổng ra. Đang lăn thì IsBusy.
+        public void PlayGarageRollOut(float distance, float duration)
+        {
+            Vector3 target = transform.position;
+            Vector3 back = transform.forward;
+            back.y = 0f;
+            transform.position = target - back.normalized * distance;
+            gameObject.SetActive(true);
+            rollOutTween = transform.DOMove(target, duration)
+                .SetEase(Ease.OutQuad)
                 .SetLink(gameObject)
                 .SetTarget(transform);
         }

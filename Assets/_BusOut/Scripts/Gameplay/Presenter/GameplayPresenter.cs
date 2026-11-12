@@ -58,11 +58,19 @@ namespace BusOut.Gameplay
         [Tooltip("SharedPopupsPresenter trên SharedUI: popup dùng chung (Cài đặt, Leave game) — nút bánh răng ở thanh trên mở.")]
         [SerializeField] private SharedPopupsPresenter sharedPopups;
 
+        [Header("Hướng dẫn đầu game")]
+        [Tooltip("TutorialHandView trong Canvas gameplay: bàn tay chỉ xe ở level hướng dẫn.")]
+        [SerializeField] private TutorialHandView tutorialHand;
+        [Tooltip("BoosterIntroView trên Tutorial/BoosterTut: màn giới thiệu booster vừa mở khoá.")]
+        [SerializeField] private BoosterIntroView boosterIntro;
+
         private LevelCurveData curveData;
+        private LevelCurveData ownLevels; // null khi chưa dựng level riêng nào
         private LevelSpawner spawner;
         private BusStopPresenter busStop;
         private CarFlowPresenter carFlow;
         private PassengerPresenter passengers; // null khi thiếu tham chiếu hành khách: xe vẫn chơi được
+        private TutorialPresenter tutorial; // null khi thiếu bàn tay: game vẫn chơi được, chỉ mất hướng dẫn
         private BoardingPresenter boarding;    // null cùng lúc với passengers
         private HudPresenter hud;
         private BoosterPresenter booster; // null khi thiếu hàng khách: booster nào cũng sắp lại hàng
@@ -144,7 +152,10 @@ namespace BusOut.Gameplay
             if (coinFly == null)
                 Debug.LogError("[BusOut] GameplayPresenter thiếu Coin Fly: nhận thưởng thắng không có coin bay về thanh trên. " +
                                "Add Component CoinFlyView lên TouchFxCanvas/CoinFlyLayer rồi kéo vào.", this);
-            curveData = LevelCurveData.Parse(levelCurve.text);
+            ownLevels = LoadOwnLevels();
+            // Bộ level riêng có từ level 1 trở đi (E5, bạn chốt 11/11: bỏ curve) thì dùng hẳn bộ này, quay vòng trong chính nó.
+            // File curve chỉ còn là dự phòng khi Resources/Levels chưa có level 1 (vd. chỉ có level thử số 1000).
+            curveData = ownLevels != null && ownLevels.LastLevelNumber > 0 ? ownLevels : LevelCurveData.Parse(levelCurve.text);
             spawner = new LevelSpawner(config, parkingLot, fourSeatPrefab, sixSeatPrefab, tenSeatPrefab);
             busStop = new BusStopPresenter(busStopView, config);
             carFlow = new CarFlowPresenter(config, parkingLot, spawner, busStop);
@@ -161,6 +172,7 @@ namespace BusOut.Gameplay
                 booster = new BoosterPresenter(config, gameData, spawner, busStop, passengers, carFlow, CanUseBooster);
             hud = CreateHudPresenter();
             if (booster != null) booster.ArmedChanged += hud.SetBoosterArmed;
+            tutorial = CreateTutorialPresenter();
             result = CreateResultPresenter();
             hasSharedPopups = InitSharedPopups();
             SendLoadingTips();
@@ -176,7 +188,7 @@ namespace BusOut.Gameplay
         /// Pool xe theo level đông nhất của file curve (LevelSpawner.Prewarm).
         private void PrewarmCars()
         {
-            spawner.Prewarm(curveData);
+            spawner.Prewarm(curveData, ownLevels);
             // Hiệu ứng va chạm: tạo sẵn cùng xe — Instantiate lúc cú đâm đầu tiên là giật đúng lúc người chơi đang nhìn.
             FxConfig fx = FxConfig.Instance;
             PoolingManager.Prewarm(fx.rammedEffectPrefab, fx.rammedEffectPrewarmCount);
@@ -243,7 +255,13 @@ namespace BusOut.Gameplay
             if (isReady) LoadLevel(gameData.currentLevel);
         }
 
-        private bool HandleBoosterRequested(BoosterType type) => booster != null && booster.TryUse(type);
+        private bool HandleBoosterRequested(BoosterType type)
+        {
+            if (booster == null || (tutorial != null && !tutorial.AllowsBooster(type))) return false;
+            bool used = booster.TryUse(type);
+            tutorial?.OnBoosterPressed(used);
+            return used;
+        }
 
         private bool HandleShopRequested(BoosterType type) => shop != null && shop.Open(type);
 
@@ -257,6 +275,36 @@ namespace BusOut.Gameplay
 
         /// Chỉ dùng booster khi đang chơi thật sự: không trong lúc xe đang "bung" ra, không khi ván đã kết thúc.
         private bool CanUseBooster() => isReady && !levelFinished && interactionLockRemaining <= 0f && !carFlow.IsRewinding;
+
+        // Popup mua bị khoá riêng: bài hướng dẫn booster vẫn phải dùng được booster qua CanUseBooster.
+        private bool CanOpenPurchase() => CanUseBooster() && (tutorial == null || !tutorial.IsActive);
+
+        /// Level riêng trong Resources (mỗi level một file); null khi chưa có level nào.
+        private static LevelCurveData LoadOwnLevels()
+        {
+            TextAsset[] files = Resources.LoadAll<TextAsset>(LevelCurveData.OwnLevelsFolder);
+            if (files.Length == 0) return null;
+            var levels = new LevelData[files.Length];
+            for (int i = 0; i < files.Length; i++) levels[i] = JsonUtility.FromJson<LevelData>(files[i].text);
+            return new LevelCurveData { curve = LevelCurveData.OwnLevelsFolder, levels = levels };
+        }
+
+        private TutorialPresenter CreateTutorialPresenter()
+        {
+            if (passengers == null) return null;
+            if (tutorialHand == null)
+            {
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Tutorial Hand: level đầu không có hướng dẫn. " +
+                               "Kéo object có TutorialHandView vào mục Hướng dẫn đầu game.", this);
+                return null;
+            }
+            if (!tutorialHand.Init()) return null;
+            if (boosterIntro == null)
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Booster Intro: bài hướng dẫn booster không có màn giới thiệu. " +
+                               "Kéo Tutorial/BoosterTut (có BoosterIntroView) vào mục Hướng dẫn đầu game.", this);
+            else if (!boosterIntro.Init(PanelAnimation())) boosterIntro = null;
+            return new TutorialPresenter(config, gameData, spawner, passengers, hud, tutorialHand, boosterIntro);
+        }
 
         /// Nút chơi lại trên thanh trên.
         /// ⚠️ Ván đã kết thúc + có popup kết quả → bỏ qua: thắng thì save đã sang level sau, bấm trong lúc chờ WinPanel
@@ -285,6 +333,7 @@ namespace BusOut.Gameplay
             if (hasSharedPopups) sharedPopups.HideAll();
             booster?.Disarm();
             noSlotMessage?.Hide();
+            tutorial?.ResetForLevel(number);
             passengers?.DespawnAll();
             spawner.DespawnAll();
             carFlow.ResetForLevel();
@@ -292,19 +341,21 @@ namespace BusOut.Gameplay
 
             // Số level hiển thị tăng mãi; quá level cuối của file thì quay vòng layout từ loopStartLevel.
             int layoutNumber = curveData.ResolveLayoutNumber(number, config.loopStartLevel);
-            LevelData level = curveData.FindLevel(layoutNumber);
+            // Level riêng khớp theo số HIỂN THỊ, không theo layout: level thử số 1000 phải chơi đúng nó, không bị quay vòng về 21.
+            LevelData level = ownLevels?.FindLevel(number) ?? curveData.FindLevel(layoutNumber);
             if (level == null || level.vehicles == null)
             {
-                Debug.LogError($"[BusOut] Không có level {layoutNumber} (level hiển thị {number}) trong {levelCurve.name}. Level lấy từ save (SecureGameData.currentLevel): xoá save hoặc sửa file curve.", this);
+                Debug.LogError($"[BusOut] Không có level {layoutNumber} (level hiển thị {number}). Level lấy từ save (SecureGameData.currentLevel): xoá save hoặc sửa file curve.", this);
                 // ⚠️ Dọn hết trạng thái ván cũ: giữ lại thì bộ lên kế hoạch cũ chạy trên danh sách xe đã xoá (lỗi mỗi frame),
                 // và "không xe + không khách" bị tính là thắng.
-                passengers?.ResetForLevel(null);
+                passengers?.ResetForLevel(null, false);
                 boarding?.ResetForLevel();
                 levelFinished = true;
                 interactionLockRemaining = 0f;
                 return;
             }
             spawner.Spawn(level);
+            busStop.SetupConstruction(level.constructionSlots, level.constructionPassengers);
             currentLevel = number;
             levelFinished = false;
             if (passengers != null)
@@ -316,11 +367,12 @@ namespace BusOut.Gameplay
                     GroupMin = config.passengerGroupMin,
                     GroupMax = config.passengerGroupMax,
                     HardPointBaseBlockers = config.hardPointBaseBlockers,
-                    HardPointSlotLimit = config.openSlotCount - config.hardPointSlotReserve,
+                    // Ô công trường lúc đầu không dùng được: điểm khó tính theo số ô thật sự dùng được, không thì kế hoạch vượt sức bến.
+                    HardPointSlotLimit = config.openSlotCount - busStop.ConstructionSlotCount - config.hardPointSlotReserve,
                 };
                 var planner = new PassengerColorPlanner(spawner.Cars, spawner.BuildBlockingGraph(), new System.Random(number),
                     level, planSettings);
-                passengers.ResetForLevel(planner);
+                passengers.ResetForLevel(planner, level.passengersHidden);
             }
             boarding?.ResetForLevel();
             // ⚠️ Sau khi dựng đồ thị chặn (trong planner ở trên): hoạt ảnh đặt xe về cỡ 0, dựng đồ thị lúc đó là sai.
@@ -345,7 +397,12 @@ namespace BusOut.Gameplay
             if (interactionLockRemaining > 0f) interactionLockRemaining -= deltaTime;
             passengers?.Tick(deltaTime);
             boarding?.Tick(deltaTime);
+            // Không lộ màu trong lúc xe đang bung vào level: cú nảy lộ màu đè lên tween phóng cỡ của intro.
+            if (interactionLockRemaining <= 0f) spawner.RevealFreedCars();
+            spawner.UpdateLockMarks();
+            spawner.UpdateGarages(deltaTime);
             result?.Tick(deltaTime);
+            tutorial?.Tick(deltaTime, !levelFinished && interactionLockRemaining <= 0f);
             if (passengers != null && passengerCount != null) passengerCount.SetCount(passengers.RemainingCount);
             CheckLevelCompleted();
             CheckLevelFailed();
@@ -439,7 +496,7 @@ namespace BusOut.Gameplay
                                "SharedPopupsPresenter): không mua thêm lượt booster / ô đỗ được.", this);
                 return null;
             }
-            return new PurchasePresenter(config, gameData, purchasePopup, CanUseBooster, UnlockExtraSlot);
+            return new PurchasePresenter(config, gameData, purchasePopup, CanOpenPurchase, UnlockExtraSlot);
         }
 
         /// Về Menu (GameFlowController tắt GameContext, bật HomeContext). Ván đang dở để nguyên: lần Play sau LoadLevel dọn hết.
@@ -533,15 +590,18 @@ namespace BusOut.Gameplay
         {
             // Xe đang tua ngược (Undo) có collider tắt: chạm xe khác lúc này là xe kia chạy xuyên qua nó.
             if (!isReady || levelFinished || interactionLockRemaining > 0f || carFlow.IsRewinding) return;
+            if (tutorial != null && !tutorial.AllowsCar(view)) return;
             // Crane đang giương: cú chạm này là chọn xe để nhấc, không phải chạy xe ra như thường.
             if (booster != null && booster.IsCraneArmed) booster.TryCranePick(view);
             else carFlow.HandleCarTapped(view);
+            tutorial?.OnCarTapHandled();
         }
 
         private void HandleSlotTapped(BusStopSlotView slot)
         {
             // Chạm ô khoá → popup mở thêm ô (coin / quảng cáo); ô mở thì không có gì để làm.
             if (!isReady || levelFinished || interactionLockRemaining > 0f || !busStop.IsLocked(slot.Index)) return;
+            if (tutorial != null && tutorial.IsActive) return;
             shop?.OpenSlotUnlock();
         }
 

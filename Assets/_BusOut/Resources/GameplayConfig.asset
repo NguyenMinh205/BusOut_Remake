@@ -24,6 +24,23 @@ MonoBehaviour:
   - {r: 0.9803922, g: 0.5372549, b: 0.8745098, a: 1}
   - {r: 0.772549, g: 0.3803922, b: 0.9686275, a: 1}
   - {r: 1, g: 0.6431373, b: 0.3019608, a: 1}
+  hiddenCarColor: {r: 0.36, g: 0.37, b: 0.4, a: 1}
+  hiddenPassengerColor: {r: 0.55, g: 0.56, b: 0.6, a: 1}
+  passengerRevealCount: 3
+  hiddenPassengerRunChance: 0.6
+  hiddenPassengerRunMin: 3
+  hiddenPassengerRunMax: 6
+  hiddenPassengerRunExtendMax: 3
+  lockPairColors:
+  - {r: 1, g: 0.82, b: 0.2, a: 1}
+  - {r: 0.3, g: 0.85, b: 1, a: 1}
+  - {r: 1, g: 0.45, b: 0.85, a: 1}
+  - {r: 0.55, g: 1, b: 0.4, a: 1}
+  constructionSlotPrefab: {fileID: 2240761703393245806, guid: 5b89a29c3f5640d89c1e08e6a8f0f0f8, type: 3}
+  garagePrefab: {fileID: 7094870455234780038, guid: 90e6abfaaa63463c8dba77ae07df2917, type: 3}
+  garageBuildingOffset: 2.2
+  garageBuildingLength: 2
+  garageBuildingWidth: 1.6
   openSlotCount: 4
   warningBlinkCount: 4
   warningBlinkDuration: 0.5
@@ -62,7 +79,10 @@ MonoBehaviour:
   carLeaveDelay: 0.5
   tapRayDistance: 200
   cameraReferenceAspect: 0.4620853
-  loopStartLevel: 21
+  loopStartLevel: 25
+  tutorialLevel: 1
+  tutorialGuidedTaps: 2
+  tutorialStepDelay: 1.2
   winCoinReward: 20
   winAdCoinMultiplier: 2
   reviveCoinCost: 100

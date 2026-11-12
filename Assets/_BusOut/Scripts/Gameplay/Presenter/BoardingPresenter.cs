@@ -173,6 +173,7 @@ namespace BusOut.Gameplay
 
             CarModel car = spawner.Cars[carId];
             car.BoardSeat();
+            busStop.NotifyPassengerBoarded();
             // Ghế theo thứ tự khách tới: khách thứ n ngồi ghế n. Xe xoá thì CarView trả khách về pool.
             carView.SeatPassenger(view.transform, car.BoardedSeats - 1, config.seatedPassengerScale);
             view.FreezeSeatedPose();

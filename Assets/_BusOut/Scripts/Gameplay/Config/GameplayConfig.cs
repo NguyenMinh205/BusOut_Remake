@@ -32,6 +32,56 @@ namespace BusOut.Gameplay
         [Tooltip("Bảng màu xe theo mã màu trong level.")]
         public List<Color> carColors;
 
+        [Header("Cơ chế ẩn màu")]
+        [Tooltip("Màu thân xe ẩn màu (chưa hết xe chắn đường ra). Phải khác hẳn mọi màu trong Car Colors.")]
+        public Color hiddenCarColor = new Color(0.36f, 0.37f, 0.4f, 1f);
+
+        [Tooltip("Màu khách chưa lộ (level có Khách ẩn).")]
+        public Color hiddenPassengerColor = new Color(0.55f, 0.56f, 0.6f, 1f);
+
+        [Tooltip("Level có Khách ẩn: khách bị ẩn lộ màu khi tới bấy nhiêu chỗ đầu hàng. Tối thiểu 1 (người đầu hàng luôn thấy màu).")]
+        [Min(1)] public int passengerRevealCount = 5;
+
+        [Tooltip("Level có Khách ẩn: khách vào hàng theo từng đoạn; mỗi đoạn có tỉ lệ này bị ẩn. Ngẫu nhiên mỗi lần chơi, " +
+                 "chơi lại không ẩn đúng chỗ cũ.")]
+        [Range(0f, 1f)] public float hiddenPassengerRunChance = 0.6f;
+
+        [Tooltip("Độ dài một đoạn khách (ẩn hoặc không), chọn ngẫu nhiên trong khoảng này. Sau một đoạn ẩn luôn là một đoạn lộ.")]
+        [Min(1)] public int hiddenPassengerRunMin = 2;
+
+        [Min(1)] public int hiddenPassengerRunMax = 5;
+
+        [Tooltip("Đoạn ẩn mới có một màu thì dài thêm tới khi có người khác màu, tối đa thêm bấy nhiêu người.")]
+        [Min(0)] public int hiddenPassengerRunExtendMax = 3;
+
+        [Header("Cơ chế khoá và chìa")]
+        [Tooltip("Màu ổ khoá / chìa theo số cặp (cặp 1 = phần tử 0). Hết danh sách thì quay vòng. Phải khác nhau rõ để nhìn ra cặp.")]
+        public List<Color> lockPairColors = new List<Color>
+        {
+            new Color(1f, 0.82f, 0.2f, 1f),
+            new Color(0.3f, 0.85f, 1f, 1f),
+            new Color(1f, 0.45f, 0.85f, 1f),
+            new Color(0.55f, 1f, 0.4f, 1f),
+        };
+
+        [Header("Cơ chế ô công trường")]
+        [Tooltip("Prefab hình công trường đặt lên ô bị chắn (có ConstructionSlotView). Đặt theo toạ độ của ô (như sprite Slot).")]
+        public ConstructionSlotView constructionSlotPrefab;
+
+        [Header("Cơ chế bãi chờ")]
+        [Tooltip("Prefab cổng bãi chờ (có GarageView). Gốc prefab = gốc xe đứng trước cổng; nhà cổng nằm phía −Z, sau Building Offset.")]
+        public GarageView garagePrefab;
+
+        [Tooltip("Nhà cổng bắt đầu cách gốc xe đứng trước cổng bấy nhiêu (đơn vị prefab xe, ra phía đuôi xe). Phải ≥ nửa thân xe dài " +
+                 "nhất (Bus ≈ 2.15). Level Builder và bộ sinh dùng số này để soát xe chạy xuyên cổng.")]
+        public float garageBuildingOffset = 2.2f;
+
+        [Tooltip("Chiều dài nhà cổng (đơn vị prefab xe). Khớp với hình trong prefab.")]
+        public float garageBuildingLength = 2f;
+
+        [Tooltip("Chiều rộng nhà cổng (đơn vị prefab xe). Khớp với hình trong prefab.")]
+        public float garageBuildingWidth = 1.6f;
+
         [Header("Bến đỗ")]
         [Tooltip("Số ô đỗ mở sẵn (tính từ ô 1). Game gốc mở 4 ô, ô 5–7 mở bằng quảng cáo.")]
         public int openSlotCount = 4;
@@ -165,9 +215,19 @@ namespace BusOut.Gameplay
         public float cameraReferenceAspect = 1170f / 2532f;
 
         [Header("Level")]
-        [Tooltip("Hết level cuối của file curve thì quay vòng từ level này (số level hiển thị vẫn tăng tiếp). Gốc để trên " +
-                 "remote config, không tìm được; chọn 21 vì đã qua các level dễ đầu game.")]
-        [Min(1)] public int loopStartLevel = 21;
+        [Tooltip("Hết level cuối của bộ level thì quay vòng từ level này (số level hiển thị vẫn tăng tiếp). 25 = sau khi đã mở " +
+                 "hết cơ chế (Ô công trường mở ở L24), vòng lặp không lùi về đoạn còn thiếu cơ chế (bạn chốt 12/11).")]
+        [Min(1)] public int loopStartLevel = 25;
+
+        [Header("Hướng dẫn đầu game")]
+        [Tooltip("Level có bàn tay hướng dẫn (số hiển thị).")]
+        [Min(1)] public int tutorialLevel = 1;
+
+        [Tooltip("Số xe bàn tay chỉ trước khi trả quyền chơi tự do.")]
+        [Min(0)] public int tutorialGuidedTaps = 2;
+
+        [Tooltip("Chờ bấy nhiêu giây sau mỗi lần chạm rồi mới chỉ xe tiếp theo, để người chơi kịp thấy xe chạy và khách lên xe.")]
+        [Min(0f)] public float tutorialStepDelay = 1.2f;
 
         [Header("Kinh tế")]
         [Tooltip("Coin thưởng khi thắng một level thường. GDD: 20.")]
@@ -250,6 +310,12 @@ namespace BusOut.Gameplay
 
         [Tooltip("Thời gian chữ \"Hết chỗ!\" mờ dần (giây).")]
         public float noSlotMessageFade = 0.25f;
+
+        public Color GetLockPairColor(int pairId)
+        {
+            if (lockPairColors == null || lockPairColors.Count == 0) return Color.white;
+            return lockPairColors[Mathf.Abs(pairId - 1) % lockPairColors.Count];
+        }
 
         public Color GetCarColor(int colorIndex)
         {

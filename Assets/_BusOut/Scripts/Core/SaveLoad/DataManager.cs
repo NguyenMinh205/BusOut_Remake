@@ -55,6 +55,9 @@ namespace BusOut.Core
         public int coinCount;
         /// Số lượt mỗi booster, chỉ số = (int)BoosterType.
         public List<int> boosterCounts = new List<int>();
+        /// Hướng dẫn booster, mỗi bit = (int)BoosterType. Tách 2 cờ: thoát giữa chừng thì chơi lại vẫn hướng dẫn tiếp mà không được tặng thêm.
+        public int boosterLessonGiftMask;
+        public int boosterLessonDoneMask;
 
         public bool musicOn = true;
         public bool sfxOn = true;
@@ -145,6 +148,19 @@ namespace BusOut.Core
             return true;
         }
 
+        public bool IsBoosterLessonDone(BoosterType type) => (boosterLessonDoneMask & (1 << (int)type)) != 0;
+
+        public void MarkBoosterLessonDone(BoosterType type) => boosterLessonDoneMask |= 1 << (int)type;
+
+        /// Tặng 1 lượt của bài hướng dẫn, mỗi booster đúng một lần trong cả save.
+        public void GrantBoosterLessonGift(BoosterType type)
+        {
+            int bit = 1 << (int)type;
+            if ((boosterLessonGiftMask & bit) != 0) return;
+            boosterLessonGiftMask |= bit;
+            AddBooster(type, 1);
+        }
+
         private void PublishCoins(int delta)
         {
             EventBus.Publish(new CurrencyUpdatedEvent
@@ -196,6 +212,8 @@ namespace BusOut.Core
             coinCount = other.coinCount;
             boosterCounts = other.boosterCounts != null ? new List<int>(other.boosterCounts) : new List<int>();
             EnsureBoosterSlots();
+            boosterLessonGiftMask = other.boosterLessonGiftMask;
+            boosterLessonDoneMask = other.boosterLessonDoneMask;
             musicOn = other.musicOn;
             sfxOn = other.sfxOn;
             vibrationOn = other.vibrationOn;

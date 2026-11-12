@@ -70,6 +70,29 @@ namespace BusOut.Gameplay
 
         public bool HasLockedSlot => busStop.HasLockedSlot;
 
+        /// Số ô đang bị công trường chắn.
+        public int ConstructionSlotCount => busStop.ConstructionSlotCount;
+
+        /// Gọi sau ResetForLevel, khi đã biết level. Hồi sinh / mua ô (UnlockNearest) chỉ mở ô khoá, không đụng ô công trường.
+        public void SetupConstruction(int slotCount, int passengersPerSlot)
+        {
+            busStop.SetConstruction(slotCount, passengersPerSlot);
+            if (busStop.ConstructionSlotCount > 0 && config.constructionSlotPrefab == null)
+                Debug.LogError("[BusOut] GameplayConfig thiếu Construction Slot Prefab: ô công trường vẫn bị chắn nhưng không có hình. " +
+                               "Tạo prefab có ConstructionSlotView rồi kéo vào GameplayConfig.", config);
+            Refresh();
+        }
+
+        /// Một khách vừa lên xe: đếm lùi ô công trường; ô nào vừa mở thì vòng sáng + pháo sáng như mở ô bằng coin.
+        public void NotifyPassengerBoarded()
+        {
+            int opened = busStop.OnPassengerBoarded();
+            Refresh();
+            if (opened < 0) return;
+            PlaySlotRing(opened);
+            if (hasUnlockEffect) SpawnAtSlot(fx.slotUnlockEffectPrefab, opened, fx.slotUnlockEffectScale);
+        }
+
         /// Mở thêm 1 ô (ô khoá gần nhất) — hồi sinh, hoặc mua ô ở popup mở ô. -1 khi không còn ô khoá.
         /// Trả coin / xem quảng cáo do nơi gọi lo (LevelResultPresenter, PurchasePresenter).
         public int UnlockNearest()

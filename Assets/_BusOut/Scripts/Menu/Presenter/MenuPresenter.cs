@@ -197,7 +197,7 @@ namespace BusOut.Menu
             }
             if (config.removeAdsIcon == null)
                 Debug.LogError("[BusOut] MenuConfig thiếu Remove Ads Icon: popup sẽ hiện icon của món mở trước đó. " +
-                               "Kéo Art/UI/Sprites/RemoveAds vào MenuConfig.", config);
+                               "Kéo Art/BusOut/UI/Shop/RemoveAds vào MenuConfig.", config);
             return new RemoveAdsPresenter(config, removeAdsButton, popup, gameData);
         }
 

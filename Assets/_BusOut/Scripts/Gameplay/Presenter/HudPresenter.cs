@@ -114,6 +114,14 @@ namespace BusOut.Gameplay
             if (index >= 0) boosterBar.GetButton(index).SetArmed(armed, config.boosterArmedScale);
         }
 
+        /// Nút của một booster; null khi không có thanh booster hoặc không có nút cho loại đó.
+        public RectTransform GetBoosterRect(BoosterType type)
+        {
+            if (boosterBar == null) return null;
+            int index = FindBoosterIndex(type);
+            return index >= 0 ? boosterBar.GetButton(index).transform as RectTransform : null;
+        }
+
         private void RefreshBoosters()
         {
             if (boosterBar == null) return;

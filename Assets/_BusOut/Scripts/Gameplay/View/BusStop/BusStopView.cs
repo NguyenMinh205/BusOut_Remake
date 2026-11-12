@@ -40,7 +40,11 @@ namespace BusOut.Gameplay
         {
             if (busStop.Version == renderedVersion) return;
             renderedVersion = busStop.Version;
-            for (int i = 0; i < slots.Length; i++) slots[i].SetVisual(busStop.GetVisual(i), config);
+            for (int i = 0; i < slots.Length; i++)
+            {
+                slots[i].SetVisual(busStop.GetVisual(i), config);
+                slots[i].SetConstruction(busStop.Slots[i].ConstructionRemaining, config.constructionSlotPrefab);
+            }
         }
     }
 }

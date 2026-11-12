@@ -33,6 +33,16 @@ namespace BusOut.Gameplay
         private Transform sweepTransform;
         private Tween sweepTween;
         private PassengerColorPlanner planner;
+        private bool passengersHidden;
+        // Khách ẩn: lineHidden[i] = khách lineViews[i] thuộc đoạn bị ẩn. Ngẫu nhiên KHÔNG theo hạt giống level (khác thứ tự
+        // màu): chơi lại vẫn cùng thứ tự màu nhưng ẩn chỗ khác, người chơi không học thuộc được.
+        private readonly List<bool> lineHidden = new List<bool>();
+        private readonly System.Random hiddenRandom = new System.Random();
+        private int hiddenRunLeft;
+        private bool hiddenRunActive;
+        private int hiddenRunFirstColor;
+        private bool hiddenRunMixed;
+        private int hiddenRunLength;
         private float spacing;
         private float joinCooldown;
 
@@ -70,10 +80,14 @@ namespace BusOut.Gameplay
             if (hasSweep) PoolingManager.Prewarm(fx.queueSweepPrefab, 1);
         }
 
-        public void ResetForLevel(PassengerColorPlanner colorPlanner)
+        /// <paramref name="hidePassengers"/>: level có cơ chế Khách ẩn.
+        public void ResetForLevel(PassengerColorPlanner colorPlanner, bool hidePassengers)
         {
             DespawnAll();
             planner = colorPlanner;
+            passengersHidden = hidePassengers;
+            hiddenRunLeft = 0;
+            hiddenRunActive = false;
             int capacity = Mathf.Max(1, config.passengerQueueCount);
             queue.Reset(capacity);
             spacing = path.SpacingFor(capacity);
@@ -138,9 +152,57 @@ namespace BusOut.Gameplay
             if (passenger == null) return null;
             PassengerView head = lineViews[0];
             head.FlushPendingRecolor();
+            // Phòng hờ: người lên xe luôn phải mang đúng màu xe.
+            head.RevealColor(0f, 0f);
             lineViews.RemoveAt(0);
+            lineHidden.RemoveAt(0);
             for (int i = 0; i < lineViews.Count; i++) WalkToSpot(lineViews[i], i, config.passengerForwardSpeed);
+            RefreshHiddenColors();
             return head;
+        }
+
+        /// Khách ẩn: khách thuộc đoạn bị ẩn chỉ lộ màu khi tới passengerRevealCount chỗ đầu hàng. Gọi mỗi khi hàng đổi chỗ.
+        private void RefreshHiddenColors()
+        {
+            if (!passengersHidden) return;
+            int revealCount = Mathf.Max(1, config.passengerRevealCount);
+            for (int i = 0; i < lineViews.Count; i++)
+            {
+                if (lineHidden[i] && i >= revealCount) lineViews[i].HideColor(config.hiddenPassengerColor);
+                else lineViews[i].RevealColor(fx.hiddenRevealPunch, fx.hiddenRevealDuration);
+            }
+        }
+
+        /// Khách mới vào hàng có thuộc đoạn bị ẩn không: hàng chia thành các đoạn dài ngẫu nhiên, mỗi đoạn ẩn theo tỉ lệ.
+        /// Đoạn ẩn đủ độ dài mà mới có một màu thì kéo dài tới khi có người khác màu: đoạn ẩn toàn một màu thì nhìn người
+        /// đứng ngay trước là đoán được (hay gặp ở level không trộn khách, khách một xe đứng liền một khối).
+        /// Kéo dài có giới hạn (Run Extend Max): gặp nhiều xe cùng màu liền nhau thì không chặn là đoạn ẩn rất dài.
+        private bool NextJoinsHiddenRun(int color)
+        {
+            if (!passengersHidden) return false;
+            int runMax = Mathf.Max(Mathf.Max(1, config.hiddenPassengerRunMin), config.hiddenPassengerRunMax);
+            bool mustExtend = hiddenRunActive && !hiddenRunMixed &&
+                              hiddenRunLength < runMax + Mathf.Max(0, config.hiddenPassengerRunExtendMax);
+            if (hiddenRunLeft <= 0 && !mustExtend)
+            {
+                int min = Mathf.Max(1, config.hiddenPassengerRunMin);
+                bool previousHidden = hiddenRunActive;
+                hiddenRunLeft = hiddenRandom.Next(min, runMax + 1);
+                // ⚠️ Sau đoạn ẩn luôn là đoạn lộ: đo 10/11, không có luật này thì các đoạn ẩn nối nhau thành chuỗi xám tới 60–97
+                // người (bạn thử thấy gần cả hàng xám).
+                hiddenRunActive = !previousHidden && hiddenRandom.NextDouble() < config.hiddenPassengerRunChance;
+                hiddenRunFirstColor = -1;
+                hiddenRunMixed = false;
+                hiddenRunLength = 0;
+            }
+            hiddenRunLeft--;
+            hiddenRunLength++;
+            if (hiddenRunActive)
+            {
+                if (hiddenRunFirstColor < 0) hiddenRunFirstColor = color;
+                else if (color != hiddenRunFirstColor) hiddenRunMixed = true;
+            }
+            return hiddenRunActive;
         }
 
         private void PlaySweep(int lastSpot, float duration)
@@ -180,6 +242,7 @@ namespace BusOut.Gameplay
             foreach (PassengerView view in lineViews) PoolingManager.Despawn(view);
             foreach (PassengerView view in leavingViews) PoolingManager.Despawn(view);
             lineViews.Clear();
+            lineHidden.Clear();
             leavingViews.Clear();
         }
 
@@ -192,6 +255,8 @@ namespace BusOut.Gameplay
             if (view == null) return;
             view.Init(passenger.Id, config.GetCarColor(passenger.ColorIndex), passenger.IsVip);
             lineViews.Add(view);
+            lineHidden.Add(NextJoinsHiddenRun(passenger.ColorIndex));
+            RefreshHiddenColors();
 
             walkBuffer.Clear();
             walkBuffer.Add(path.PositionAt(path.Length)); // SpawnPoint → cuối hàng (trùng nhau thì đoạn này dài 0)
