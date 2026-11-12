@@ -1,0 +1,507 @@
+{
+    "index": 1000,
+    "seed": 2,
+    "difficulty": "Trung bình",
+    "vehicles": [
+        {
+            "type": 2,
+            "color": 2,
+            "x": 0.8899999856948853,
+            "z": -3.200000047683716,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 5,
+            "x": 1.9600000381469727,
+            "z": -2.369999885559082,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": 2.240000009536743,
+            "z": 1.0,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": -0.18000000715255738,
+            "z": -2.369999885559082,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 1,
+            "color": 5,
+            "x": -0.25999999046325686,
+            "z": 1.0,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": -8.489999771118164,
+            "z": -7.010000228881836,
+            "rotY": 135.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": -2.859999895095825,
+            "z": 1.0,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 2,
+            "color": 0,
+            "x": -5.789999961853027,
+            "z": 1.0,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 5,
+            "x": -2.859999895095825,
+            "z": -0.07000000029802323,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": -6.829999923706055,
+            "z": -8.670000076293946,
+            "rotY": 135.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": -6.070000171661377,
+            "z": -7.909999847412109,
+            "rotY": 135.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 2,
+            "color": 2,
+            "x": -4.610000133514404,
+            "z": -10.75,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 0,
+            "x": -3.759999990463257,
+            "z": -1.5,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 2,
+            "x": -1.4299999475479127,
+            "z": -10.75,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 0,
+            "x": 0.9200000166893005,
+            "z": -10.75,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": -3.7799999713897707,
+            "z": -9.680000305175782,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": -1.4299999475479127,
+            "z": -9.680000305175782,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": 6.010000228881836,
+            "z": -6.510000228881836,
+            "rotY": 135.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": 6.0,
+            "z": -3.990000009536743,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 5,
+            "x": -1.6799999475479127,
+            "z": -11.819999694824219,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 0,
+            "color": 0,
+            "x": 0.9200000166893005,
+            "z": -9.680000305175782,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 5,
+            "x": 1.0700000524520875,
+            "z": -11.819999694824219,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": 3.6700000762939455,
+            "z": -11.819999694824219,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": 5.25,
+            "z": 4.510000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 2,
+            "x": 4.179999828338623,
+            "z": 4.260000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 2,
+            "x": -0.25999999046325686,
+            "z": 2.069999933242798,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 1,
+            "color": 0,
+            "x": -1.6799999475479127,
+            "z": -8.609999656677246,
+            "rotY": 90.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 1,
+            "color": 1,
+            "x": 5.25,
+            "z": 7.010000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 2,
+            "x": 7.070000171661377,
+            "z": -4.239999771118164,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 0,
+            "x": -2.75,
+            "z": 7.260000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": -2.859999895095825,
+            "z": 2.069999933242798,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 2,
+            "color": 5,
+            "x": 8.25,
+            "z": 2.359999895095825,
+            "rotY": 180.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": true
+        },
+        {
+            "type": 1,
+            "color": 4,
+            "x": -5.360000133514404,
+            "z": 2.069999933242798,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 2,
+            "x": -5.610000133514404,
+            "z": 3.140000104904175,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 0,
+            "x": -7.0,
+            "z": 7.260000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 1,
+            "x": 7.670000076293945,
+            "z": -8.170000076293946,
+            "rotY": 135.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 2,
+            "x": -3.759999990463257,
+            "z": -2.569999933242798,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 5,
+            "x": 9.319999694824219,
+            "z": 1.7799999713897706,
+            "rotY": 180.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 2,
+            "color": 4,
+            "x": -8.539999961853028,
+            "z": 2.069999933242798,
+            "rotY": 270.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 0,
+            "x": 3.0,
+            "z": 5.460000038146973,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 5,
+            "x": -3.819999933242798,
+            "z": 7.260000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 1,
+            "x": -4.889999866485596,
+            "z": 7.010000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 0,
+            "color": 4,
+            "x": 9.5,
+            "z": 6.510000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        },
+        {
+            "type": 1,
+            "color": 2,
+            "x": 4.179999828338623,
+            "z": 7.010000228881836,
+            "rotY": 0.0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false
+        }
+    ],
+    "mix": [
+        {
+            "at": 0.0,
+            "size": 1,
+            "from": 10.0,
+            "to": 35.0
+        }
+    ],
+    "hardPoints": [
+        {
+            "at": 45.0,
+            "bonus": 0,
+            "series": 0
+        }
+    ],
+    "passengersHidden": true
+}
