@@ -1,0 +1,21 @@
+{
+    "name": "BusOut.Gameplay.Editor",
+    "rootNamespace": "BusOut.Gameplay.Editor",
+    "references": [
+        "BusOut.Gameplay",
+        "BusOut.Core",
+        "BusOut.DesignPattern",
+        "BusOut.Core.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

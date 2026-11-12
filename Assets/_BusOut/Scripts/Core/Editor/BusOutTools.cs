@@ -116,7 +116,7 @@ namespace BusOut.Core.Editor
         }
 
         /// Nạp save như lúc chạy game: chưa có file → người chơi mới theo NewPlayerConfig.
-        internal static SecureGameData LoadPlayerSave()
+        public static SecureGameData LoadPlayerSave()
         {
             NewPlayerConfig newPlayer = Resources.Load<NewPlayerConfig>(NewPlayerConfig.ResourcePath);
             if (newPlayer == null) newPlayer = NewPlayerConfig.CreateDefault();

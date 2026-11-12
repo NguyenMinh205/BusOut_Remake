@@ -1,0 +1,153 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0038638020ec03343961e73dda012ae6, type: 3}
+  m_Name: LevelGeneratorConfig
+  m_EditorClassIdentifier: BusOut.Gameplay.Editor::BusOut.Gameplay.Editor.LevelGeneratorConfig
+  profiles:
+  - displayName: "D\u1EC5"
+    carCountMin: 18
+    carCountMax: 28
+    colorCountMin: 3
+    colorCountMax: 4
+    weightFourSeat: 5
+    weightSixSeat: 3
+    weightTenSeat: 1
+    diagonalChance: 0
+    alignChance: 0.8
+    mirrorChance: 0.6
+    carGap: 0.14
+    gridStep: 0.5
+    blockChance: 0.3
+    minChainDepth: 1
+    maxChainDepth: 2
+    minFreeCars: 6
+    maxFreeRatio: 0.7
+    sameColorAsBlockerChance: 0.6
+    hiddenCarChance: 0.35
+    lockPairCount: 2
+    constructionSlotCount: 2
+    constructionPassengers: 30
+    garageCount: 1
+    garageQueueMin: 2
+    garageQueueMax: 3
+    mix: []
+    hardPoints: []
+    candidatesPerCar: 60
+    layoutAttempts: 30
+  - displayName: "Trung b\xECnh"
+    carCountMin: 34
+    carCountMax: 46
+    colorCountMin: 4
+    colorCountMax: 6
+    weightFourSeat: 4
+    weightSixSeat: 4
+    weightTenSeat: 2
+    diagonalChance: 0.15
+    alignChance: 0.7
+    mirrorChance: 0.4
+    carGap: 0.12
+    gridStep: 0.25
+    blockChance: 0.55
+    minChainDepth: 2
+    maxChainDepth: 4
+    minFreeCars: 5
+    maxFreeRatio: 0.5
+    sameColorAsBlockerChance: 0.3
+    hiddenCarChance: 0.35
+    lockPairCount: 2
+    constructionSlotCount: 2
+    constructionPassengers: 30
+    garageCount: 1
+    garageQueueMin: 2
+    garageQueueMax: 3
+    mix:
+    - at: 0
+      size: 1
+      from: 10
+      to: 35
+    hardPoints:
+    - at: 45
+      bonus: 0
+      series: 0
+    candidatesPerCar: 80
+    layoutAttempts: 40
+  - displayName: "Kh\xF3"
+    carCountMin: 50
+    carCountMax: 64
+    colorCountMin: 6
+    colorCountMax: 8
+    weightFourSeat: 3
+    weightSixSeat: 4
+    weightTenSeat: 3
+    diagonalChance: 0.3
+    alignChance: 0.6
+    mirrorChance: 0.2
+    carGap: 0.1
+    gridStep: 0.25
+    blockChance: 0.8
+    minChainDepth: 3
+    maxChainDepth: 6
+    minFreeCars: 4
+    maxFreeRatio: 0.4
+    sameColorAsBlockerChance: 0.1
+    hiddenCarChance: 0.35
+    lockPairCount: 2
+    constructionSlotCount: 1
+    constructionPassengers: 60
+    garageCount: 1
+    garageQueueMin: 2
+    garageQueueMax: 3
+    mix:
+    - at: 0
+      size: 2
+      from: 25
+      to: 55
+    hardPoints:
+    - at: 30
+      bonus: 0
+      series: 0
+    - at: 65
+      bonus: 1
+      series: 0
+    candidatesPerCar: 100
+    layoutAttempts: 50
+  - displayName: "L\xE0m quen"
+    carCountMin: 10
+    carCountMax: 16
+    colorCountMin: 2
+    colorCountMax: 3
+    weightFourSeat: 5
+    weightSixSeat: 2
+    weightTenSeat: 0
+    diagonalChance: 0
+    alignChance: 0.85
+    mirrorChance: 0.5
+    carGap: 0.16
+    gridStep: 0.5
+    blockChance: 0.35
+    minChainDepth: 1
+    maxChainDepth: 2
+    minFreeCars: 4
+    maxFreeRatio: 0.8
+    sameColorAsBlockerChance: 0.5
+    minFreeColors: 2
+    hiddenCarChance: 0.35
+    lockPairCount: 2
+    constructionSlotCount: 1
+    constructionPassengers: 20
+    garageCount: 1
+    garageQueueMin: 2
+    garageQueueMax: 3
+    mix: []
+    hardPoints: []
+    candidatesPerCar: 60
+    layoutAttempts: 40
