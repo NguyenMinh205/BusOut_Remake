@@ -42,7 +42,7 @@ MonoBehaviour:
     - kind: 1
       booster: 3
       amount: 2
-      icon: {fileID: 21300000, guid: 1bd1d2afdf2a6094aafbb0317b1dbe0a, type: 2}
+      icon: {fileID: 21300000, guid: 735cb22d27028de449b12119df0dea34, type: 3}
   - rewards:
     - kind: 1
       booster: 2

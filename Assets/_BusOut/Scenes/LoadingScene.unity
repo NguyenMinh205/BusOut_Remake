@@ -599,7 +599,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.AspectRatioFitter
   m_AspectMode: 4
-  m_AspectRatio: 0.6
+  m_AspectRatio: 0.5625
 --- !u!114 &1301581596
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -620,7 +620,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 573f2b83aaafdd147a38dac4ec167ca3, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e1c5f957a1812e948aee5d87afb50496, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -883,7 +883,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 125, y: 100}
+  m_SizeDelta: {x: 200, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1719228383
 MonoBehaviour:
@@ -905,7 +905,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 92019cf94b344dd4da2c0b49779ae56d, type: 2}
+  m_Sprite: {fileID: 1314200074, guid: 3c06892597553eb46b7d3731c70dc615, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -1197,7 +1197,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 6e5e5434776cb4042b3c58eb7dd7f84d, type: 2}
+  m_Sprite: {fileID: 21300000, guid: 5e7cfb0b0d4e011408712ed9a28e2eab, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -1272,7 +1272,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: c8cc3c65f16de5247b3ecbf0e13db6e8, type: 2}
+  m_Sprite: {fileID: 21300000, guid: de8f1f3d1b048394bae221624f5dc576, type: 3}
   m_Type: 1
   m_PreserveAspect: 0
   m_FillCenter: 1
