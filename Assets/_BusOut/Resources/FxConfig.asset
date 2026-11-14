@@ -75,3 +75,22 @@ MonoBehaviour:
   coinFlyEndDelay: 0.25
   buttonPressScale: 0.92
   buttonPressDuration: 0.08
+  comboWindow: 3
+  comboTiers:
+  - minCombo: 2
+    sprite: {fileID: 21300000, guid: 11b84f828c7b415d87d39b9430624538, type: 3}
+    sound: 10
+  - minCombo: 3
+    sprite: {fileID: 21300000, guid: 9c1fb87f4ed54df99cb0529a654df022, type: 3}
+    sound: 11
+  - minCombo: 4
+    sprite: {fileID: 21300000, guid: 22c414949fbd425b94eb7f45c37939f8, type: 3}
+    sound: 12
+  - minCombo: 5
+    sprite: {fileID: 21300000, guid: cca77409ea4e45b6b312030021c6e03f, type: 3}
+    sound: 13
+  comboPopFromScale: 0.4
+  comboPopDuration: 0.25
+  comboHoldDuration: 0.45
+  comboFadeDuration: 0.3
+  comboFloatDistance: 60

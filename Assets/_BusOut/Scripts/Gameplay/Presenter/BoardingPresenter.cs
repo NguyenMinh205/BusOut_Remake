@@ -26,6 +26,10 @@ namespace BusOut.Gameplay
         private readonly List<PendingLeave> pendingLeaves = new List<PendingLeave>();
         private float cooldown;
 
+        /// Một xe vừa đủ khách (người cuối vừa ngồi). Chữ khen combo nghe sự kiện này.
+        // System.Action viết đầy đủ: thêm using System thì Random (UnityEngine / System) trùng tên.
+        public event System.Action CarFilled;
+
         /// <paramref name="viewTransform"/>: camera gameplay (hiệu ứng xe đủ khách quay mặt về nó). null = giữ hướng prefab.
         public BoardingPresenter(GameplayConfig config, LevelSpawner spawner, BusStopPresenter busStop,
             PassengerPresenter passengers, CarFlowPresenter carFlow, Transform viewTransform)
@@ -185,6 +189,7 @@ namespace BusOut.Gameplay
             {
                 pendingLeaves.Add(new PendingLeave { CarId = carId, Remaining = config.carLeaveDelay });
                 PlayCarFull(carView);
+                CarFilled?.Invoke();
             }
         }
 

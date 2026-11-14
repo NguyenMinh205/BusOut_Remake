@@ -283,5 +283,43 @@ namespace BusOut.Core
 
         [Tooltip("Xe lăn ra từ trong cổng, cách chỗ đỗ bấy nhiêu (đơn vị thế giới).")]
         public float garageRollOutDistance = 2.5f;
+
+        [Header("Trong ván: chữ khen combo (ComboPraiseView)")]
+        [Tooltip("Xe đủ khách cách xe đủ khách trước không quá bấy nhiêu giây thì combo +1, quá thì combo về 1. Ước lượng, chỉnh khi chơi thử.")]
+        public float comboWindow = 3f;
+
+        [Tooltip("Mốc combo, xếp TĂNG dần theo Min Combo. Combo đạt mốc nào lớn nhất thì hiện chữ + tiếng của mốc đó; dưới mốc " +
+                 "đầu thì không hiện gì.")]
+        public ComboTier[] comboTiers =
+        {
+            new ComboTier { minCombo = 2, sound = SoundId.StreakComboGood },
+            new ComboTier { minCombo = 3, sound = SoundId.StreakComboNice },
+            new ComboTier { minCombo = 4, sound = SoundId.StreakComboGoodJob },
+            new ComboTier { minCombo = 5, sound = SoundId.StreakComboFantastic },
+        };
+
+        [Tooltip("Chữ khen nảy từ cỡ này lên 1.")]
+        public float comboPopFromScale = 0.4f;
+
+        [Tooltip("Thời gian nảy lên (giây).")]
+        public float comboPopDuration = 0.25f;
+
+        [Tooltip("Đứng yên bao lâu trước khi mờ (giây).")]
+        public float comboHoldDuration = 0.45f;
+
+        [Tooltip("Thời gian mờ dần (giây).")]
+        public float comboFadeDuration = 0.3f;
+
+        [Tooltip("Vừa mờ vừa trôi lên bấy nhiêu (đơn vị UI).")]
+        public float comboFloatDistance = 60f;
+    }
+
+    /// Một mốc chữ khen: đạt bấy nhiêu xe đủ khách liên tiếp thì hiện chữ này + phát tiếng này.
+    [System.Serializable]
+    public class ComboTier
+    {
+        [Min(2)] public int minCombo = 2;
+        public Sprite sprite;
+        public SoundId sound;
     }
 }

@@ -40,6 +40,11 @@ namespace BusOut.Gameplay
         [SerializeField] private Button continueAdButton;
         [Tooltip("CloseBtn: không hồi sinh → sang LosePanel.")]
         [SerializeField] private Button continueCloseButton;
+        [Tooltip("ProgressBar/Fill: phần đầy thanh tiến độ ván (Image Sliced, neo trái). Code kéo Anchor Max X = tỉ lệ khách đã " +
+                 "lên xe. Trống = popup không có thanh (báo lỗi).")]
+        [SerializeField] private RectTransform continueProgressFill;
+        [Tooltip("ProgressBar/ProgressTxt: \"Only N passengers left!\". Trống = popup không có dòng này (báo lỗi).")]
+        [SerializeField] private TMP_Text continueProgressText;
 
         [Header("Thua")]
         [SerializeField] private AnimatedPanel losePanel;
@@ -90,6 +95,11 @@ namespace BusOut.Gameplay
                 Debug.LogError("[BusOut] LevelResultView: Root của panel phải là object CON (WinPanel…), không phải LevelResult.", this);
                 return false;
             }
+
+            // Tiến độ ván ở popup Continue là phần thêm: thiếu thì báo nhưng popup vẫn chạy.
+            if (continueProgressFill == null || continueProgressText == null)
+                Debug.LogError("[BusOut] LevelResultView thiếu Continue Progress Fill / Text: popup hồi sinh không hiện tiến độ ván. " +
+                               "Kéo ContinuePopup/Description/ProgressBar/Fill và ProgressTxt vào.", this);
 
             // Hiệu ứng thắng là phần thêm: thiếu thì báo nhưng popup vẫn chạy.
             if (winRays == null || winConfetti == null)
@@ -198,13 +208,22 @@ namespace BusOut.Gameplay
         }
 
         /// <paramref name="canAfford"/> false → nút trả coin bấm không được (vẫn hiện giá để người chơi biết cần bao nhiêu).
-        public void ShowContinue(int coinCost, bool canAfford)
+        /// <paramref name="progress"/>: tỉ lệ khách đã lên xe (0..1); <paramref name="progressLabel"/>: dòng "Only N passengers left!".
+        public void ShowContinue(int coinCost, bool canAfford, float progress, string progressLabel)
         {
             StopWinEffects();
             winPanel.Hide();
             losePanel.Hide();
             continueCostText.SetText("{0}", coinCost);
             continueCoinButton.interactable = canAfford;
+            if (continueProgressFill != null)
+            {
+                // Kéo neo phải thay vì Image Filled: phần đầy là sprite bo tròn Sliced, Filled cắt cụt đầu bo.
+                Vector2 anchorMax = continueProgressFill.anchorMax;
+                anchorMax.x = Mathf.Clamp01(progress);
+                continueProgressFill.anchorMax = anchorMax;
+            }
+            if (continueProgressText != null) continueProgressText.SetText(progressLabel);
             continuePanel.Show(panelAnimation);
         }
 

@@ -55,6 +55,8 @@ namespace BusOut.Gameplay
         [SerializeField] private CoinFlyView coinFly;
         [Tooltip("NoSlotMessageView trên chữ \"Hết chỗ!\".")]
         [SerializeField] private NoSlotMessageView noSlotMessage;
+        [Tooltip("ComboPraiseView trên UI/Popup/ComboPraise: chữ khen khi nhiều xe đủ khách liên tiếp. Trống = không có chữ khen (báo lỗi).")]
+        [SerializeField] private ComboPraiseView comboPraise;
         [Tooltip("SharedPopupsPresenter trên SharedUI: popup dùng chung (Cài đặt, Leave game) — nút bánh răng ở thanh trên mở.")]
         [SerializeField] private SharedPopupsPresenter sharedPopups;
 
@@ -72,6 +74,7 @@ namespace BusOut.Gameplay
         private PassengerPresenter passengers; // null khi thiếu tham chiếu hành khách: xe vẫn chơi được
         private TutorialPresenter tutorial; // null khi thiếu bàn tay: game vẫn chơi được, chỉ mất hướng dẫn
         private BoardingPresenter boarding;    // null cùng lúc với passengers
+        private ComboPresenter combo; // null khi thiếu chữ khen hoặc thiếu hàng khách: chỉ mất phản hồi, game vẫn chơi được
         private HudPresenter hud;
         private BoosterPresenter booster; // null khi thiếu hàng khách: booster nào cũng sắp lại hàng
         private LevelResultPresenter result; // null khi thiếu bảng kết quả: thắng / thua chỉ còn log
@@ -178,6 +181,7 @@ namespace BusOut.Gameplay
             SendLoadingTips();
             shop = CreateShopPresenter();
             CreateNoSlotMessage();
+            combo = CreateComboPresenter();
             // Mỗi lần GameFlowController bật xong GameContext (bấm Play). Lần bấm Play đầu mà KHÔNG qua màn Loading thì sự
             // kiện đã phát trước Start (lúc chưa nghe) — Start tự nạp level.
             EventBus.Subscribe<GameplayShownEvent>(HandleGameplayShown);
@@ -350,6 +354,7 @@ namespace BusOut.Gameplay
                 // và "không xe + không khách" bị tính là thắng.
                 passengers?.ResetForLevel(null, false);
                 boarding?.ResetForLevel();
+            combo?.ResetForLevel();
                 levelFinished = true;
                 interactionLockRemaining = 0f;
                 return;
@@ -376,6 +381,7 @@ namespace BusOut.Gameplay
                 passengers.ResetForLevel(planner, level.passengersHidden);
             }
             boarding?.ResetForLevel();
+            combo?.ResetForLevel();
             // ⚠️ Sau khi dựng đồ thị chặn (trong planner ở trên): hoạt ảnh đặt xe về cỡ 0, dựng đồ thị lúc đó là sai.
             if (deferIntro)
             {
@@ -438,7 +444,8 @@ namespace BusOut.Gameplay
             shop?.Hide();
             if (hasSharedPopups) sharedPopups.HideAll();
             booster?.Disarm();
-            result?.ShowLoseLater(currentLevel, busStop.HasLockedSlot);
+            int passengersLeft = passengers?.RemainingCount ?? 0;
+            result?.ShowLoseLater(currentLevel, busStop.HasLockedSlot, passengersLeft, LevelProgress(passengersLeft));
             // Khoảng đứng yên trước popup Continue: báo lý do thua. Mờ xong đúng lúc popup hiện, không đè lên popup.
             noSlotMessage?.Show(Mathf.Max(0f, config.losePopupDelay - config.noSlotMessageFade), config.noSlotMessageFade);
         }
@@ -572,6 +579,26 @@ namespace BusOut.Gameplay
                 Debug.LogError("[BusOut] GameplayPresenter thiếu No Slot Message: hết ô chỉ còn xe rung. Kéo chữ \"Hết chỗ!\" (có NoSlotMessageView) vào.", this);
             else if (!noSlotMessage.Init()) noSlotMessage = null;
             if (noSlotMessage != null) carFlow.NoSlotRejected += HandleNoSlotRejected;
+        }
+
+        /// Tỉ lệ khách đã lên xe. Tổng khách = tổng ghế mọi xe trong level (sinh khách theo tổng ghế từng màu).
+        private float LevelProgress(int passengersLeft)
+        {
+            int totalSeats = 0;
+            foreach (CarModel car in spawner.Cars) totalSeats += car.SeatCount;
+            return totalSeats > 0 ? 1f - (float)passengersLeft / totalSeats : 0f;
+        }
+
+        private ComboPresenter CreateComboPresenter()
+        {
+            if (comboPraise == null)
+            {
+                Debug.LogError("[BusOut] GameplayPresenter thiếu Combo Praise: không có chữ khen combo. Kéo UI/Popup/ComboPraise " +
+                               "(có ComboPraiseView) vào mục Giao diện trong ván.", this);
+                return null;
+            }
+            if (boarding == null || !comboPraise.Init()) return null;
+            return new ComboPresenter(FxConfig.Instance, comboPraise, boarding);
         }
 
         private void HandleNoSlotRejected() => noSlotMessage.Show(config.noSlotMessageHold, config.noSlotMessageFade);

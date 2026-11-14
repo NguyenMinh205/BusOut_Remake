@@ -26,6 +26,8 @@ namespace BusOut.Gameplay
         private Pending pending;
         private float timer;
         private bool canRevive;
+        private int passengersLeft;
+        private float levelProgress;
         private int level;
         private bool winClaimed; // chặn bấm 2 lần (2 nút / bấm đúp) → cộng coin 2 lần
         // Callback trao thưởng sau quảng cáo: dựng sẵn một lần.
@@ -69,12 +71,16 @@ namespace BusOut.Gameplay
             winClaimed = false;
         }
 
-        public void ShowLoseLater(int levelNumber, bool revivable)
+        /// <paramref name="remaining"/>: số khách chưa lên xe; <paramref name="progress"/>: tỉ lệ đã lên (0..1). Popup hồi sinh
+        /// hiện "sắp thắng rồi" để người chơi thấy đáng hồi sinh.
+        public void ShowLoseLater(int levelNumber, bool revivable, int remaining, float progress)
         {
             pending = Pending.Lose;
             timer = config.losePopupDelay;
             level = levelNumber;
             canRevive = revivable;
+            passengersLeft = remaining;
+            levelProgress = progress;
         }
 
         /// Huỷ cả popup đang chờ hiện: chơi lại ngay trong lúc chờ thì popup của ván cũ không được bật lên.
@@ -92,7 +98,9 @@ namespace BusOut.Gameplay
             if (pending == Pending.Win) view.ShowWin(config.winCoinReward, config.winCoinReward * config.winAdCoinMultiplier,
                 config.popupCoinCountDuration,
                 FxConfig.Instance.winRaysTurnDuration, FxConfig.Instance.winConfettiScale);
-            else if (canRevive) view.ShowContinue(config.reviveCoinCost, gameData.coinCount >= config.reviveCoinCost);
+            else if (canRevive) view.ShowContinue(config.reviveCoinCost, gameData.coinCount >= config.reviveCoinCost, levelProgress,
+                passengersLeft == 1 ? config.continueProgressFormatOne
+                    : string.Format(config.continueProgressFormat, passengersLeft));
             else view.ShowLose(config.levelLabelFormat, level);
             // Tiếng thua phát một lần lúc popup đầu tiên hiện (Continue hoặc Lose), không phát lại khi từ chối Continue.
             AudioService.Play(pending == Pending.Win ? SoundId.WinGame : SoundId.LoseGame);

@@ -110,6 +110,8 @@ MonoBehaviour:
   winCoinReward: 20
   winAdCoinMultiplier: 2
   reviveCoinCost: 100
+  continueProgressFormat: Only {0} passengers left!
+  continueProgressFormatOne: Only 1 passenger left!
   slotUnlockCoinCost: 100
   slotUnlockName: EXTRA SLOT
   slotUnlockDescription: Unlock one more parking space for this level.

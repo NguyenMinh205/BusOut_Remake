@@ -257,6 +257,12 @@ namespace BusOut.Gameplay
         [Tooltip("Giá coin hồi sinh +1 ô (popup Continue). GDD: 100.")]
         public int reviveCoinCost = 100;
 
+        [Tooltip("Popup Continue: dòng tiến độ ván, {0} = số khách chưa lên xe (tiếng Anh, như UI).")]
+        public string continueProgressFormat = "Only {0} passengers left!";
+
+        [Tooltip("Như trên khi chỉ còn 1 khách.")]
+        public string continueProgressFormatOne = "Only 1 passenger left!";
+
         [Header("Mở thêm ô đỗ (chạm ô khoá ở bến)")]
         [Tooltip("Giá coin mở 1 ô khoá (chỉ cho level đang chơi). Bằng giá hồi sinh: cùng là +1 ô.")]
         public int slotUnlockCoinCost = 100;
