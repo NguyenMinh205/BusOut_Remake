@@ -35,6 +35,10 @@ namespace BusOut.Core
             new SoundEntry { id = SoundId.Coin },
             new SoundEntry { id = SoundId.BonusCoin },
             new SoundEntry { id = SoundId.Helicopter },
+            new SoundEntry { id = SoundId.StreakComboGood },
+            new SoundEntry { id = SoundId.StreakComboNice },
+            new SoundEntry { id = SoundId.StreakComboGoodJob },
+            new SoundEntry { id = SoundId.StreakComboFantastic },
         };
 
         public static AudioConfig CreateDefault() => CreateInstance<AudioConfig>();

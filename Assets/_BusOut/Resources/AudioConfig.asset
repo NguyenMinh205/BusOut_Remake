@@ -46,3 +46,15 @@ MonoBehaviour:
   - id: 9
     clip: {fileID: 8300000, guid: f2eaeda1f0fa0d24cad41be978727d27, type: 3}
     volume: 1
+  - id: 10
+    clip: {fileID: 8300000, guid: 793e387e75731fd45b51d1450b92b245, type: 3}
+    volume: 1
+  - id: 11
+    clip: {fileID: 8300000, guid: 13a9cd8c6ff5cb64a8b9093f2b416e28, type: 3}
+    volume: 1
+  - id: 12
+    clip: {fileID: 8300000, guid: 59836976b332a604590f45e477f47d56, type: 3}
+    volume: 1
+  - id: 13
+    clip: {fileID: 8300000, guid: 5ca4180a041ce86418e2bf638663b8b5, type: 3}
+    volume: 1

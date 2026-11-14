@@ -15,5 +15,10 @@ namespace BusOut.Core
         Coin,
         BonusCoin,
         Helicopter,
+        // ⚠️ Lưu theo số trong AudioConfig: chỉ thêm ở cuối.
+        StreakComboGood,
+        StreakComboNice,
+        StreakComboGoodJob,
+        StreakComboFantastic,
     }
 }
