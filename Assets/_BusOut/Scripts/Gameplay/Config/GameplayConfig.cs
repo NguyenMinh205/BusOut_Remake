@@ -77,10 +77,10 @@ namespace BusOut.Gameplay
         public float garageBuildingOffset = 2.2f;
 
         [Tooltip("Chiều dài nhà cổng (đơn vị prefab xe). Khớp với hình trong prefab.")]
-        public float garageBuildingLength = 2f;
+        public float garageBuildingLength = 2.7f;
 
         [Tooltip("Chiều rộng nhà cổng (đơn vị prefab xe). Khớp với hình trong prefab.")]
-        public float garageBuildingWidth = 1.6f;
+        public float garageBuildingWidth = 2.4f;
 
         [Header("Bến đỗ")]
         [Tooltip("Số ô đỗ mở sẵn (tính từ ô 1). Game gốc mở 4 ô, ô 5–7 mở bằng quảng cáo.")]
@@ -229,6 +229,24 @@ namespace BusOut.Gameplay
         [Tooltip("Chờ bấy nhiêu giây sau mỗi lần chạm rồi mới chỉ xe tiếp theo, để người chơi kịp thấy xe chạy và khách lên xe.")]
         [Min(0f)] public float tutorialStepDelay = 1.2f;
 
+        [Header("Giới thiệu cơ chế")]
+        [Tooltip("Level đầu tiên có cơ chế người chơi chưa gặp thì hiện màn giới thiệu (dùng chung màn BoosterTut), mỗi cơ chế " +
+                 "một lần trong cả save. Lịch cơ chế nằm trong file level (L8 bãi chờ, 12 xe ẩn, 16 khoá, 20 khách ẩn, 24 công " +
+                 "trường), không đặt ở đây. Icon trống = màn giới thiệu không có hình.")]
+        public List<MechanicIntroDefinition> mechanicIntros = new List<MechanicIntroDefinition>
+        {
+            new MechanicIntroDefinition { mechanic = LevelMechanic.Garage, displayName = "GARAGE",
+                description = "Cars wait inside the garage. When the car in front drives away, the next one rolls out." },
+            new MechanicIntroDefinition { mechanic = LevelMechanic.HiddenCar, displayName = "MYSTERY CAR",
+                description = "Its color is hidden. Clear the cars in its way to reveal it." },
+            new MechanicIntroDefinition { mechanic = LevelMechanic.LockKey, displayName = "LOCK & KEY",
+                description = "A locked car can't move. Send out the car with the matching key to unlock it." },
+            new MechanicIntroDefinition { mechanic = LevelMechanic.HiddenPassenger, displayName = "MYSTERY PASSENGERS",
+                description = "Some passengers hide their color. It shows when they get near the front of the line." },
+            new MechanicIntroDefinition { mechanic = LevelMechanic.Construction, displayName = "CONSTRUCTION",
+                description = "This slot is closed. Fill buses with passengers to open it." },
+        };
+
         [Header("Kinh tế")]
         [Tooltip("Coin thưởng khi thắng một level thường. GDD: 20.")]
         public int winCoinReward = 20;
@@ -268,9 +286,9 @@ namespace BusOut.Gameplay
             new BoosterDefinition { type = BoosterType.Undo, displayName = "UNDO", unlockLevel = 4,
                 coinPrice = 100, buyAmount = 1, description = "Send the last car you moved back to its parking spot.",
                 loadingDescription = "Tapped the wrong car? Undo sends it back to its parking spot before anyone boards." },
-            new BoosterDefinition { type = BoosterType.Crane, displayName = "CRANE", unlockLevel = 5,
+            new BoosterDefinition { type = BoosterType.Crane, displayName = "HELICOPTER", unlockLevel = 5,
                 coinPrice = 200, buyAmount = 1, description = "Lift any car, even a blocked one, straight to the stop.",
-                loadingDescription = "Need a car that's boxed in? The Crane lifts it over the others, straight to the stop." },
+                loadingDescription = "Need a car that's boxed in? The Helicopter lifts it over the others, straight to the stop." },
         };
 
         [Tooltip("Icon ổ khoá trên nút booster chưa mở. Để trống thì giữ icon đang có.")]
@@ -329,6 +347,29 @@ namespace BusOut.Gameplay
         }
 
         public static GameplayConfig CreateDefault() => CreateInstance<GameplayConfig>();
+    }
+
+    /// Cơ chế đặc biệt trong file level.
+    /// ⚠️ Lưu theo số (bit trong save mechanicIntroSeenMask): chỉ thêm ở cuối, không đổi thứ tự.
+    public enum LevelMechanic
+    {
+        Garage,
+        HiddenCar,
+        LockKey,
+        HiddenPassenger,
+        Construction,
+    }
+
+    /// Màn giới thiệu một cơ chế: hiện ở level đầu tiên có cơ chế đó.
+    [Serializable]
+    public class MechanicIntroDefinition
+    {
+        // Trường chữ đứng đầu: Inspector lấy nó làm tên phần tử (GARAGE, LOCK & KEY...) thay vì "Element 0".
+        public string displayName;
+        public LevelMechanic mechanic;
+        public Sprite icon;
+        [Tooltip("Mô tả ngắn (tiếng Anh, như UI): cơ chế chạy thế nào, cách gỡ.")]
+        [TextArea] public string description;
     }
 
     /// Một booster trên thanh dưới: hiện gì, mở ở level nào.

@@ -8,7 +8,8 @@ using UnityEngine.UI;
 
 namespace BusOut.Gameplay
 {
-    /// Màn giới thiệu booster vừa mở khoá: tên, hình, mô tả. Chạm bất kỳ đâu để đóng. Gắn trên object BoosterTut.
+    /// Màn giới thiệu booster vừa mở khoá, hoặc cơ chế mới gặp lần đầu: tên, hình, mô tả. Chạm bất kỳ đâu để đóng.
+    /// Gắn trên object BoosterTut.
     public class BoosterIntroView : MonoBehaviour, IPointerClickHandler
     {
         [Tooltip("Root = BoosterTut, Dim = BoosterTut/Dim, Reveal Items = tên, hình, mô tả.")]
@@ -41,11 +42,19 @@ namespace BusOut.Gameplay
             return true;
         }
 
-        public void Show(BoosterDefinition booster, Action onClosed)
+        public void Show(BoosterDefinition booster, Action onClosed) =>
+            Show(booster.displayName, booster.icon, booster.description, onClosed);
+
+        public void Show(MechanicIntroDefinition mechanic, Action onClosed) =>
+            Show(mechanic.displayName, mechanic.icon, mechanic.description, onClosed);
+
+        private void Show(string title, Sprite icon, string description, Action onClosed)
         {
-            nameText.SetText(booster.displayName);
-            descriptionText.SetText(booster.description);
-            iconImage.sprite = booster.icon;
+            nameText.SetText(title);
+            descriptionText.SetText(description);
+            iconImage.sprite = icon;
+            // Cơ chế chưa có hình thì ẩn ô hình; để bật thì Image không sprite hiện thành ô trắng.
+            iconImage.enabled = icon != null;
             closed = onClosed;
             canClose = false;
             // Chỉ cho đóng khi đã hiện xong: người chơi đang chạm liên tục lúc vào ván sẽ bỏ qua màn này mà chưa kịp đọc.

@@ -7,6 +7,7 @@ namespace BusOut.Gameplay
     /// Hướng dẫn trong ván, chạy theo danh sách bước: màn giới thiệu, hoặc bàn tay chỉ một xe / một nút booster, chỉ thứ đó nhận chạm.
     /// - Level hướng dẫn (level 1): chỉ vài xe để biết cách chơi.
     /// - Level mở khoá booster: tặng 1 lượt, giới thiệu, rồi bắt dùng thử. Mỗi booster một kịch bản vì cần tình huống khác nhau mới dùng được.
+    /// - Level đầu tiên có cơ chế chưa gặp (bãi chờ, xe ẩn, khoá...): chỉ màn giới thiệu, không bắt thao tác.
     /// ⚠️ Bất kỳ bước nào không làm được (không có xe phù hợp, booster từ chối) đều phải kết thúc hướng dẫn ngay: mọi thao tác
     /// khác đang bị khoá, đứng chờ ở đó là người chơi kẹt vĩnh viễn.
     public sealed class TutorialPresenter
@@ -19,11 +20,13 @@ namespace BusOut.Gameplay
         {
             public readonly StepKind Kind;
             public readonly CarRule Rule;
+            public readonly MechanicIntroDefinition Mechanic; // bước Intro: null = giới thiệu booster của bài học
 
-            public Step(StepKind kind, CarRule rule = default)
+            public Step(StepKind kind, CarRule rule = default, MechanicIntroDefinition mechanic = null)
             {
                 Kind = kind;
                 Rule = rule;
+                Mechanic = mechanic;
             }
         }
 
@@ -58,7 +61,8 @@ namespace BusOut.Gameplay
         /// Đang hướng dẫn: mọi thao tác ngoài bước hiện tại tạm khoá.
         public bool IsActive => phase != Phase.Off;
 
-        public void ResetForLevel(int levelNumber)
+        /// <paramref name="level"/>: null khi không tải được level (chỉ dọn hướng dẫn cũ).
+        public void ResetForLevel(int levelNumber, LevelData level)
         {
             hand.Hide();
             intro?.Hide();
@@ -73,6 +77,7 @@ namespace BusOut.Gameplay
                 for (int i = 0; i < config.tutorialGuidedTaps; i++) steps.Add(new Step(StepKind.TapCar, CarRule.ServesQueue));
             }
             else BuildBoosterLesson(levelNumber);
+            if (level != null) AddMechanicIntros(level);
             phase = steps.Count > 0 ? Phase.Waiting : Phase.Off;
         }
 
@@ -143,6 +148,37 @@ namespace BusOut.Gameplay
             lesson = booster;
         }
 
+        /// Đọc chính file level thay vì đặt số level trong config: đổi lịch cơ chế trong bộ level thì màn giới thiệu tự theo.
+        /// Nhảy cóc level (công cụ thử) gặp nhiều cơ chế mới cùng lúc thì giới thiệu lần lượt.
+        private void AddMechanicIntros(LevelData level)
+        {
+            if (intro == null || config.mechanicIntros == null) return;
+            foreach (MechanicIntroDefinition mechanic in config.mechanicIntros)
+            {
+                if (mechanic == null || gameData.IsMechanicIntroSeen((int)mechanic.mechanic)) continue;
+                if (HasMechanic(level, mechanic.mechanic)) steps.Add(new Step(StepKind.Intro, mechanic: mechanic));
+            }
+        }
+
+        private static bool HasMechanic(LevelData level, LevelMechanic mechanic)
+        {
+            switch (mechanic)
+            {
+                case LevelMechanic.HiddenPassenger: return level.passengersHidden;
+                case LevelMechanic.Construction: return level.constructionSlots > 0;
+            }
+            foreach (VehicleData vehicle in level.vehicles)
+            {
+                switch (mechanic)
+                {
+                    case LevelMechanic.Garage: if (vehicle.garageId > 0) return true; break;
+                    case LevelMechanic.HiddenCar: if (vehicle.colorHidden) return true; break;
+                    case LevelMechanic.LockKey: if (vehicle.lockId > 0) return true; break;
+                }
+            }
+            return false;
+        }
+
         private BoosterDefinition FindBoosterUnlockedAt(int levelNumber)
         {
             foreach (BoosterDefinition booster in config.boosters)
@@ -156,7 +192,8 @@ namespace BusOut.Gameplay
             switch (step.Kind)
             {
                 case StepKind.Intro:
-                    intro.Show(lesson, () => Advance(0f));
+                    if (step.Mechanic != null) intro.Show(step.Mechanic, () => Advance(0f));
+                    else intro.Show(lesson, () => Advance(0f));
                     break;
                 case StepKind.TapBooster:
                     RectTransform button = hud?.GetBoosterRect(lesson.type);
@@ -182,6 +219,13 @@ namespace BusOut.Gameplay
 
         private void Advance(float delayBeforeNextStep)
         {
+            // Đánh dấu ngay khi đóng màn, không chờ hết bài: thoát giữa chừng thì lần sau không bắt đọc lại.
+            MechanicIntroDefinition mechanic = steps[stepIndex].Mechanic;
+            if (mechanic != null)
+            {
+                gameData.MarkMechanicIntroSeen((int)mechanic.mechanic);
+                gameData.Save();
+            }
             hand.Hide();
             target = null;
             stepIndex++;

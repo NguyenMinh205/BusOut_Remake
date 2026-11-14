@@ -39,8 +39,8 @@ MonoBehaviour:
   constructionSlotPrefab: {fileID: 2240761703393245806, guid: 5b89a29c3f5640d89c1e08e6a8f0f0f8, type: 3}
   garagePrefab: {fileID: 7094870455234780038, guid: 90e6abfaaa63463c8dba77ae07df2917, type: 3}
   garageBuildingOffset: 2.2
-  garageBuildingLength: 2
-  garageBuildingWidth: 1.6
+  garageBuildingLength: 2.7
+  garageBuildingWidth: 2.4
   openSlotCount: 4
   warningBlinkCount: 4
   warningBlinkDuration: 0.5
@@ -83,6 +83,30 @@ MonoBehaviour:
   tutorialLevel: 1
   tutorialGuidedTaps: 2
   tutorialStepDelay: 1.2
+  mechanicIntros:
+  - displayName: GARAGE
+    mechanic: 0
+    icon: {fileID: 21300000, guid: 62835f90816bce640b598a6560e9ac8a, type: 3}
+    description: Cars wait inside the garage. When the car in front drives away,
+      the next one rolls out.
+  - displayName: MYSTERY CAR
+    mechanic: 1
+    icon: {fileID: 21300000, guid: f73bde7de67aec842a74d2c49431662a, type: 3}
+    description: Its color is hidden. Clear the cars in its way to reveal it.
+  - displayName: LOCK & KEY
+    mechanic: 2
+    icon: {fileID: 21300000, guid: f2bbaf32ae584d938a8006b7938fa43f, type: 3}
+    description: A locked car can't move. Send out the car with the matching key
+      to unlock it.
+  - displayName: MYSTERY PASSENGERS
+    mechanic: 3
+    icon: {fileID: 21300000, guid: eecbff316b3b82547a605f2c751e6c2c, type: 3}
+    description: Some passengers hide their color. It shows when they get near the
+      front of the line.
+  - displayName: CONSTRUCTION
+    mechanic: 4
+    icon: {fileID: 21300000, guid: 26dc690a35134e01a15581c357fb3246, type: 3}
+    description: This slot is closed. Fill buses with passengers to open it.
   winCoinReward: 20
   winAdCoinMultiplier: 2
   reviveCoinCost: 100
@@ -99,7 +123,7 @@ MonoBehaviour:
     coinPrice: 120
     buyAmount: 1
     description: Shuffle the queue to open up new moves.
-    loadingSprite: {fileID: 21300000, guid: 11be60155e95d694cac65f1c4fb22b1d, type: 3}
+    loadingSprite: {fileID: 21300000, guid: cf0d4b6bb4aecf74380b01f6117a2ea1, type: 3}
     loadingDescription: No car matches the line? Shuffle mixes up the waiting passengers
       to open new moves.
   - type: 0
@@ -109,28 +133,28 @@ MonoBehaviour:
     coinPrice: 150
     buyAmount: 1
     description: Line up passengers so every car at the stop fills up and leaves.
-    loadingSprite: {fileID: 21300000, guid: c9207df06f0e91648a47a4373579ead9, type: 3}
+    loadingSprite: {fileID: 21300000, guid: 0016c0fa3c0460748b17526b61c44f86, type: 3}
     loadingDescription: Stop getting crowded? Sort lines up the passengers so every
       car there fills up and drives away.
   - type: 1
     displayName: UNDO
-    icon: {fileID: 21300000, guid: c5bcf12081dbac749a5a80ae4b7c6af3, type: 2}
+    icon: {fileID: 21300000, guid: 133f0d56fa509b04fb6d34409554fffc, type: 3}
     unlockLevel: 4
     coinPrice: 100
     buyAmount: 1
     description: Send the last car you moved back to its parking spot.
-    loadingSprite: {fileID: 21300000, guid: 051c89b9605e9db42ba01c318193ebc2, type: 3}
+    loadingSprite: {fileID: 21300000, guid: d2ae3683841863748878ce2f1bce5993, type: 3}
     loadingDescription: Tapped the wrong car? Undo sends it back to its parking spot
       before anyone boards.
   - type: 3
-    displayName: CRANE
-    icon: {fileID: 21300000, guid: 1bd1d2afdf2a6094aafbb0317b1dbe0a, type: 2}
+    displayName: HELICOPTER
+    icon: {fileID: 21300000, guid: 735cb22d27028de449b12119df0dea34, type: 3}
     unlockLevel: 5
     coinPrice: 200
     buyAmount: 1
     description: Lift any car, even a blocked one, straight to the stop.
-    loadingSprite: {fileID: 21300000, guid: 3b35bd68a09832849b176773865ce3ed, type: 3}
-    loadingDescription: Need a car that's boxed in? The Crane lifts it over the others,
+    loadingSprite: {fileID: 21300000, guid: 2817472fbd7597546a64810e20c8d85c, type: 3}
+    loadingDescription: Need a car that's boxed in? The Helicopter lifts it over the others,
       straight to the stop.
   boosterLockIcon: {fileID: 21300000, guid: 61568a6e5fe042d4495e3cb36886e5d8, type: 2}
   boosterUnlockedBackground: {fileID: 21300000, guid: 83f00ce8cd2529945b33401d3d40db64, type: 2}

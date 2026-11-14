@@ -333,7 +333,6 @@ namespace BusOut.Gameplay
             if (hasSharedPopups) sharedPopups.HideAll();
             booster?.Disarm();
             noSlotMessage?.Hide();
-            tutorial?.ResetForLevel(number);
             passengers?.DespawnAll();
             spawner.DespawnAll();
             carFlow.ResetForLevel();
@@ -345,6 +344,7 @@ namespace BusOut.Gameplay
             LevelData level = ownLevels?.FindLevel(number) ?? curveData.FindLevel(layoutNumber);
             if (level == null || level.vehicles == null)
             {
+                tutorial?.ResetForLevel(number, null);
                 Debug.LogError($"[BusOut] Không có level {layoutNumber} (level hiển thị {number}). Level lấy từ save (SecureGameData.currentLevel): xoá save hoặc sửa file curve.", this);
                 // ⚠️ Dọn hết trạng thái ván cũ: giữ lại thì bộ lên kế hoạch cũ chạy trên danh sách xe đã xoá (lỗi mỗi frame),
                 // và "không xe + không khách" bị tính là thắng.
@@ -354,6 +354,7 @@ namespace BusOut.Gameplay
                 interactionLockRemaining = 0f;
                 return;
             }
+            tutorial?.ResetForLevel(number, level);
             spawner.Spawn(level);
             busStop.SetupConstruction(level.constructionSlots, level.constructionPassengers);
             currentLevel = number;

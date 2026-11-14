@@ -58,6 +58,8 @@ namespace BusOut.Core
         /// Hướng dẫn booster, mỗi bit = (int)BoosterType. Tách 2 cờ: thoát giữa chừng thì chơi lại vẫn hướng dẫn tiếp mà không được tặng thêm.
         public int boosterLessonGiftMask;
         public int boosterLessonDoneMask;
+        /// Màn giới thiệu cơ chế đã xem, mỗi bit = (int)LevelMechanic (Gameplay).
+        public int mechanicIntroSeenMask;
 
         public bool musicOn = true;
         public bool sfxOn = true;
@@ -152,6 +154,10 @@ namespace BusOut.Core
 
         public void MarkBoosterLessonDone(BoosterType type) => boosterLessonDoneMask |= 1 << (int)type;
 
+        public bool IsMechanicIntroSeen(int mechanic) => (mechanicIntroSeenMask & (1 << mechanic)) != 0;
+
+        public void MarkMechanicIntroSeen(int mechanic) => mechanicIntroSeenMask |= 1 << mechanic;
+
         /// Tặng 1 lượt của bài hướng dẫn, mỗi booster đúng một lần trong cả save.
         public void GrantBoosterLessonGift(BoosterType type)
         {
@@ -214,6 +220,7 @@ namespace BusOut.Core
             EnsureBoosterSlots();
             boosterLessonGiftMask = other.boosterLessonGiftMask;
             boosterLessonDoneMask = other.boosterLessonDoneMask;
+            mechanicIntroSeenMask = other.mechanicIntroSeenMask;
             musicOn = other.musicOn;
             sfxOn = other.sfxOn;
             vibrationOn = other.vibrationOn;
