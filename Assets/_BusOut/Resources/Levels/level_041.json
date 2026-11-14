@@ -18,7 +18,7 @@
             "colorHidden": true,
             "lockId": 0,
             "keyId": 0,
-            "garageId": 0,
+            "garageId": 1,
             "garageOrder": 0
         },
         {
@@ -408,7 +408,7 @@
             "colorHidden": false,
             "lockId": 0,
             "keyId": 0,
-            "garageId": 1,
+            "garageId": 0,
             "garageOrder": 0
         },
         {
@@ -637,10 +637,10 @@
             "garageOrder": 0
         },
         {
-            "type": 2,
+            "type": 1,
             "color": 5,
-            "x": -9.5,
-            "z": 5.96,
+            "x": -1.06,
+            "z": -0.39,
             "rotY": 0,
             "hidden": false,
             "autoMove": false,
@@ -652,10 +652,10 @@
             "garageOrder": 1
         },
         {
-            "type": 1,
-            "color": 1,
-            "x": -9.5,
-            "z": 5.96,
+            "type": 0,
+            "color": 6,
+            "x": -1.06,
+            "z": -0.39,
             "rotY": 0,
             "hidden": false,
             "autoMove": false,
@@ -665,6 +665,21 @@
             "keyId": 0,
             "garageId": 1,
             "garageOrder": 2
+        },
+        {
+            "type": 0,
+            "color": 0,
+            "x": -1.06,
+            "z": -0.39,
+            "rotY": 0,
+            "hidden": false,
+            "autoMove": false,
+            "tool": -1,
+            "colorHidden": false,
+            "lockId": 0,
+            "keyId": 0,
+            "garageId": 1,
+            "garageOrder": 3
         }
     ],
     "mix": [
